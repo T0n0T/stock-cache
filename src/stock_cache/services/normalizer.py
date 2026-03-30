@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 from stock_cache.domain.models import DailyIndicatorRow, DailyMarketRow
 
@@ -10,7 +10,7 @@ class NormalizedSymbolBundle:
     indicator_rows: list[DailyIndicatorRow]
 
 
-def _parse_trade_date(value: str) -> datetime.date:
+def _parse_trade_date(value: str) -> date:
     return datetime.strptime(value, "%Y%m%d").date()
 
 
@@ -31,6 +31,9 @@ def normalize_symbol_bundle(
         DailyMarketRow(
             ts_code=ts_code,
             trade_date=_parse_trade_date(trade_date),
+            open=payload.get("open"),
+            high=payload.get("high"),
+            low=payload.get("low"),
             close=payload.get("close"),
             pct_chg=payload.get("pct_chg"),
             turnover_rate=payload.get("turnover_rate"),
