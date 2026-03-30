@@ -7,7 +7,11 @@ def calculate_macd_fallback(rows: list[DailyMarketRow]) -> list[DailyIndicatorRo
     dea = 0.0
     results: list[DailyIndicatorRow] = []
     for row in rows:
-        close = row.close or 0.0
+        if row.close is None:
+            raise ValueError(
+                f"close price is required for MACD fallback: {row.ts_code} on {row.trade_date.isoformat()}"
+            )
+        close = row.close
         ema12 = close if ema12 is None else (close * 2 / 13) + ema12 * (11 / 13)
         ema26 = close if ema26 is None else (close * 2 / 27) + ema26 * (25 / 27)
         dif = ema12 - ema26
