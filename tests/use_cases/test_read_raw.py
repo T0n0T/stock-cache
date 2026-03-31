@@ -25,3 +25,5 @@ async def test_read_raw_returns_json_ready_payload() -> None:
     assert payload["query"]["ts_code"] == "000001.SZ"
     assert payload["meta"]["row_count_market"] == 1
     assert payload["data"]["market"][0]["close"] == 12.4
+    assert payload["data"]["market"][0]["trade_date"] == "2026-03-30"
+    assert payload["data"]["indicators"][0]["trade_date"] == "2026-03-30"

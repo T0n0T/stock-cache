@@ -1,4 +1,15 @@
 from dataclasses import asdict
+from datetime import date, datetime
+
+
+def _json_ready(value: object) -> object:
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {key: _json_ready(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_ready(item) for item in value]
+    return value
 
 
 class ReadRawMarketDataUseCase:
@@ -7,8 +18,8 @@ class ReadRawMarketDataUseCase:
 
     async def run(self, ts_code: str, start_date: str, end_date: str) -> dict[str, object]:
         rows = await self._market_repository.fetch_raw(ts_code=ts_code, start_date=start_date, end_date=end_date)
-        market = [asdict(row) for row in rows["market"]]
-        indicators = [asdict(row) for row in rows["indicators"]]
+        market = [_json_ready(asdict(row)) for row in rows["market"]]
+        indicators = [_json_ready(asdict(row)) for row in rows["indicators"]]
         return {
             "query": {"ts_code": ts_code, "start_date": start_date, "end_date": end_date},
             "data": {"market": market, "indicators": indicators},
