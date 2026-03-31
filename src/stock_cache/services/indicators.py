@@ -1,6 +1,16 @@
 from stock_cache.domain.models import DailyIndicatorRow, DailyMarketRow
 
 
+class IndicatorService:
+    def __init__(self, allow_online_backfill: bool, enable_local_fallback: bool) -> None:
+        self.allow_online_backfill = allow_online_backfill
+        self.enable_local_fallback = enable_local_fallback
+
+    async def ensure_indicators(self, ts_code: str, start_date: str, end_date: str) -> None:
+        """Hook for later provider-backed indicator backfill."""
+        _ = (ts_code, start_date, end_date)
+
+
 def calculate_macd_fallback(rows: list[DailyMarketRow]) -> list[DailyIndicatorRow]:
     ema12 = None
     ema26 = None
