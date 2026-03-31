@@ -88,13 +88,7 @@ class WriteMarketDataUseCase:
 
         successes: list[str] = []
         failures: dict[str, str] = {}
-        daily_rows: list[dict[str, object]] = []
-        daily_basic_rows: list[dict[str, object]] = []
-        moneyflow_rows: list[dict[str, object]] = []
-        adj_factor_rows: list[dict[str, object]] = []
-        limit_rows: list[dict[str, object]] = []
-        suspend_rows: list[dict[str, object]] = []
-        indicator_rows: list[dict[str, object]] = []
+        target_symbol_set = set(target_symbols)
         for index, trade_date in enumerate(trade_dates, start=1):
             self._emit_progress(progress, f"syncing trade date {trade_date} ({index}/{len(trade_dates)})")
             try:
@@ -105,38 +99,29 @@ class WriteMarketDataUseCase:
                     backoff_factor=self.settings.retry_backoff_factor,
                     jitter=self.settings.retry_jitter,
                 )
-                daily_rows.extend(payload[0])
-                daily_basic_rows.extend(payload[1])
-                moneyflow_rows.extend(payload[2])
-                adj_factor_rows.extend(payload[3])
-                limit_rows.extend(payload[4])
-                suspend_rows.extend(payload[5])
-                indicator_rows.extend(payload[6])
+                bundle = normalize_market_batches(
+                    daily_rows=payload[0],
+                    daily_basic_rows=payload[1],
+                    moneyflow_rows=payload[2],
+                    adj_factor_rows=payload[3],
+                    limit_rows=payload[4],
+                    suspend_rows=payload[5],
+                    indicator_rows=payload[6],
+                    target_symbols=target_symbol_set,
+                )
+                if self.market_repository is not None:
+                    self._emit_progress(
+                        progress,
+                        f"persisting {len(bundle.market_rows)} market row(s) and {len(bundle.indicator_rows)} indicator row(s)",
+                    )
+                    await self.market_repository.upsert_daily_market(bundle.market_rows)
+                    await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
             except StockCacheError as exc:
                 failures[f"__trade_date__:{trade_date}"] = str(exc)
                 self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
             except Exception as exc:
                 failures[f"__trade_date__:{trade_date}"] = str(exc)
                 self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
-
-        if target_symbols:
-            bundle = normalize_market_batches(
-                daily_rows=daily_rows,
-                daily_basic_rows=daily_basic_rows,
-                moneyflow_rows=moneyflow_rows,
-                adj_factor_rows=adj_factor_rows,
-                limit_rows=limit_rows,
-                suspend_rows=suspend_rows,
-                indicator_rows=indicator_rows,
-                target_symbols=set(target_symbols),
-            )
-            if self.market_repository is not None:
-                self._emit_progress(
-                    progress,
-                    f"persisting {len(bundle.market_rows)} market row(s) and {len(bundle.indicator_rows)} indicator row(s)",
-                )
-                await self.market_repository.upsert_daily_market(bundle.market_rows)
-                await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
         if target_symbols and not failures:
             successes = list(target_symbols)
 

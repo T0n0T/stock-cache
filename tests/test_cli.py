@@ -325,7 +325,10 @@ def test_run_read_raw_resolves_ts_code_from_name_when_building_live_repository(m
     monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
     monkeypatch.setenv("TUSHARE_TOKEN", "token")
     monkeypatch.setattr("cli.create_pool", fake_create_pool)
-    monkeypatch.setattr("cli.MarketDataRepository", lambda received_pool: object())
+    monkeypatch.setattr(
+        "cli.MarketDataRepository",
+        lambda received_pool, write_batch_size: object(),
+    )
     monkeypatch.setattr("cli.InstrumentRepository", FakeInstrumentRepository)
     monkeypatch.setattr("cli.ReadRawMarketDataUseCase", FakeReadRawUseCase)
 
@@ -374,6 +377,48 @@ def test_run_read_screen_closes_pool_when_building_live_repository(monkeypatch, 
     )
 
     assert payload["query"]["trade_date"] == "2026-03-31"
+    assert pool.closed is True
+
+
+def test_run_read_raw_passes_configured_batch_size_to_market_repository(monkeypatch, sample_dsn: str) -> None:
+    pool = FakePool()
+    calls: dict[str, object] = {}
+
+    class FakeMarketDataRepository:
+        def __init__(self, received_pool: object, write_batch_size: int) -> None:
+            calls["pool"] = received_pool
+            calls["write_batch_size"] = write_batch_size
+
+    class FakeReadRawUseCase:
+        def __init__(self, market_repository: object) -> None:
+            _ = market_repository
+
+        async def run(self, ts_code: str, start_date: str, end_date: str) -> dict[str, object]:
+            return {"query": {"ts_code": ts_code, "start_date": start_date, "end_date": end_date}}
+
+    async def fake_create_pool(dsn: str) -> FakePool:
+        assert dsn == sample_dsn
+        return pool
+
+    monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
+    monkeypatch.setenv("TUSHARE_TOKEN", "token")
+    monkeypatch.setenv("WRITE_BATCH_SIZE", "321")
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.MarketDataRepository", FakeMarketDataRepository)
+    monkeypatch.setattr("cli.ReadRawMarketDataUseCase", FakeReadRawUseCase)
+
+    payload = cli_module.asyncio.run(
+        cli_module._run_read_raw(
+            ts_code="000001.SZ",
+            name=None,
+            start_date="2026-03-01",
+            end_date="2026-03-31",
+            injected_use_case=None,
+        )
+    )
+
+    assert payload["query"]["ts_code"] == "000001.SZ"
+    assert calls == {"pool": pool, "write_batch_size": 321}
     assert pool.closed is True
 
 
@@ -438,7 +483,10 @@ def test_run_write_resolves_single_name_when_building_live_use_case(monkeypatch,
     monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
     monkeypatch.setenv("TUSHARE_TOKEN", "token")
     monkeypatch.setattr("cli.create_pool", fake_create_pool)
-    monkeypatch.setattr("cli.MarketDataRepository", lambda received_pool: object())
+    monkeypatch.setattr(
+        "cli.MarketDataRepository",
+        lambda received_pool, write_batch_size: object(),
+    )
     monkeypatch.setattr("cli.InstrumentRepository", FakeInstrumentRepository)
     monkeypatch.setattr("cli.JobRunRepository", lambda received_pool: object())
     monkeypatch.setattr("cli.WriteMarketDataUseCase", FakeWriteMarketDataUseCase)
@@ -461,6 +509,73 @@ def test_run_write_resolves_single_name_when_building_live_use_case(monkeypatch,
         "symbols": ["000001.SZ"],
         "write_range": None,
     }
+    assert pool.closed is True
+
+
+def test_run_write_passes_configured_batch_size_to_market_repository(monkeypatch, sample_dsn: str) -> None:
+    pool = FakePool()
+    calls: dict[str, object] = {}
+
+    class FakeMarketDataRepository:
+        def __init__(self, received_pool: object, write_batch_size: int) -> None:
+            calls["pool"] = received_pool
+            calls["write_batch_size"] = write_batch_size
+
+    class FakeWriteMarketDataUseCase:
+        def __init__(
+            self,
+            settings: object,
+            primary_provider: object,
+            market_repository: object,
+            instrument_repository: object,
+            job_run_repository: object,
+        ) -> None:
+            _ = (settings, primary_provider, market_repository, instrument_repository, job_run_repository)
+
+        async def run(
+            self,
+            mode: str,
+            symbols: list[str] | None = None,
+            write_range: object | None = None,
+            progress: object | None = None,
+        ) -> FakeJobRunSummary:
+            _ = (mode, symbols, write_range, progress)
+            return FakeJobRunSummary(
+                job_id="20260331T120000Z",
+                status="success",
+                started_at="2026-03-31T12:00:00+00:00",
+                finished_at="2026-03-31T12:00:01+00:00",
+                total_symbols=1,
+                success_symbols=["000001.SZ"],
+                failed_symbols={},
+            )
+
+    async def fake_create_pool(dsn: str) -> FakePool:
+        assert dsn == sample_dsn
+        return pool
+
+    monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
+    monkeypatch.setenv("TUSHARE_TOKEN", "token")
+    monkeypatch.setenv("WRITE_BATCH_SIZE", "777")
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.MarketDataRepository", FakeMarketDataRepository)
+    monkeypatch.setattr("cli.InstrumentRepository", lambda received_pool: object())
+    monkeypatch.setattr("cli.JobRunRepository", lambda received_pool: object())
+    monkeypatch.setattr("cli.WriteMarketDataUseCase", FakeWriteMarketDataUseCase)
+
+    payload = cli_module.asyncio.run(
+        cli_module._run_write(
+            mode="full",
+            ts_code=None,
+            name=None,
+            write_range=None,
+            injected_use_case=None,
+            progress=None,
+        )
+    )
+
+    assert payload.status == "success"
+    assert calls == {"pool": pool, "write_batch_size": 777}
     assert pool.closed is True
 
 
@@ -817,7 +932,10 @@ def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn:
 
     monkeypatch.setattr(cli_module, "AkshareAdapter", fail_akshare_init, raising=False)
     monkeypatch.setattr("cli.create_pool", fake_create_pool)
-    monkeypatch.setattr("cli.MarketDataRepository", lambda pool: FakeMarketRepository())
+    monkeypatch.setattr(
+        "cli.MarketDataRepository",
+        lambda pool, write_batch_size: FakeMarketRepository(),
+    )
     monkeypatch.setattr("cli.InstrumentRepository", lambda pool: FakeInstrumentRepository())
     monkeypatch.setattr("cli.JobRunRepository", lambda pool: FakeJobRunRepository())
     monkeypatch.setattr("providers.tushare_adapter.ts.pro_api", lambda token: object())

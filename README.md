@@ -82,7 +82,7 @@ Examples below use the console-script form.
 | `ALLOW_INDICATOR_BACKFILL_ON_READ` | No | `true` | read-time indicator backfill policy flag |
 | `ENABLE_TUSHARE_INDICATORS` | No | `true` | provider indicator toggle |
 | `ENABLE_LOCAL_INDICATOR_FALLBACK` | No | `true` | allow local indicator fallback logic |
-| `WRITE_BATCH_SIZE` | No | `500` | reserved write batching setting |
+| `WRITE_BATCH_SIZE` | No | `500` | maximum rows per repository upsert batch |
 | `LOG_LEVEL` | No | `INFO` | logging level |
 
 The example file lives at [`.env.example`](/home/pi/Documents/agents/stock-cache/.env.example).
@@ -167,6 +167,8 @@ During a write run, the CLI prints progress lines to `stderr` so you can see wha
 ```
 
 Each write run also overwrites the status file at `STATUS_FILE_PATH`. The file contains a human-readable summary with counts plus successful and failed symbols.
+
+During `write --mode full`, the CLI now fetches one trade date at a time, normalizes that trade date immediately, and persists rows in chunks controlled by `WRITE_BATCH_SIZE`. This keeps write-memory usage bounded by the current trade date payload plus the current repository batch instead of the whole write window.
 
 Write window rules:
 

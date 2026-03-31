@@ -1,10 +1,13 @@
 from datetime import date, datetime
 import json
 import math
+from typing import Callable, TypeVar
 
 import asyncpg
 
 from domain.models import DailyIndicatorRow, DailyMarketRow
+
+RowT = TypeVar("RowT")
 
 
 def _coerce_date(value: object) -> date:
@@ -39,22 +42,30 @@ def _decode_jsonb(value: object) -> object:
 
 
 class MarketDataRepository:
-    def __init__(self, pool: asyncpg.Pool) -> None:
+    def __init__(self, pool: asyncpg.Pool, write_batch_size: int = 500) -> None:
         self._pool = pool
+        self._write_batch_size = write_batch_size if write_batch_size > 0 else 500
 
     async def upsert_daily_market(self, rows: list[DailyMarketRow]) -> None:
         if not rows:
             return
-        sql, values = build_daily_market_upsert(rows)
-        async with self._pool.acquire() as connection:
-            await connection.executemany(sql, values)
+        await self._upsert_in_chunks(rows, build_daily_market_upsert)
 
     async def upsert_daily_indicators(self, rows: list[DailyIndicatorRow]) -> None:
         if not rows:
             return
-        sql, values = build_daily_indicator_upsert(rows)
+        await self._upsert_in_chunks(rows, build_daily_indicator_upsert)
+
+    async def _upsert_in_chunks(
+        self,
+        rows: list[RowT],
+        builder: Callable[[list[RowT]], tuple[str, list[tuple[object, ...]]]],
+    ) -> None:
         async with self._pool.acquire() as connection:
-            await connection.executemany(sql, values)
+            for chunk_start in range(0, len(rows), self._write_batch_size):
+                row_chunk = rows[chunk_start : chunk_start + self._write_batch_size]
+                sql, values = builder(row_chunk)
+                await connection.executemany(sql, values)
 
     async def fetch_raw(self, ts_code: str, start_date: str, end_date: str) -> dict[str, list[object]]:
         start = _coerce_date(start_date)

@@ -131,6 +131,47 @@ class RecordingMarketRepository:
         self.indicator_rows = rows
 
 
+class StableTradeDateProvider(FlakyProvider):
+    async def fetch_daily_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
+        self.batch_dates.append(trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": trade_date, "close": 12.3, "pct_chg": 1.1}]
+
+
+class SequencedPersistRepository:
+    def __init__(self) -> None:
+        self.market_trade_dates_by_call: list[list[str]] = []
+        self.indicator_trade_dates_by_call: list[list[str]] = []
+
+    async def upsert_daily_market(self, rows: list[object]) -> None:
+        self.market_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
+
+    async def upsert_daily_indicators(self, rows: list[object]) -> None:
+        self.indicator_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
+
+
+class FailOnTradeDatePersistRepository(SequencedPersistRepository):
+    def __init__(self, failing_trade_date: str) -> None:
+        super().__init__()
+        self.failing_trade_date = failing_trade_date
+
+    async def upsert_daily_market(self, rows: list[object]) -> None:
+        await super().upsert_daily_market(rows)
+        trade_dates = {row.trade_date.strftime("%Y%m%d") for row in rows}
+        if self.failing_trade_date in trade_dates:
+            raise RuntimeError("persist failed")
+
+
+class FailOnIndicatorPersistRepository(SequencedPersistRepository):
+    def __init__(self, failing_trade_date: str) -> None:
+        super().__init__()
+        self.failing_trade_date = failing_trade_date
+
+    async def upsert_daily_indicators(self, rows: list[object]) -> None:
+        trade_dates = {row.trade_date.strftime("%Y%m%d") for row in rows}
+        if self.failing_trade_date in trade_dates:
+            raise RuntimeError("indicator persist failed")
+        await super().upsert_daily_indicators(rows)
+
 
 
 @pytest.mark.asyncio
@@ -265,6 +306,118 @@ async def test_write_use_case_single_mode_uses_symbol_range_endpoints(tmp_path: 
     assert provider.indicator_requests == [("000001.SZ", "20260327", "20260330")]
     assert [row.ts_code for row in repository.market_rows] == ["000001.SZ", "000001.SZ"]
     assert [row.ts_code for row in repository.indicator_rows] == ["000001.SZ"]
+
+
+@pytest.mark.asyncio
+async def test_full_mode_persists_each_trade_date_immediately(tmp_path: Path) -> None:
+    provider = StableTradeDateProvider()
+    repository = SequencedPersistRepository()
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+        ),
+        primary_provider=provider,
+        market_repository=repository,
+        instrument_repository=None,
+        job_run_repository=None,
+    )
+
+    summary = await use_case.run(mode="full")
+
+    assert summary.status == "success"
+    assert summary.success_symbols == ["000001.SZ"]
+    assert summary.failed_symbols == {}
+    assert repository.market_trade_dates_by_call == [
+        ["20260330"],
+        ["20260327"],
+        ["20260326"],
+        ["20260325"],
+        ["20260324"],
+    ]
+    assert repository.indicator_trade_dates_by_call == [
+        ["20260330"],
+        ["20260327"],
+        ["20260326"],
+        ["20260325"],
+        ["20260324"],
+    ]
+
+
+@pytest.mark.asyncio
+async def test_full_mode_continues_after_trade_date_persist_failure(tmp_path: Path) -> None:
+    provider = StableTradeDateProvider()
+    repository = FailOnTradeDatePersistRepository("20260327")
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+        ),
+        primary_provider=provider,
+        market_repository=repository,
+        instrument_repository=None,
+        job_run_repository=None,
+    )
+
+    summary = await use_case.run(mode="full")
+
+    assert summary.status == "partial_success"
+    assert summary.success_symbols == []
+    assert summary.failed_symbols == {"__trade_date__:20260327": "persist failed"}
+    assert repository.market_trade_dates_by_call == [
+        ["20260330"],
+        ["20260327"],
+        ["20260326"],
+        ["20260325"],
+        ["20260324"],
+    ]
+    assert repository.indicator_trade_dates_by_call == [
+        ["20260330"],
+        ["20260326"],
+        ["20260325"],
+        ["20260324"],
+    ]
+
+
+@pytest.mark.asyncio
+async def test_full_mode_continues_after_indicator_persist_failure(tmp_path: Path) -> None:
+    provider = StableTradeDateProvider()
+    repository = FailOnIndicatorPersistRepository("20260327")
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+        ),
+        primary_provider=provider,
+        market_repository=repository,
+        instrument_repository=None,
+        job_run_repository=None,
+    )
+
+    summary = await use_case.run(mode="full")
+
+    assert summary.status == "partial_success"
+    assert summary.success_symbols == []
+    assert summary.failed_symbols == {"__trade_date__:20260327": "indicator persist failed"}
+    assert repository.market_trade_dates_by_call == [
+        ["20260330"],
+        ["20260327"],
+        ["20260326"],
+        ["20260325"],
+        ["20260324"],
+    ]
+    assert repository.indicator_trade_dates_by_call == [
+        ["20260330"],
+        ["20260326"],
+        ["20260325"],
+        ["20260324"],
+    ]
 
 
 @pytest.mark.asyncio

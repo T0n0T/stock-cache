@@ -45,7 +45,7 @@ def main(ctx: typer.Context) -> None:
 async def _build_market_repository() -> tuple[MarketDataRepository, object]:
     settings = Settings()
     pool = await create_pool(settings.postgres_dsn)
-    return MarketDataRepository(pool), pool
+    return MarketDataRepository(pool, write_batch_size=settings.write_batch_size), pool
 
 
 async def _run_write(
@@ -59,10 +59,11 @@ async def _run_write(
     mode = WriteMode(mode)
     use_case = injected_use_case
     pool = None
+    settings = None
     try:
-        settings = Settings()
         symbols = None
         if use_case is None or (mode is WriteMode.SINGLE and name is not None):
+            settings = Settings()
             pool = await create_pool(settings.postgres_dsn)
 
         if mode is WriteMode.SINGLE:
@@ -74,7 +75,9 @@ async def _run_write(
                 symbols = [ts_code]
 
         if use_case is None:
-            repository = MarketDataRepository(pool)
+            if settings is None:
+                settings = Settings()
+            repository = MarketDataRepository(pool, write_batch_size=settings.write_batch_size)
             instrument_repository = InstrumentRepository(pool)
             job_run_repository = JobRunRepository(pool)
             primary_provider = TushareAdapter(
@@ -124,7 +127,7 @@ async def _run_read_raw(
             resolved_ts_code = instrument.ts_code
 
         if not isinstance(use_case, ReadRawMarketDataUseCase):
-            repository = MarketDataRepository(pool)
+            repository = MarketDataRepository(pool, write_batch_size=settings.write_batch_size)
             use_case = ReadRawMarketDataUseCase(repository)
 
         return await use_case.run(ts_code=resolved_ts_code, start_date=start_date, end_date=end_date)
@@ -155,7 +158,7 @@ async def _run_stats_date_range(injected_use_case: object | None) -> dict[str, o
     if use_case is None:
         settings = Settings()
         pool = await create_pool(settings.postgres_dsn)
-        repository = MarketDataRepository(pool)
+        repository = MarketDataRepository(pool, write_batch_size=settings.write_batch_size)
         provider = TushareAdapter(
             settings.tushare_token,
             timeout_seconds=settings.request_timeout_seconds,

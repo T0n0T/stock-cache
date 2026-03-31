@@ -3,6 +3,7 @@ import json
 
 import pytest
 
+import repositories.market_data as market_data_module
 from domain.models import DailyIndicatorRow, DailyMarketRow
 from repositories.market_data import (
     MarketDataRepository,
@@ -265,3 +266,129 @@ async def test_fetch_raw_decodes_jsonb_strings_from_postgres() -> None:
         "ema_qfq_5": 12.2,
         "wr_bfq": 17.1,
     }
+
+
+class _WriteRecordingConnection:
+    def __init__(self) -> None:
+        self.executemany_calls: list[tuple[str, list[tuple[object, ...]]]] = []
+
+    async def executemany(self, query: str, args: list[tuple[object, ...]]) -> None:
+        self.executemany_calls.append((query, args))
+
+
+def _market_rows(count: int) -> list[DailyMarketRow]:
+    return [
+        DailyMarketRow(
+            ts_code=f"{i:06d}.SZ",
+            trade_date=date(2026, 3, 30),
+            extra_market_jsonb={"idx": i},
+        )
+        for i in range(count)
+    ]
+
+
+def _indicator_rows(count: int) -> list[DailyIndicatorRow]:
+    return [
+        DailyIndicatorRow(
+            ts_code=f"{i:06d}.SZ",
+            trade_date=date(2026, 3, 30),
+            extra_factors_jsonb={"idx": i},
+        )
+        for i in range(count)
+    ]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_market_write_batches_splits_rows_by_batch_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=2)
+    rows = _market_rows(5)
+    original_builder = market_data_module.build_daily_market_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyMarketRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_market_upsert", _spy_builder)
+
+    await repository.upsert_daily_market(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
+    assert len({query for query, _ in connection.executemany_calls}) == 1
+    assert builder_call_sizes == [2, 2, 1]
+    assert [values[0] for _, args in connection.executemany_calls for values in args] == [
+        row.ts_code for row in rows
+    ]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_indicators_write_batches_splits_rows_by_batch_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=2)
+    rows = _indicator_rows(5)
+    original_builder = market_data_module.build_daily_indicator_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyIndicatorRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_indicator_upsert", _spy_builder)
+
+    await repository.upsert_daily_indicators(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
+    assert len({query for query, _ in connection.executemany_calls}) == 1
+    assert builder_call_sizes == [2, 2, 1]
+    assert [values[0] for _, args in connection.executemany_calls for values in args] == [
+        row.ts_code for row in rows
+    ]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_market_invalid_batch_size_falls_back_to_default_batches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=0)
+    rows = _market_rows(501)
+    original_builder = market_data_module.build_daily_market_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyMarketRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_market_upsert", _spy_builder)
+
+    await repository.upsert_daily_market(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [500, 1]
+    assert builder_call_sizes == [500, 1]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_indicators_invalid_batch_size_falls_back_to_default_batches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=-7)
+    rows = _indicator_rows(501)
+    original_builder = market_data_module.build_daily_indicator_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyIndicatorRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_indicator_upsert", _spy_builder)
+
+    await repository.upsert_daily_indicators(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [500, 1]
+    assert builder_call_sizes == [500, 1]
