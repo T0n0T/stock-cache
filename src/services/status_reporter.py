@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from stock_cache.domain.models import JobRunSummary
+from domain.models import JobRunSummary
 
 
 class StatusReporter:

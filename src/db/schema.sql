@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS daily_market (
   circ_mv DOUBLE PRECISION,
   net_mf_vol DOUBLE PRECISION,
   net_mf_amount DOUBLE PRECISION,
+  extra_market_jsonb JSONB NOT NULL DEFAULT '{}'::jsonb,
   source_provider TEXT NOT NULL,
   source_daily TEXT,
   source_daily_basic TEXT,

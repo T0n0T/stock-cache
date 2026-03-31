@@ -2,8 +2,8 @@ from datetime import date
 
 import pytest
 
-from stock_cache.domain.models import DailyIndicatorRow, DailyMarketRow
-from stock_cache.use_cases.read_raw import ReadRawMarketDataUseCase
+from domain.models import DailyIndicatorRow, DailyMarketRow
+from use_cases.read_raw import ReadRawMarketDataUseCase
 
 
 class FakeMarketRepository:

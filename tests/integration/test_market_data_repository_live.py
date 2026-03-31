@@ -2,9 +2,9 @@ from datetime import date
 
 import pytest
 
-from stock_cache.db.pool import create_pool
-from stock_cache.domain.models import DailyIndicatorRow, DailyMarketRow
-from stock_cache.repositories.market_data import MarketDataRepository
+from db.pool import create_pool
+from domain.models import DailyIndicatorRow, DailyMarketRow
+from repositories.market_data import MarketDataRepository
 
 
 @pytest.mark.asyncio

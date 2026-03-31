@@ -2,10 +2,10 @@ from datetime import date
 
 import pytest
 
-from stock_cache.domain.errors import RetryableProviderError
-from stock_cache.domain.models import DailyMarketRow
-from stock_cache.services.indicators import calculate_macd_fallback
-from stock_cache.services.retry import with_retries
+from domain.errors import RetryableProviderError
+from domain.models import DailyMarketRow
+from services.indicators import calculate_macd_fallback
+from services.retry import with_retries
 
 
 def test_calculate_macd_fallback_returns_rows_for_market_series() -> None:

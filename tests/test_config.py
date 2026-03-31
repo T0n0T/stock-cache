@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 
-from stock_cache.config import Settings
-from stock_cache.logging import configure_logging
+from app_logging import configure_logging
+from config import Settings
 
 
 def test_settings_load_default_values(monkeypatch, sample_dsn: str) -> None:
@@ -12,7 +12,7 @@ def test_settings_load_default_values(monkeypatch, sample_dsn: str) -> None:
     settings = Settings()
 
     assert settings.default_lookback_trading_days == 90
-    assert settings.status_file_path.as_posix() == "runtime/last-write-status.txt"
+    assert settings.status_file_path.as_posix() == ".runtime/last-write-status.txt"
     assert settings.max_retries == 3
 
 

@@ -2,7 +2,7 @@ import asyncio
 import random
 from collections.abc import Awaitable, Callable
 
-from stock_cache.domain.errors import RetryableProviderError
+from domain.errors import RetryableProviderError
 
 
 async def with_retries(

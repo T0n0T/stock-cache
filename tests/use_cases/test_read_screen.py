@@ -1,6 +1,6 @@
 import pytest
 
-from stock_cache.use_cases.read_screen import ReadScreeningResultsUseCase
+from use_cases.read_screen import ReadScreeningResultsUseCase
 
 
 class FakeScreenRepository:

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from stock_cache.domain.models import JobRunSummary
-from stock_cache.services.status_reporter import StatusReporter
+from domain.models import JobRunSummary
+from services.status_reporter import StatusReporter
 
 
 def test_status_reporter_overwrites_file(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-from stock_cache.domain.models import DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyIndicatorRow, DailyMarketRow
 
 
 class IndicatorService:
