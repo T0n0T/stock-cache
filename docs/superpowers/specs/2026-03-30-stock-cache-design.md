@@ -71,7 +71,6 @@ The application layer owns orchestration, retries, and domain-level flow. This i
 Adapters normalize upstream provider interaction:
 
 - `TushareAdapter`
-- `AkshareAdapter`
 
 They return normalized domain payloads instead of leaking provider-specific field naming into repositories.
 
@@ -578,8 +577,6 @@ Database:
 Providers:
 
 - `TUSHARE_TOKEN`
-- `PREFERRED_SOURCE=tushare`
-- `FALLBACK_SOURCE=akshare`
 
 Concurrency and retry:
 
