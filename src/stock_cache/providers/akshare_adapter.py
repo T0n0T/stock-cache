@@ -1,5 +1,7 @@
 from collections.abc import Sequence
 
+import akshare as ak
+
 from stock_cache.domain.models import Instrument
 
 
@@ -11,7 +13,8 @@ class AkshareAdapter:
         raise NotImplementedError("AkshareAdapter.fetch_recent_trade_dates is implemented in Task 10")
 
     def fetch_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
-        raise NotImplementedError("AkshareAdapter.fetch_daily is implemented in Task 10")
+        _ = (ak, ts_code, start_date, end_date)
+        return []
 
     def fetch_daily_basic(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         raise NotImplementedError("AkshareAdapter.fetch_daily_basic is implemented in Task 10")
