@@ -14,6 +14,8 @@ wheels/
 # Local worktrees
 .worktree/
 .worktree
+.worktrees/
+.worktrees
 
 # Local runtime state
 .runtime/
