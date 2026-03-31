@@ -203,6 +203,58 @@ class MarketDataRepository:
             for row in rows
         ]
 
+    async def fetch_trade_date_inventory(self) -> dict[str, list[str]]:
+        async with self._pool.acquire() as connection:
+            market_rows = await connection.fetch(
+                """
+                select distinct trade_date
+                from daily_market
+                order by trade_date
+                """
+            )
+            indicator_rows = await connection.fetch(
+                """
+                select distinct trade_date
+                from daily_indicators
+                order by trade_date
+                """
+            )
+
+        return {
+            "daily_market": [_coerce_date(row["trade_date"]).isoformat() for row in market_rows],
+            "daily_indicators": [_coerce_date(row["trade_date"]).isoformat() for row in indicator_rows],
+        }
+
+    async def delete_trade_date_range(self, start_date: str, end_date: str) -> dict[str, int]:
+        start = _coerce_date(start_date)
+        end = _coerce_date(end_date)
+        async with self._pool.acquire() as connection:
+            market_result = await connection.execute(
+                """
+                delete from daily_market
+                where trade_date between $1 and $2
+                """,
+                start,
+                end,
+            )
+            indicator_result = await connection.execute(
+                """
+                delete from daily_indicators
+                where trade_date between $1 and $2
+                """,
+                start,
+                end,
+            )
+
+        return {
+            "daily_market_deleted": _affected_row_count(market_result),
+            "daily_indicators_deleted": _affected_row_count(indicator_result),
+        }
+
+
+def _affected_row_count(result: str) -> int:
+    return int(result.split()[-1])
+
 
 def build_daily_market_upsert(rows: list[DailyMarketRow]) -> tuple[str, list[tuple[object, ...]]]:
     sql = """

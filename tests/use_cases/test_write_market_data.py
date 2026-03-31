@@ -6,7 +6,7 @@ import pytest
 from config import Settings
 from domain.errors import NonRetryableProviderError, RetryableProviderError
 from domain.models import Instrument
-from use_cases.write_market_data import WriteMarketDataUseCase
+from use_cases.write_market_data import WriteDateRange, WriteMarketDataUseCase
 
 
 class FlakyProvider:
@@ -14,6 +14,7 @@ class FlakyProvider:
         self.calls = 0
         self.instrument_fetches = 0
         self.trade_date_requests: list[tuple[str, int]] = []
+        self.trade_date_range_requests: list[tuple[str, str]] = []
         self.batch_dates: list[str] = []
 
     def fetch_instruments(self) -> list[Instrument]:
@@ -38,6 +39,10 @@ class FlakyProvider:
             "20260325",
             "20260324",
         ][:limit]
+
+    def fetch_trade_dates_in_range(self, start_date: str, end_date: str) -> list[str]:
+        self.trade_date_range_requests.append((start_date, end_date))
+        return ["20260102", "20260105", "20260331"]
 
     async def fetch_daily_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
         self.batch_dates.append(trade_date)
@@ -84,6 +89,46 @@ class StartupFailingProvider(FlakyProvider):
     def fetch_instruments(self) -> list[Instrument]:
         self.instrument_fetches += 1
         raise RetryableProviderError("instrument api unavailable")
+
+
+class SingleSymbolProvider(FlakyProvider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.daily_requests: list[tuple[str, str, str]] = []
+        self.daily_basic_requests: list[tuple[str, str, str]] = []
+        self.moneyflow_requests: list[tuple[str, str, str]] = []
+        self.indicator_requests: list[tuple[str, str, str]] = []
+
+    def fetch_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        self.daily_requests.append((ts_code, start_date, end_date))
+        return [
+            {"trade_date": "20260327", "close": 11.8, "pct_chg": 0.8},
+            {"trade_date": "20260330", "close": 12.3, "pct_chg": 1.1},
+        ]
+
+    def fetch_daily_basic(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        self.daily_basic_requests.append((ts_code, start_date, end_date))
+        return [{"trade_date": "20260330", "turnover_rate": 1.2, "total_mv": 1000.0}]
+
+    def fetch_moneyflow(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        self.moneyflow_requests.append((ts_code, start_date, end_date))
+        return [{"trade_date": "20260330", "net_mf_amount": 12.4}]
+
+    def fetch_indicators(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        self.indicator_requests.append((ts_code, start_date, end_date))
+        return [{"trade_date": "20260330", "macd": 0.1, "kdj_j": 70.0}]
+
+
+class RecordingMarketRepository:
+    def __init__(self) -> None:
+        self.market_rows: list[object] = []
+        self.indicator_rows: list[object] = []
+
+    async def upsert_daily_market(self, rows: list[object]) -> None:
+        self.market_rows = rows
+
+    async def upsert_daily_indicators(self, rows: list[object]) -> None:
+        self.indicator_rows = rows
 
 
 
@@ -133,6 +178,93 @@ async def test_write_use_case_uses_configured_lookback_window(tmp_path: Path) ->
 
     assert provider.trade_date_requests == [("20260330", 5)]
     assert provider.batch_dates == ["20260330", "20260330", "20260327", "20260326", "20260325", "20260324"]
+
+
+@pytest.mark.asyncio
+async def test_write_use_case_allows_cli_lookback_override(tmp_path: Path) -> None:
+    provider = FlakyProvider()
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            DEFAULT_LOOKBACK_TRADING_DAYS=90,
+        ),
+        primary_provider=provider,
+        market_repository=None,
+        instrument_repository=None,
+        job_run_repository=None,
+        now_provider=lambda: datetime(2026, 3, 30, 12, tzinfo=UTC),
+    )
+
+    await use_case.run(mode="full", write_range=WriteDateRange(lookback_trading_days=2))
+
+    assert provider.trade_date_requests == [("20260330", 2)]
+    assert provider.trade_date_range_requests == []
+    assert provider.batch_dates == ["20260330", "20260330", "20260327"]
+
+
+@pytest.mark.asyncio
+async def test_write_use_case_uses_absolute_trade_date_range(tmp_path: Path) -> None:
+    provider = FlakyProvider()
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            DEFAULT_LOOKBACK_TRADING_DAYS=90,
+        ),
+        primary_provider=provider,
+        market_repository=None,
+        instrument_repository=None,
+        job_run_repository=None,
+        now_provider=lambda: datetime(2026, 3, 30, 12, tzinfo=UTC),
+    )
+
+    await use_case.run(
+        mode="full",
+        write_range=WriteDateRange(start_date="20260101", end_date="20260331"),
+    )
+
+    assert provider.trade_date_requests == []
+    assert provider.trade_date_range_requests == [("20260101", "20260331")]
+    assert provider.batch_dates == ["20260102", "20260102", "20260105", "20260331"]
+
+
+@pytest.mark.asyncio
+async def test_write_use_case_single_mode_uses_symbol_range_endpoints(tmp_path: Path) -> None:
+    provider = SingleSymbolProvider()
+    repository = RecordingMarketRepository()
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            DEFAULT_LOOKBACK_TRADING_DAYS=90,
+        ),
+        primary_provider=provider,
+        market_repository=repository,
+        instrument_repository=None,
+        job_run_repository=None,
+        now_provider=lambda: datetime(2026, 3, 30, 12, tzinfo=UTC),
+    )
+
+    summary = await use_case.run(mode="single", symbols=["000001.SZ"], write_range=WriteDateRange(lookback_trading_days=2))
+
+    assert summary.status == "success"
+    assert summary.success_symbols == ["000001.SZ"]
+    assert provider.instrument_fetches == 0
+    assert provider.trade_date_requests == [("20260330", 2)]
+    assert provider.batch_dates == []
+    assert provider.daily_requests == [("000001.SZ", "20260327", "20260330")]
+    assert provider.daily_basic_requests == [("000001.SZ", "20260327", "20260330")]
+    assert provider.moneyflow_requests == [("000001.SZ", "20260327", "20260330")]
+    assert provider.indicator_requests == [("000001.SZ", "20260327", "20260330")]
+    assert [row.ts_code for row in repository.market_rows] == ["000001.SZ", "000001.SZ"]
+    assert [row.ts_code for row in repository.indicator_rows] == ["000001.SZ"]
 
 
 @pytest.mark.asyncio

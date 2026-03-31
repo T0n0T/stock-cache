@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 
 import cli as cli_module
 from cli import app
+from db.pool import DatabasePrecheckError
 from domain.models import DailyIndicatorRow, DailyMarketRow, Instrument
 from providers.tushare_adapter import TushareAdapter
 from use_cases.read_raw import ReadRawMarketDataUseCase
@@ -24,6 +25,8 @@ def test_cli_help_lists_write_and_read_commands() -> None:
     assert result.exit_code == 0
     assert "write" in result.stdout
     assert "read" in result.stdout
+    assert "stats" in result.stdout
+    assert "delete" in result.stdout
 
 
 def test_read_help_lists_raw_and_screen_subcommands() -> None:
@@ -32,6 +35,31 @@ def test_read_help_lists_raw_and_screen_subcommands() -> None:
     assert result.exit_code == 0
     assert "raw" in result.stdout
     assert "screen" in result.stdout
+
+
+def test_stats_help_lists_date_range_subcommand() -> None:
+    result = runner.invoke(app, ["stats", "--help"])
+
+    assert result.exit_code == 0
+    assert "date-range" in result.stdout
+
+
+def test_delete_help_lists_by_date_subcommand() -> None:
+    result = runner.invoke(app, ["delete", "--help"])
+
+    assert result.exit_code == 0
+    assert "by-date" in result.stdout
+
+
+def test_write_help_describes_supported_modes_and_single_selectors() -> None:
+    result = runner.invoke(app, ["write", "--help"])
+
+    assert result.exit_code == 0
+    assert "full" in result.stdout
+    assert "single" in result.stdout
+    assert "failed-only" not in result.stdout
+    assert "--ts-code" in result.stdout
+    assert "--name" in result.stdout
 
 
 class FakeMarketRepository:
@@ -54,6 +82,54 @@ def test_cli_read_raw_prints_json_payload() -> None:
     assert payload["query"]["ts_code"] == "000001.SZ"
     assert payload["meta"]["row_count_market"] == 1
     assert payload["meta"]["row_count_indicators"] == 1
+
+
+def test_cli_read_raw_requires_exactly_one_lookup_selector() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "read",
+            "raw",
+            "--ts-code",
+            "000001.SZ",
+            "--name",
+            "Ping An",
+            "--start-date",
+            "2026-01-01",
+            "--end-date",
+            "2026-03-30",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "Exactly one of --ts-code or --name must be provided." in result.output
+
+
+def test_cli_read_raw_reports_postgres_precheck_failure(monkeypatch) -> None:
+    async def fake_run_read_raw(
+        ts_code: str | None,
+        name: str | None,
+        start_date: str,
+        end_date: str,
+        injected_use_case: object | None,
+    ) -> dict[str, object]:
+        _ = (ts_code, name, start_date, end_date, injected_use_case)
+        raise DatabasePrecheckError("PostgreSQL is not reachable at configured POSTGRES_DSN.")
+
+    monkeypatch.setattr("cli._run_read_raw", fake_run_read_raw, raising=False)
+
+    result = runner.invoke(
+        app,
+        ["read", "raw", "--ts-code", "000001.SZ", "--start-date", "2026-01-01", "--end-date", "2026-03-30"],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload == {
+        "status": "error",
+        "error": "postgres_unreachable",
+        "message": "PostgreSQL is not reachable at configured POSTGRES_DSN.",
+    }
 
 
 class FakeScreenRepository:
@@ -104,6 +180,75 @@ def test_cli_read_screen_prints_json_payload() -> None:
     assert payload["data"][0]["ts_code"] == "300001.SZ"
 
 
+class FakeStatsDateRangeUseCase:
+    async def run(self) -> dict[str, object]:
+        return {
+            "data": {
+                "daily_market": {
+                    "min_trade_date": "2026-01-02",
+                    "max_trade_date": "2026-02-10",
+                    "continuous_ranges": [["2026-01-02", "2026-01-05"], ["2026-02-10"]],
+                },
+                "daily_indicators": {
+                    "min_trade_date": "2026-01-02",
+                    "max_trade_date": "2026-01-05",
+                    "continuous_ranges": [["2026-01-02", "2026-01-05"]],
+                },
+            }
+        }
+
+
+def test_cli_stats_date_range_prints_json_payload() -> None:
+    result = runner.invoke(
+        app,
+        ["stats", "date-range"],
+        obj={"stats_date_range_use_case": FakeStatsDateRangeUseCase()},
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["data"]["daily_market"]["continuous_ranges"] == [["2026-01-02", "2026-01-05"], ["2026-02-10"]]
+
+
+class FakeDeleteByDateUseCase:
+    async def run(self, start_date: str, end_date: str) -> dict[str, object]:
+        return {
+            "query": {"start_date": "2026-01-01", "end_date": "2026-01-31"},
+            "data": {"daily_market_deleted": 12, "daily_indicators_deleted": 9},
+            "meta": {"total_deleted_rows": 21},
+        }
+
+
+def test_cli_delete_by_date_prints_json_payload() -> None:
+    result = runner.invoke(
+        app,
+        ["delete", "by-date", "--trade-date", "2026-01-31"],
+        obj={"delete_by_date_use_case": FakeDeleteByDateUseCase()},
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["meta"]["total_deleted_rows"] == 21
+    assert payload["data"]["daily_market_deleted"] == 12
+
+
+def test_cli_delete_by_date_rejects_mixing_trade_date_and_range() -> None:
+    result = runner.invoke(
+        app,
+        ["delete", "by-date", "--trade-date", "2026-01-31", "--start-date", "2026-01-01", "--end-date", "2026-01-31"],
+    )
+
+    assert result.exit_code == 2
+    assert "--trade-date cannot be combined with --start-date/--end-date." in result.output
+
+
+def test_cli_delete_by_date_requires_complete_range() -> None:
+    result = runner.invoke(app, ["delete", "by-date", "--start-date", "2026-01-01"])
+
+    assert result.exit_code == 2
+    assert "--start-date and --end-date must be provided together." in result.output
+
+
 class FakePool:
     def __init__(self) -> None:
         self.closed = False
@@ -135,6 +280,7 @@ def test_run_read_raw_closes_pool_when_building_live_repository(monkeypatch, sam
     payload = cli_module.asyncio.run(
         cli_module._run_read_raw(
             ts_code="000001.SZ",
+            name=None,
             start_date="2026-03-01",
             end_date="2026-03-31",
             injected_use_case=None,
@@ -142,6 +288,59 @@ def test_run_read_raw_closes_pool_when_building_live_repository(monkeypatch, sam
     )
 
     assert payload["query"]["ts_code"] == "000001.SZ"
+    assert pool.closed is True
+
+
+def test_run_read_raw_resolves_ts_code_from_name_when_building_live_repository(monkeypatch, sample_dsn: str) -> None:
+    pool = FakePool()
+    calls: dict[str, object] = {}
+
+    class FakeInstrumentRepository:
+        def __init__(self, received_pool: object) -> None:
+            assert received_pool is pool
+
+        async def find_by_name(self, name: str) -> Instrument:
+            calls["name"] = name
+            return Instrument(
+                ts_code="000001.SZ",
+                symbol="000001",
+                name=name,
+                exchange="SZ",
+                list_status="L",
+                is_st=False,
+            )
+
+    class FakeReadRawUseCase:
+        def __init__(self, market_repository: object) -> None:
+            self.market_repository = market_repository
+
+        async def run(self, ts_code: str, start_date: str, end_date: str) -> dict[str, object]:
+            _ = self.market_repository
+            return {"query": {"ts_code": ts_code, "start_date": start_date, "end_date": end_date}}
+
+    async def fake_create_pool(dsn: str) -> FakePool:
+        assert dsn == sample_dsn
+        return pool
+
+    monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
+    monkeypatch.setenv("TUSHARE_TOKEN", "token")
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.MarketDataRepository", lambda received_pool: object())
+    monkeypatch.setattr("cli.InstrumentRepository", FakeInstrumentRepository)
+    monkeypatch.setattr("cli.ReadRawMarketDataUseCase", FakeReadRawUseCase)
+
+    payload = cli_module.asyncio.run(
+        cli_module._run_read_raw(
+            ts_code=None,
+            name="Ping An",
+            start_date="2026-03-01",
+            end_date="2026-03-31",
+            injected_use_case=None,
+        )
+    )
+
+    assert payload["query"]["ts_code"] == "000001.SZ"
+    assert calls == {"name": "Ping An"}
     assert pool.closed is True
 
 
@@ -178,6 +377,93 @@ def test_run_read_screen_closes_pool_when_building_live_repository(monkeypatch, 
     assert pool.closed is True
 
 
+def test_run_write_resolves_single_name_when_building_live_use_case(monkeypatch, sample_dsn: str) -> None:
+    pool = FakePool()
+    calls: dict[str, object] = {}
+
+    class FakeInstrumentRepository:
+        def __init__(self, received_pool: object) -> None:
+            assert received_pool is pool
+
+        async def find_by_name(self, name: str) -> Instrument:
+            calls["name"] = name
+            return Instrument(
+                ts_code="000001.SZ",
+                symbol="000001",
+                name=name,
+                exchange="SZ",
+                list_status="L",
+                is_st=False,
+            )
+
+        async def upsert_instruments(self, instruments: list[Instrument]) -> None:
+            _ = instruments
+
+    class FakeWriteMarketDataUseCase:
+        def __init__(
+            self,
+            settings: object,
+            primary_provider: object,
+            market_repository: object,
+            instrument_repository: object,
+            job_run_repository: object,
+        ) -> None:
+            _ = (settings, primary_provider, market_repository, instrument_repository, job_run_repository)
+
+        async def run(
+            self,
+            mode: str,
+            symbols: list[str] | None = None,
+            write_range: object | None = None,
+            progress: object | None = None,
+        ) -> FakeJobRunSummary:
+            _ = progress
+            calls["mode"] = mode
+            calls["symbols"] = symbols
+            calls["write_range"] = write_range
+            return FakeJobRunSummary(
+                job_id="20260331T120000Z",
+                status="success",
+                started_at="2026-03-31T12:00:00+00:00",
+                finished_at="2026-03-31T12:00:01+00:00",
+                total_symbols=1,
+                success_symbols=["000001.SZ"],
+                failed_symbols={},
+            )
+
+    async def fake_create_pool(dsn: str) -> FakePool:
+        assert dsn == sample_dsn
+        return pool
+
+    monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
+    monkeypatch.setenv("TUSHARE_TOKEN", "token")
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.MarketDataRepository", lambda received_pool: object())
+    monkeypatch.setattr("cli.InstrumentRepository", FakeInstrumentRepository)
+    monkeypatch.setattr("cli.JobRunRepository", lambda received_pool: object())
+    monkeypatch.setattr("cli.WriteMarketDataUseCase", FakeWriteMarketDataUseCase)
+
+    payload = cli_module.asyncio.run(
+        cli_module._run_write(
+            mode="single",
+            ts_code=None,
+            name="Ping An",
+            write_range=None,
+            injected_use_case=None,
+            progress=None,
+        )
+    )
+
+    assert payload.success_symbols == ["000001.SZ"]
+    assert calls == {
+        "name": "Ping An",
+        "mode": "single",
+        "symbols": ["000001.SZ"],
+        "write_range": None,
+    }
+    assert pool.closed is True
+
+
 @dataclass
 class FakeJobRunSummary:
     job_id: str
@@ -191,10 +477,17 @@ class FakeJobRunSummary:
 
 class FakeWriteUseCase:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, list[str] | None]] = []
+        self.calls: list[tuple[str, list[str] | None, object | None]] = []
 
-    async def run(self, mode: str, symbols: list[str] | None = None) -> FakeJobRunSummary:
-        self.calls.append((mode, symbols))
+    async def run(
+        self,
+        mode: str,
+        symbols: list[str] | None = None,
+        write_range: object | None = None,
+        progress: object | None = None,
+    ) -> FakeJobRunSummary:
+        _ = progress
+        self.calls.append((mode, symbols, write_range))
         return FakeJobRunSummary(
             job_id="20260331T120000Z",
             status="success",
@@ -216,10 +509,237 @@ def test_cli_write_runs_use_case_with_mode_option() -> None:
     )
 
     assert result.exit_code == 0
-    assert use_case.calls == [("full", None)]
+    assert use_case.calls == [("full", None, None)]
     payload = json.loads(result.stdout)
     assert payload["status"] == "success"
     assert payload["success_symbols"] == ["000001.SZ"]
+
+
+def test_cli_write_rejects_removed_failed_only_mode() -> None:
+    result = runner.invoke(app, ["write", "--mode", "failed-only"])
+
+    assert result.exit_code == 2
+    assert "failed-only" in result.output
+
+
+def test_cli_write_single_requires_exactly_one_lookup_selector() -> None:
+    result = runner.invoke(app, ["write", "--mode", "single"])
+
+    assert result.exit_code == 2
+    assert "Exactly one of --ts-code or --name must be provided" in result.output
+    assert "--mode single" in result.output
+
+
+def test_cli_write_full_rejects_lookup_selectors() -> None:
+    result = runner.invoke(app, ["write", "--mode", "full", "--ts-code", "000001.SZ"])
+
+    assert result.exit_code == 2
+    assert "--ts-code/--name can only be used with" in result.output
+    assert "--mode single" in result.output
+
+
+def test_cli_write_single_passes_ts_code_selector() -> None:
+    use_case = FakeWriteUseCase()
+
+    result = runner.invoke(
+        app,
+        ["write", "--mode", "single", "--ts-code", "000001.SZ"],
+        obj={"write_use_case": use_case},
+    )
+
+    assert result.exit_code == 0
+    assert use_case.calls == [("single", ["000001.SZ"], None)]
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "success"
+
+
+def test_cli_write_passes_lookback_override(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    async def fake_run_write(
+        mode: str,
+        ts_code: str | None,
+        name: str | None,
+        write_range: object | None,
+        injected_use_case: object | None,
+        progress: object | None,
+    ) -> object:
+        captured["mode"] = mode
+        captured["ts_code"] = ts_code
+        captured["name"] = name
+        captured["write_range"] = write_range
+        captured["injected_use_case"] = injected_use_case
+        captured["progress"] = progress
+        return FakeJobRunSummary(
+            job_id="20260331T120000Z",
+            status="success",
+            started_at="2026-03-31T12:00:00+00:00",
+            finished_at="2026-03-31T12:00:01+00:00",
+            total_symbols=1,
+            success_symbols=["000001.SZ"],
+            failed_symbols={},
+        )
+
+    monkeypatch.setattr("cli._run_write", fake_run_write, raising=False)
+
+    result = runner.invoke(app, ["write", "--mode", "full", "--lookback-trading-days", "30"])
+
+    assert result.exit_code == 0
+    assert captured["mode"] == "full"
+    assert captured["ts_code"] is None
+    assert captured["name"] is None
+    assert captured["injected_use_case"] is None
+    assert callable(captured["progress"])
+    assert captured["write_range"].lookback_trading_days == 30
+    assert captured["write_range"].start_date is None
+    assert captured["write_range"].end_date is None
+
+
+def test_cli_write_passes_absolute_date_range(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    async def fake_run_write(
+        mode: str,
+        ts_code: str | None,
+        name: str | None,
+        write_range: object | None,
+        injected_use_case: object | None,
+        progress: object | None,
+    ) -> object:
+        captured["mode"] = mode
+        captured["ts_code"] = ts_code
+        captured["name"] = name
+        captured["write_range"] = write_range
+        captured["progress"] = progress
+        return FakeJobRunSummary(
+            job_id="20260331T120000Z",
+            status="success",
+            started_at="2026-03-31T12:00:00+00:00",
+            finished_at="2026-03-31T12:00:01+00:00",
+            total_symbols=1,
+            success_symbols=["000001.SZ"],
+            failed_symbols={},
+        )
+
+    monkeypatch.setattr("cli._run_write", fake_run_write, raising=False)
+
+    result = runner.invoke(
+        app,
+        [
+            "write",
+            "--mode",
+            "full",
+            "--start-date",
+            "2026-01-01",
+            "--end-date",
+            "2026-03-31",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["mode"] == "full"
+    assert captured["ts_code"] is None
+    assert captured["name"] is None
+    assert callable(captured["progress"])
+    assert captured["write_range"].lookback_trading_days is None
+    assert captured["write_range"].start_date == "20260101"
+    assert captured["write_range"].end_date == "20260331"
+
+
+def test_cli_write_rejects_mixing_lookback_and_date_range() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "write",
+            "--mode",
+            "full",
+            "--lookback-trading-days",
+            "30",
+            "--start-date",
+            "2026-01-01",
+            "--end-date",
+            "2026-03-31",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--lookback-trading-days" in result.output
+    assert "cannot be combined" in result.output
+
+
+def test_cli_write_requires_complete_date_range() -> None:
+    result = runner.invoke(app, ["write", "--mode", "full", "--start-date", "2026-01-01"])
+
+    assert result.exit_code == 2
+    assert "--start-date and --end-date must be provided together." in result.output
+
+
+def test_cli_write_rejects_reversed_date_range() -> None:
+    result = runner.invoke(
+        app,
+        ["write", "--mode", "full", "--start-date", "2026-03-31", "--end-date", "2026-01-01"],
+    )
+
+    assert result.exit_code == 2
+    assert "--start-date must be earlier than or equal to --end-date." in result.output
+
+
+def test_cli_write_reports_postgres_precheck_failure(monkeypatch) -> None:
+    async def fake_run_write(
+        mode: str,
+        ts_code: str | None,
+        name: str | None,
+        write_range: object | None,
+        injected_use_case: object | None,
+        progress: object | None,
+    ) -> object:
+        _ = (mode, ts_code, name, write_range, injected_use_case, progress)
+        raise DatabasePrecheckError("PostgreSQL is not reachable at configured POSTGRES_DSN.")
+
+    monkeypatch.setattr("cli._run_write", fake_run_write, raising=False)
+
+    result = runner.invoke(app, ["write", "--mode", "full"])
+
+    assert result.exit_code == 1
+    payload = json.loads(result.stdout)
+    assert payload == {
+        "status": "error",
+        "error": "postgres_unreachable",
+        "message": "PostgreSQL is not reachable at configured POSTGRES_DSN.",
+    }
+
+
+def test_cli_write_emits_progress_to_stderr(monkeypatch) -> None:
+    async def fake_run_write(
+        mode: str,
+        ts_code: str | None,
+        name: str | None,
+        write_range: object | None,
+        injected_use_case: object | None,
+        progress: object | None,
+    ) -> object:
+        _ = (mode, ts_code, name, write_range, injected_use_case)
+        assert callable(progress)
+        progress("starting write")
+        progress("finished write")
+        return FakeJobRunSummary(
+            job_id="20260331T120000Z",
+            status="success",
+            started_at="2026-03-31T12:00:00+00:00",
+            finished_at="2026-03-31T12:00:01+00:00",
+            total_symbols=1,
+            success_symbols=["000001.SZ"],
+            failed_symbols={},
+        )
+
+    monkeypatch.setattr("cli._run_write", fake_run_write, raising=False)
+
+    result = runner.invoke(app, ["write", "--mode", "full"])
+
+    assert result.exit_code == 0
+    assert result.stderr == "starting write\nfinished write\n"
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "success"
 
 
 def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn: str, tmp_path) -> None:
@@ -227,6 +747,25 @@ def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn:
     monkeypatch.setenv("TUSHARE_TOKEN", "token")
     monkeypatch.setenv("STATUS_FILE_PATH", str(tmp_path / "status.txt"))
     monkeypatch.setenv("DEFAULT_LOOKBACK_TRADING_DAYS", "1")
+
+    class FakeMarketRepository:
+        async def upsert_daily_market(self, rows: list[object]) -> None:
+            _ = rows
+
+        async def upsert_daily_indicators(self, rows: list[object]) -> None:
+            _ = rows
+
+    class FakeInstrumentRepository:
+        async def upsert_instruments(self, instruments: list[Instrument]) -> None:
+            _ = instruments
+
+    class FakeJobRunRepository:
+        async def insert_job_run(self, summary: object, status_file_path: str, job_type: str = "write") -> None:
+            _ = (summary, status_file_path, job_type)
+
+    async def fake_create_pool(dsn: str) -> FakePool:
+        assert dsn == sample_dsn
+        return FakePool()
 
     def fail_akshare_init() -> None:
         raise AssertionError("AkshareAdapter should not be instantiated")
@@ -277,6 +816,10 @@ def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn:
         return [{"ts_code": "000001.SZ", "trade_date": "20260331", "macd": 0.11, "kdj_j": 81.0}]
 
     monkeypatch.setattr(cli_module, "AkshareAdapter", fail_akshare_init, raising=False)
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.MarketDataRepository", lambda pool: FakeMarketRepository())
+    monkeypatch.setattr("cli.InstrumentRepository", lambda pool: FakeInstrumentRepository())
+    monkeypatch.setattr("cli.JobRunRepository", lambda pool: FakeJobRunRepository())
     monkeypatch.setattr("providers.tushare_adapter.ts.pro_api", lambda token: object())
     monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_instruments", fake_fetch_instruments)
     monkeypatch.setattr(
@@ -481,6 +1024,33 @@ def test_tushare_adapter_fetch_recent_trade_dates_returns_open_days(monkeypatch)
         }
     ]
     assert dates == ["20260331", "20260330"]
+
+
+def test_tushare_adapter_fetch_trade_dates_in_range_returns_open_days(monkeypatch) -> None:
+    frame = FakeFrame(
+        [
+            {"cal_date": "20260101", "is_open": 0},
+            {"cal_date": "20260102", "is_open": 1},
+            {"cal_date": "20260103", "is_open": 0},
+            {"cal_date": "20260105", "is_open": 1},
+        ]
+    )
+    client = FakeTushareProClient(frame)
+
+    monkeypatch.setattr("providers.tushare_adapter.ts.pro_api", lambda token: client)
+
+    adapter = TushareAdapter("demo-token")
+    dates = list(adapter.fetch_trade_dates_in_range("20260101", "20260105"))
+
+    assert client.calls == [
+        {
+            "endpoint": "trade_cal",
+            "exchange": "SSE",
+            "start_date": "20260101",
+            "end_date": "20260105",
+        }
+    ]
+    assert dates == ["20260102", "20260105"]
 
 
 def test_tushare_adapter_fetch_daily_basic_converts_dataframe_to_records(monkeypatch) -> None:

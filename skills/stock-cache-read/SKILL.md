@@ -17,18 +17,43 @@ Run commands from the repository root.
 Make sure:
 
 - `.env` contains a valid `POSTGRES_DSN`
-- PostgreSQL is running
+- PostgreSQL is running before any read attempt
 - the cache has already been populated with `uv run stock-cache write --mode full`
 
 If the cache is empty, read commands will still return JSON, but `data` may be empty.
 
+When using this skill, check the PostgreSQL cache layer first. A typical local startup command is:
+
+```bash
+docker compose up -d postgres
+```
+
+If PostgreSQL is unreachable, the CLI now exits with JSON like:
+
+```json
+{
+  "status": "error",
+  "error": "postgres_unreachable",
+  "message": "PostgreSQL is not reachable at configured POSTGRES_DSN."
+}
+```
+
 ## Read One Stock
 
-Use `read raw` for one symbol and date range:
+Use `read raw` for one symbol and date range. Provide exactly one of `--ts-code` or `--name`:
 
 ```bash
 uv run stock-cache read raw \
   --ts-code 000001.SZ \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-30
+```
+
+You can also resolve the stock from the cached `instruments` table by exact name:
+
+```bash
+uv run stock-cache read raw \
+  --name "Ping An Bank" \
   --start-date 2026-01-01 \
   --end-date 2026-03-30
 ```
@@ -74,6 +99,22 @@ Returned rows are JSON objects with fields such as:
 - `macd`
 - `kdj_j`
 
+## Inspect Cached Date Segments
+
+Use `stats date-range` to inspect the actual queryable trade-date segments already present in the cache:
+
+```bash
+uv run stock-cache stats date-range
+```
+
+The payload is keyed by table name and includes:
+
+- `min_trade_date`
+- `max_trade_date`
+- `continuous_ranges`
+
+`continuous_ranges` is a two-dimensional array of actual cached trade dates grouped into continuous trading-date segments. This is meant to surface cache gaps instead of assuming the stored trading dates are complete.
+
 ## Reading Guidance
 
 Use `read raw` when the task is about one stock's stored history.
@@ -92,6 +133,7 @@ Inspect supported commands with:
 
 ```bash
 uv run stock-cache read --help
+uv run stock-cache stats --help
 uv run stock-cache read raw --help
 uv run stock-cache read screen --help
 ```

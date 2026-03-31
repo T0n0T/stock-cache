@@ -17,7 +17,7 @@
 - PostgreSQL
 - a valid `TUSHARE_TOKEN`
 
-The repository includes a local PostgreSQL service definition in [config.yml](/home/pi/Documents/agents/stock-cache/config.yml).
+The repository includes a local PostgreSQL service definition in [compose.yml](/home/pi/Documents/agents/stock-cache/compose.yml).
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ uv sync
 2. Start PostgreSQL. One option is the bundled compose file:
 
 ```bash
-docker compose -f config.yml up -d postgres
+docker compose up -d postgres
 ```
 
 3. Create your environment file:
@@ -121,13 +121,38 @@ Run a sync job with:
 uv run stock-cache write --mode full
 ```
 
-or:
+Sync a single stock by `ts_code`:
 
 ```bash
-uv run stock-cache write --mode failed-only
+uv run stock-cache write --mode single --ts-code 000001.SZ
 ```
 
-The CLI currently accepts a `--mode` option and returns a JSON job summary. A successful run looks like:
+or resolve a single stock from the cached instruments table by name:
+
+```bash
+uv run stock-cache write --mode single --name 平安银行
+```
+
+Override the default recent trading-day window from the CLI:
+
+```bash
+uv run stock-cache write --mode full --lookback-trading-days 30
+```
+
+Or sync an absolute trade-date range:
+
+```bash
+uv run stock-cache write --mode full \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-31
+```
+
+The CLI accepts two `--mode` values:
+
+- `full`: sync all active instruments for the selected window
+- `single`: sync exactly one instrument selected by `--ts-code` or `--name`
+
+During a write run, the CLI prints progress lines to `stderr` so you can see what stage it is in. The final machine-readable job summary is still printed to `stdout`. A successful run looks like:
 
 ```json
 {
@@ -143,6 +168,85 @@ The CLI currently accepts a `--mode` option and returns a JSON job summary. A su
 
 Each write run also overwrites the status file at `STATUS_FILE_PATH`. The file contains a human-readable summary with counts plus successful and failed symbols.
 
+Write window rules:
+
+- `uv run stock-cache write --mode full` uses `DEFAULT_LOOKBACK_TRADING_DAYS`
+- `uv run stock-cache write --mode single --ts-code 000001.SZ` uses the same write window rules, but only for that instrument
+- `--ts-code` and `--name` can only be used with `--mode single`
+- `--mode single` requires exactly one of `--ts-code` or `--name`
+- `--lookback-trading-days` overrides `DEFAULT_LOOKBACK_TRADING_DAYS` for that command only
+- `--start-date` and `--end-date` must be provided together
+- `--lookback-trading-days` cannot be combined with `--start-date` / `--end-date`
+
+## Cache Stats
+
+Use `stats date-range` to inspect the queryable cached trade-date segments in each table:
+
+```bash
+uv run stock-cache stats date-range
+```
+
+Response shape:
+
+```json
+{
+  "data": {
+    "daily_market": {
+      "min_trade_date": "2026-01-02",
+      "max_trade_date": "2026-03-31",
+      "continuous_ranges": [
+        ["2026-01-02", "2026-01-05", "2026-01-06"],
+        ["2026-03-31"]
+      ]
+    },
+    "daily_indicators": {
+      "min_trade_date": "2026-01-02",
+      "max_trade_date": "2026-03-31",
+      "continuous_ranges": [
+        ["2026-01-02", "2026-01-05", "2026-01-06"],
+        ["2026-03-31"]
+      ]
+    }
+  }
+}
+```
+
+`continuous_ranges` is a two-dimensional array of actual cached trade dates grouped into continuous trading-date segments. It does not assume the cache is complete between the global minimum and maximum dates.
+
+## Delete Cached Data
+
+Delete one cached trade date:
+
+```bash
+uv run stock-cache delete by-date --trade-date 2026-03-31
+```
+
+Delete a cached date range:
+
+```bash
+uv run stock-cache delete by-date \
+  --start-date 2026-01-01 \
+  --end-date 2026-01-31
+```
+
+Delete response shape:
+
+```json
+{
+  "query": {
+    "start_date": "2026-01-01",
+    "end_date": "2026-01-31"
+  },
+  "data": {
+    "daily_market_deleted": 12,
+    "daily_indicators_deleted": 9
+  },
+  "meta": {
+    "total_deleted_rows": 21
+  }
+}
+```
+
 ## Read Raw Data
 
 Use `read raw` to fetch cached history for one stock and date range:
@@ -153,6 +257,17 @@ uv run stock-cache read raw \
   --start-date 2026-01-01 \
   --end-date 2026-03-30
 ```
+
+You can also resolve the stock by exact instrument name from the cached `instruments` table:
+
+```bash
+uv run stock-cache read raw \
+  --name "Ping An Bank" \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-30
+```
+
+Provide exactly one of `--ts-code` or `--name`.
 
 Response shape:
 
@@ -175,6 +290,16 @@ Response shape:
 ```
 
 `market` and `indicators` are serialized from the PostgreSQL cache, with date values emitted as ISO strings.
+
+`init-db`, `write`, `read raw`, and `read screen` all perform a PostgreSQL reachability check before continuing. If the configured `POSTGRES_DSN` is not reachable, the CLI exits with JSON like:
+
+```json
+{
+  "status": "error",
+  "error": "postgres_unreachable",
+  "message": "PostgreSQL is not reachable at configured POSTGRES_DSN."
+}
+```
 
 ## Read Screened Data
 

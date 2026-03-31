@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:alpine
     container_name: stock-cache-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: stock_cache
       POSTGRES_USER: postgres

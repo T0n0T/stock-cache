@@ -48,6 +48,11 @@ class TushareAdapter:
         open_dates = [str(row["cal_date"]) for row in rows if int(row.get("is_open", 0)) == 1]
         return open_dates[:limit]
 
+    def fetch_trade_dates_in_range(self, start_date: str, end_date: str) -> Sequence[str]:
+        frame = self._safe_query(self._pro.trade_cal, exchange="SSE", start_date=start_date, end_date=end_date)
+        rows = frame.to_dict("records")
+        return [str(row["cal_date"]) for row in rows if int(row.get("is_open", 0)) == 1]
+
     def fetch_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         frame = self._safe_query(self._pro.daily, ts_code=ts_code, start_date=start_date, end_date=end_date)
         return [

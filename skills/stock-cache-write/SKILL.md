@@ -18,7 +18,7 @@ Before writing data, make sure:
 
 ```bash
 uv sync
-docker compose -f config.yml up -d postgres
+docker compose up -d postgres
 cp .env.example .env
 ```
 
@@ -41,20 +41,63 @@ Run a normal cache refresh with:
 uv run stock-cache write --mode full
 ```
 
-The CLI also accepts:
+To sync one stock by `ts_code`:
 
 ```bash
-uv run stock-cache write --mode failed-only
+uv run stock-cache write --mode single --ts-code 000001.SZ
 ```
 
-Current implementation note:
+To resolve one stock from the cached `instruments` table by exact name:
 
-- The CLI accepts `full` and `failed-only`, but `WriteMarketDataUseCase.run()` does not currently branch on `mode`.
-- Do not assume `failed-only` replays only the previous failure list unless the code changes.
+```bash
+uv run stock-cache write --mode single --name 平安银行
+```
+
+To override the default recent trading-day window for one run:
+
+```bash
+uv run stock-cache write --mode full --lookback-trading-days 30
+```
+
+To sync an absolute trade-date range for the full universe:
+
+```bash
+uv run stock-cache write --mode full \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-31
+```
+
+Range rules:
+
+- `uv run stock-cache write --mode full` still uses `DEFAULT_LOOKBACK_TRADING_DAYS`
+- `uv run stock-cache write --mode single --ts-code 000001.SZ` uses the same date-window rules, but only for that instrument
+- `--ts-code` and `--name` can only be used with `--mode single`
+- `--mode single` requires exactly one of `--ts-code` or `--name`
+- `--lookback-trading-days` overrides the default lookback for that command only
+- `--start-date` and `--end-date` must be passed together
+- `--lookback-trading-days` cannot be combined with `--start-date` / `--end-date`
+
+## Delete Cached Data By Date
+
+Delete one cached trade date:
+
+```bash
+uv run stock-cache delete by-date --trade-date 2026-03-31
+```
+
+Delete an absolute cached range:
+
+```bash
+uv run stock-cache delete by-date \
+  --start-date 2026-01-01 \
+  --end-date 2026-01-31
+```
+
+The command deletes matching rows from both `daily_market` and `daily_indicators` and returns JSON row counts. Use this when you need to trim or re-sync a known cached date window.
 
 ## What To Read After A Write
 
-The command prints a JSON summary to stdout. Expect fields like:
+The command streams progress lines to `stderr`, then prints the final JSON summary to `stdout`. Expect fields like:
 
 - `job_id`
 - `status`
@@ -79,7 +122,7 @@ Use this order when setting up or refreshing a local cache:
 
 ```bash
 uv sync
-docker compose -f config.yml up -d postgres
+docker compose up -d postgres
 uv run stock-cache init-db
 uv run stock-cache write --mode full
 ```
@@ -97,4 +140,5 @@ If you need to inspect the supported top-level commands, run:
 ```bash
 uv run stock-cache --help
 uv run stock-cache write --help
+uv run stock-cache delete --help
 ```
