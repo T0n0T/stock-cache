@@ -7,6 +7,9 @@ class TushareAdapter:
     def fetch_instruments(self) -> Sequence[Instrument]:
         raise NotImplementedError("TushareAdapter.fetch_instruments is implemented in Task 10")
 
+    def fetch_recent_trade_dates(self, end_date: str, limit: int) -> Sequence[str]:
+        raise NotImplementedError("TushareAdapter.fetch_recent_trade_dates is implemented in Task 10")
+
     def fetch_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         raise NotImplementedError("TushareAdapter.fetch_daily is implemented in Task 10")
 

@@ -8,6 +8,9 @@ class MarketDataProvider(Protocol):
     def fetch_instruments(self) -> Sequence[Instrument]:
         raise NotImplementedError
 
+    def fetch_recent_trade_dates(self, end_date: str, limit: int) -> Sequence[str]:
+        raise NotImplementedError
+
     def fetch_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         raise NotImplementedError
 
