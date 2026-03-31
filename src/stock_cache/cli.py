@@ -6,10 +6,13 @@ import typer
 
 from stock_cache.config import Settings
 from stock_cache.db.pool import create_pool
+from stock_cache.providers.akshare_adapter import AkshareAdapter
+from stock_cache.providers.tushare_adapter import TushareAdapter
 from stock_cache.repositories.market_data import MarketDataRepository
 from stock_cache.services.indicators import IndicatorService
 from stock_cache.use_cases.read_raw import ReadRawMarketDataUseCase
 from stock_cache.use_cases.read_screen import ReadScreeningResultsUseCase
+from stock_cache.use_cases.write_market_data import WriteMarketDataUseCase
 
 app = typer.Typer(help="Cache A-share market data into PostgreSQL.")
 
@@ -27,6 +30,24 @@ async def _build_market_repository() -> MarketDataRepository:
     settings = Settings()
     pool = await create_pool(settings.postgres_dsn)
     return MarketDataRepository(pool)
+
+
+async def _run_write(mode: str, injected_use_case: object | None) -> object:
+    use_case = injected_use_case
+    if use_case is None:
+        settings = Settings()
+        repository = await _build_market_repository()
+        primary_provider = TushareAdapter(settings.tushare_token)
+        fallback_provider = AkshareAdapter()
+        use_case = WriteMarketDataUseCase(
+            settings=settings,
+            primary_provider=primary_provider,
+            fallback_provider=fallback_provider,
+            market_repository=repository,
+            instrument_repository=None,
+            job_run_repository=None,
+        )
+    return await use_case.run(mode=mode)
 
 
 async def _run_read_raw(ts_code: str, start_date: str, end_date: str, injected_use_case: object | None) -> dict[str, object]:
@@ -56,10 +77,7 @@ def write(
     mode: str = typer.Option(..., "--mode"),
 ) -> None:
     """Write cached market data."""
-    use_case = ctx.obj.get("write_use_case")
-    if use_case is None:
-        raise typer.BadParameter("write_use_case is not configured in typer context")
-    payload = asyncio.run(use_case.run(mode=mode))
+    payload = asyncio.run(_run_write(mode=mode, injected_use_case=ctx.obj.get("write_use_case")))
     typer.echo(json.dumps(asdict(payload), default=str))
 
 

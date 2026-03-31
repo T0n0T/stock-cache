@@ -73,7 +73,9 @@ class WriteMarketDataUseCase:
             moneyflow_rows,
             indicator_rows,
         )
-        _ = bundle
+        if self.market_repository is not None:
+            await self.market_repository.upsert_daily_market(bundle.market_rows)
+            await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
 
     def _date_window(self) -> tuple[str, str]:
         end_date = self.now_provider().strftime("%Y%m%d")
