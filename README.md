@@ -17,7 +17,7 @@
 - PostgreSQL
 - a valid `TUSHARE_TOKEN`
 
-The repository includes a local PostgreSQL service definition in [compose.yml](/home/pi/Documents/agents/stock-cache/compose.yml).
+The repository includes a local PostgreSQL service definition in [compose.yml](compose.yml).
 
 ## Quick Start
 
@@ -56,6 +56,13 @@ uv run stock-cache init-db
 uv run stock-cache write --mode full
 ```
 
+To inspect all effective runtime configuration values from the current shell or env file, run:
+
+```bash
+uv run stock-cache config show
+uv run stock-cache --env-file /path/to/.env config show
+```
+
 ## Running The CLI
 
 The supported entrypoints are:
@@ -64,6 +71,35 @@ The supported entrypoints are:
 - `uv run python -m cli ...`
 
 Examples below use the console-script form.
+
+To force the CLI to read a specific env file, pass the global option before the subcommand:
+
+```bash
+uv run stock-cache --env-file /path/to/.env write --mode full
+```
+
+Shell-exported environment variables still override values loaded from `--env-file` or the default `.env`.
+
+## Global Install And Standalone Skills
+
+Install the tool and the standalone skills from this checkout:
+
+```bash
+uv run stock-cache install-skill --token YOUR_TUSHARE_TOKEN
+```
+
+After install, both runtime forms are supported:
+
+```bash
+stock-cache --help
+uv tool run stock-cache --help
+```
+
+The installed standalone home is:
+
+```text
+~/.agents/skills/stock-cache
+```
 
 ## Environment Variables
 
@@ -85,7 +121,16 @@ Examples below use the console-script form.
 | `WRITE_BATCH_SIZE` | No | `500` | maximum rows per repository upsert batch |
 | `LOG_LEVEL` | No | `INFO` | logging level |
 
-The example file lives at [`.env.example`](/home/pi/Documents/agents/stock-cache/.env.example).
+The example file lives at [`.env.example`](.env.example).
+
+Config precedence is:
+
+1. shell `export`, for example `export TUSHARE_TOKEN=...`
+2. `--env-file /path/to/.env`
+3. default `.env` in the current working directory
+4. field defaults defined in [src/config.py](src/config.py)
+
+`uv run stock-cache config show` prints every configured variable as an `ENV_NAME=value` line using the final resolved runtime value after parsing and precedence rules are applied.
 
 ## Database Initialization
 
@@ -93,9 +138,10 @@ Run:
 
 ```bash
 uv run stock-cache init-db
+uv run stock-cache --env-file /path/to/.env init-db
 ```
 
-This command loads [src/db/schema.sql](/home/pi/Documents/agents/stock-cache/src/db/schema.sql), ensures the core tables exist, and prints JSON like:
+This command loads [src/db/schema.sql](src/db/schema.sql), ensures the core tables exist, and prints JSON like:
 
 ```json
 {
@@ -119,30 +165,38 @@ Run a sync job with:
 
 ```bash
 uv run stock-cache write --mode full
+uv run stock-cache --env-file /path/to/.env write --mode full
 ```
 
 Sync a single stock by `ts_code`:
 
 ```bash
 uv run stock-cache write --mode single --ts-code 000001.SZ
+uv run stock-cache --env-file /path/to/.env write --mode single --ts-code 000001.SZ
 ```
 
 or resolve a single stock from the cached instruments table by name:
 
 ```bash
 uv run stock-cache write --mode single --name 平安银行
+uv run stock-cache --env-file /path/to/.env write --mode single --name 平安银行
 ```
 
 Override the default recent trading-day window from the CLI:
 
 ```bash
 uv run stock-cache write --mode full --lookback-trading-days 30
+uv run stock-cache --env-file /path/to/.env write --mode full --lookback-trading-days 30
 ```
 
 Or sync an absolute trade-date range:
 
 ```bash
 uv run stock-cache write --mode full \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-31
+uv run stock-cache --env-file /path/to/.env write \
+  --mode full \
   --start-date 2026-01-01 \
   --end-date 2026-03-31
 ```
@@ -369,13 +423,13 @@ When working locally, prefer:
 
 ## Repository Layout
 
-- [src/cli.py](/home/pi/Documents/agents/stock-cache/src/cli.py): CLI entrypoint
-- [src/config.py](/home/pi/Documents/agents/stock-cache/src/config.py): settings
-- [src/db/](/home/pi/Documents/agents/stock-cache/src/db): schema and PostgreSQL helpers
-- [src/providers/](/home/pi/Documents/agents/stock-cache/src/providers): upstream provider integration
-- [src/repositories/](/home/pi/Documents/agents/stock-cache/src/repositories): persistence layer
-- [src/services/](/home/pi/Documents/agents/stock-cache/src/services): normalization, retry, status file support
-- [src/use_cases/](/home/pi/Documents/agents/stock-cache/src/use_cases): application flows for write and read commands
-- [tests/](/home/pi/Documents/agents/stock-cache/tests): unit and integration tests
+- [src/cli.py](src/cli.py): CLI entrypoint
+- [src/config.py](src/config.py): settings
+- [src/db/](src/db): schema and PostgreSQL helpers
+- [src/providers/](src/providers): upstream provider integration
+- [src/repositories/](src/repositories): persistence layer
+- [src/services/](src/services): normalization, retry, status file support
+- [src/use_cases/](src/use_cases): application flows for write and read commands
+- [tests/](tests): unit and integration tests
 
-For repository-level instructions aimed at code agents, see [AGENTS.md](/home/pi/Documents/agents/stock-cache/AGENTS.md).
+For repository-level instructions aimed at code agents, see [AGENTS.md](AGENTS.md).

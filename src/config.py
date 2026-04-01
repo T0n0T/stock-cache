@@ -22,3 +22,49 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @classmethod
+    def from_env_file(cls, env_file: str | Path | None) -> "Settings":
+        if env_file is None:
+            return cls()
+
+        env_path = Path(env_file)
+        if not env_path.exists():
+            raise FileNotFoundError(f"Env file not found: {env_path}")
+        return cls(_env_file=env_path)
+
+
+def settings_env_variable_names() -> tuple[str, ...]:
+    names: list[str] = []
+    for field in Settings.model_fields.values():
+        if isinstance(field.alias, str):
+            names.append(field.alias)
+    return tuple(names)
+
+
+def _stringify_setting_value(value: object) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, Path):
+        return value.as_posix()
+    return str(value)
+
+
+def resolve_runtime_env(
+    env_file: str | Path | None,
+    variable_names: tuple[str, ...] | None = None,
+) -> dict[str, str]:
+    if variable_names is None:
+        variable_names = settings_env_variable_names()
+
+    settings = Settings.from_env_file(env_file)
+    env_to_field_name = {
+        field.alias: field_name
+        for field_name, field in Settings.model_fields.items()
+        if isinstance(field.alias, str)
+    }
+    resolved: dict[str, str] = {}
+    for name in variable_names:
+        field_name = env_to_field_name[name]
+        resolved[name] = _stringify_setting_value(getattr(settings, field_name))
+    return resolved

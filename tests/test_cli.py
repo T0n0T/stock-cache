@@ -2,6 +2,7 @@ import json
 import time
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
 from requests import ConnectionError as RequestsConnectionError
 
 import pytest
@@ -17,6 +18,260 @@ from use_cases.read_screen import ReadScreeningResultsUseCase
 
 
 runner = CliRunner()
+
+
+class FakeInstallSkillUseCase:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    async def run(self, token: str | None, force: bool) -> dict[str, object]:
+        self.calls.append({"token": token, "force": force})
+        return {
+            "status": "ok",
+            "data": {
+                "cli_installed": True,
+                "cli_command": "stock-cache",
+                "shared_home": "/home/example/.agents/skills/stock-cache",
+                "skills": [
+                    "/home/example/.agents/skills/stock-cache-read",
+                    "/home/example/.agents/skills/stock-cache-write",
+                ],
+                "compose_file": "/home/example/.agents/skills/stock-cache/compose.yml",
+                "token_written": True,
+            },
+            "next_steps": [
+                "cd ~/.agents/skills/stock-cache",
+                "docker compose up -d postgres",
+                "stock-cache init-db",
+            ],
+        }
+
+
+def test_cli_help_lists_install_skill_command() -> None:
+    result = runner.invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    assert "install-skill" in result.stdout
+
+
+def test_cli_help_lists_config_command_and_global_env_file_option() -> None:
+    result = runner.invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    assert "config" in result.stdout
+    assert "--env-file" in result.stdout
+
+
+def test_cli_config_help_lists_show_subcommand() -> None:
+    result = runner.invoke(app, ["config", "--help"])
+
+    assert result.exit_code == 0
+    assert "show" in result.stdout
+
+
+def test_cli_config_show_prints_values_from_explicit_env_file(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.delenv("POSTGRES_DSN", raising=False)
+    monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    monkeypatch.delenv("MAX_CONCURRENCY", raising=False)
+    monkeypatch.delenv("MAX_RETRIES", raising=False)
+    monkeypatch.delenv("RETRY_BASE_DELAY", raising=False)
+    monkeypatch.delenv("RETRY_BACKOFF_FACTOR", raising=False)
+    monkeypatch.delenv("RETRY_JITTER", raising=False)
+    monkeypatch.delenv("REQUEST_TIMEOUT_SECONDS", raising=False)
+    monkeypatch.delenv("DEFAULT_LOOKBACK_TRADING_DAYS", raising=False)
+    monkeypatch.delenv("STATUS_FILE_PATH", raising=False)
+    monkeypatch.delenv("ALLOW_INDICATOR_BACKFILL_ON_READ", raising=False)
+    monkeypatch.delenv("ENABLE_TUSHARE_INDICATORS", raising=False)
+    monkeypatch.delenv("ENABLE_LOCAL_INDICATOR_FALLBACK", raising=False)
+    monkeypatch.delenv("WRITE_BATCH_SIZE", raising=False)
+    monkeypatch.delenv("LOG_LEVEL", raising=False)
+    env_file = tmp_path / "custom.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "POSTGRES_DSN=postgresql://file:file@127.0.0.1:5432/file_db",
+                "TUSHARE_TOKEN=file-token",
+                "MAX_CONCURRENCY=11",
+                "MAX_RETRIES=5",
+                "RETRY_BASE_DELAY=0.5",
+                "RETRY_BACKOFF_FACTOR=1.5",
+                "RETRY_JITTER=0.1",
+                "REQUEST_TIMEOUT_SECONDS=12",
+                "DEFAULT_LOOKBACK_TRADING_DAYS=30",
+                "STATUS_FILE_PATH=runtime/custom-status.txt",
+                "ALLOW_INDICATOR_BACKFILL_ON_READ=false",
+                "ENABLE_TUSHARE_INDICATORS=false",
+                "ENABLE_LOCAL_INDICATOR_FALLBACK=false",
+                "WRITE_BATCH_SIZE=250",
+                "LOG_LEVEL=DEBUG",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["--env-file", str(env_file), "config", "show"])
+
+    assert result.exit_code == 0
+    assert result.stdout == (
+        "POSTGRES_DSN=postgresql://file:file@127.0.0.1:5432/file_db\n"
+        "TUSHARE_TOKEN=file-token\n"
+        "MAX_CONCURRENCY=11\n"
+        "MAX_RETRIES=5\n"
+        "RETRY_BASE_DELAY=0.5\n"
+        "RETRY_BACKOFF_FACTOR=1.5\n"
+        "RETRY_JITTER=0.1\n"
+        "REQUEST_TIMEOUT_SECONDS=12\n"
+        "DEFAULT_LOOKBACK_TRADING_DAYS=30\n"
+        "STATUS_FILE_PATH=runtime/custom-status.txt\n"
+        "ALLOW_INDICATOR_BACKFILL_ON_READ=false\n"
+        "ENABLE_TUSHARE_INDICATORS=false\n"
+        "ENABLE_LOCAL_INDICATOR_FALLBACK=false\n"
+        "WRITE_BATCH_SIZE=250\n"
+        "LOG_LEVEL=DEBUG\n"
+    )
+
+
+def test_cli_config_show_prefers_shell_environment_over_explicit_env_file(monkeypatch, tmp_path: Path) -> None:
+    env_file = tmp_path / "custom.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "POSTGRES_DSN=postgresql://file:file@127.0.0.1:5432/file_db",
+                "TUSHARE_TOKEN=file-token",
+                "MAX_CONCURRENCY=11",
+                "ALLOW_INDICATOR_BACKFILL_ON_READ=false",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("POSTGRES_DSN", "postgresql://env:env@127.0.0.1:5432/env_db")
+    monkeypatch.setenv("TUSHARE_TOKEN", "env-token")
+    monkeypatch.setenv("MAX_CONCURRENCY", "99")
+    monkeypatch.setenv("ALLOW_INDICATOR_BACKFILL_ON_READ", "true")
+
+    result = runner.invoke(app, ["--env-file", str(env_file), "config", "show"])
+
+    assert result.exit_code == 0
+    assert "POSTGRES_DSN=postgresql://env:env@127.0.0.1:5432/env_db\n" in result.stdout
+    assert "TUSHARE_TOKEN=env-token\n" in result.stdout
+    assert "MAX_CONCURRENCY=99\n" in result.stdout
+    assert "ALLOW_INDICATOR_BACKFILL_ON_READ=true\n" in result.stdout
+
+
+def test_cli_config_show_rejects_missing_explicit_env_file(tmp_path: Path) -> None:
+    missing_file = tmp_path / "missing.env"
+
+    result = runner.invoke(app, ["--env-file", str(missing_file), "config", "show"])
+
+    assert result.exit_code == 2
+    assert "Env file not found" in result.output
+    assert missing_file.name in result.output
+
+
+def test_cli_init_db_uses_explicit_env_file_for_runtime_settings(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.delenv("POSTGRES_DSN", raising=False)
+    monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    env_file = tmp_path / "custom.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "POSTGRES_DSN=postgresql://file:file@127.0.0.1:5432/file_db",
+                "TUSHARE_TOKEN=file-token",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    calls: dict[str, object] = {}
+
+    async def fake_create_pool(dsn: str) -> object:
+        calls["dsn"] = dsn
+
+        class FakePool:
+            async def close(self) -> None:
+                calls["closed"] = True
+
+        return FakePool()
+
+    async def fake_initialize_schema(pool: object) -> dict[str, object]:
+        calls["pool"] = pool
+        return {"status": "ok", "created_tables": [], "already_present": [], "missing": []}
+
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.initialize_schema", fake_initialize_schema)
+
+    result = runner.invoke(app, ["--env-file", str(env_file), "init-db"])
+
+    assert result.exit_code == 0
+    assert calls["dsn"] == "postgresql://file:file@127.0.0.1:5432/file_db"
+    assert calls["closed"] is True
+
+
+def test_cli_install_skill_help_lists_token_and_force() -> None:
+    result = runner.invoke(app, ["install-skill", "--help"])
+
+    assert result.exit_code == 0
+    assert "--token" in result.stdout
+    assert "--force" in result.stdout
+
+
+def test_cli_install_skill_passes_flags_to_use_case() -> None:
+    use_case = FakeInstallSkillUseCase()
+
+    result = runner.invoke(
+        app,
+        ["install-skill", "--token", "abc123", "--force"],
+        obj={"install_skill_use_case": use_case},
+    )
+
+    assert result.exit_code == 0
+    assert use_case.calls == [{"token": "abc123", "force": True}]
+    assert "Installed stock-cache global CLI and standalone skills." in result.stdout
+    assert "Shared home: /home/example/.agents/skills/stock-cache" in result.stdout
+    assert "Installed skills:" in result.stdout
+    assert "/home/example/.agents/skills/stock-cache-read" in result.stdout
+    assert "/home/example/.agents/skills/stock-cache-write" in result.stdout
+    assert "Compose file: /home/example/.agents/skills/stock-cache/compose.yml" in result.stdout
+    assert "Next steps:" in result.stdout
+    assert "cd ~/.agents/skills/stock-cache" in result.stdout
+    assert "docker compose up -d postgres" in result.stdout
+    assert "stock-cache init-db" in result.stdout
+
+
+def test_cli_install_skill_prompts_for_token_when_missing(monkeypatch) -> None:
+    prompts: list[str] = []
+
+    def fake_prompt(text: str, hide_input: bool = False) -> str:
+        prompts.append(text)
+        assert hide_input is True
+        return "prompt-token"
+
+    class TokenCase(FakeInstallSkillUseCase):
+        async def run(self, token: str | None, force: bool) -> dict[str, object]:
+            assert token == "prompt-token"
+            assert force is False
+            return await super().run(token=token, force=force)
+
+    monkeypatch.setattr(cli_module.typer, "prompt", fake_prompt)
+
+    result = runner.invoke(
+        app,
+        ["install-skill"],
+        obj={"install_skill_use_case": TokenCase()},
+    )
+
+    assert result.exit_code == 0
+    assert prompts == ["TUSHARE token"]
+
+
+def test_cli_install_skill_reports_plain_error_for_blank_token() -> None:
+    result = runner.invoke(app, ["install-skill", "--token", ""])
+
+    assert result.exit_code == 1
+    assert result.stdout == "Error: TUSHARE token is required\n"
+
 
 
 def test_cli_help_lists_write_and_read_commands() -> None:

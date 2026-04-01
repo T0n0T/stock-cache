@@ -1,13 +1,15 @@
 import asyncio
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from enum import StrEnum
 import json
+from pathlib import Path
 from typing import Callable
 
+import click
 import typer
 
-from config import Settings
+from config import Settings, resolve_runtime_env
 from db.init import initialize_schema
 from db.pool import DatabasePrecheckError, create_pool
 from providers.tushare_adapter import TushareAdapter
@@ -15,7 +17,9 @@ from repositories.instruments import InstrumentLookupError, InstrumentRepository
 from repositories.job_runs import JobRunRepository
 from repositories.market_data import MarketDataRepository
 from services.indicators import IndicatorService
+from services.installer import SkillInstaller
 from use_cases.delete_by_date import DeleteByDateUseCase
+from use_cases.install_skill import InstallSkillUseCase
 from use_cases.read_raw import ReadRawMarketDataUseCase
 from use_cases.read_screen import ReadScreeningResultsUseCase
 from use_cases.stats_date_range import StatsDateRangeUseCase
@@ -29,6 +33,8 @@ stats_app = typer.Typer(help="Inspect cached data.")
 app.add_typer(stats_app, name="stats")
 delete_app = typer.Typer(help="Delete cached data.")
 app.add_typer(delete_app, name="delete")
+config_app = typer.Typer(help="Inspect runtime configuration.")
+app.add_typer(config_app, name="config")
 
 
 class WriteMode(StrEnum):
@@ -37,13 +43,34 @@ class WriteMode(StrEnum):
 
 
 @app.callback()
-def main(ctx: typer.Context) -> None:
+def main(
+    ctx: typer.Context,
+    env_file: Path | None = typer.Option(
+        None,
+        "--env-file",
+        exists=False,
+        dir_okay=False,
+        resolve_path=True,
+        help="Load settings from the specified .env file. Shell environment variables still take precedence.",
+    ),
+) -> None:
     if ctx.obj is None:
         ctx.obj = {}
+    if env_file is not None and not env_file.exists():
+        raise typer.BadParameter(f"Env file not found: {env_file}", param_hint="--env-file")
+    ctx.obj["env_file"] = env_file
 
 
-async def _build_market_repository() -> tuple[MarketDataRepository, object]:
-    settings = Settings()
+def _get_settings(ctx: typer.Context | None = None) -> Settings:
+    if ctx is None:
+        ctx = click.get_current_context(silent=True)
+    env_file = None
+    if ctx is not None and ctx.obj is not None:
+        env_file = ctx.obj.get("env_file")
+    return Settings.from_env_file(env_file)
+
+
+async def _build_market_repository(settings: Settings) -> tuple[MarketDataRepository, object]:
     pool = await create_pool(settings.postgres_dsn)
     return MarketDataRepository(pool, write_batch_size=settings.write_batch_size), pool
 
@@ -63,7 +90,7 @@ async def _run_write(
     try:
         symbols = None
         if use_case is None or (mode is WriteMode.SINGLE and name is not None):
-            settings = Settings()
+            settings = _get_settings()
             pool = await create_pool(settings.postgres_dsn)
 
         if mode is WriteMode.SINGLE:
@@ -76,7 +103,7 @@ async def _run_write(
 
         if use_case is None:
             if settings is None:
-                settings = Settings()
+                settings = _get_settings()
             repository = MarketDataRepository(pool, write_batch_size=settings.write_batch_size)
             instrument_repository = InstrumentRepository(pool)
             job_run_repository = JobRunRepository(pool)
@@ -98,7 +125,7 @@ async def _run_write(
 
 
 async def _run_init_db() -> dict[str, object]:
-    settings = Settings()
+    settings = _get_settings()
     pool = await create_pool(settings.postgres_dsn)
     try:
         return await initialize_schema(pool)
@@ -118,7 +145,7 @@ async def _run_read_raw(
     pool = None
     try:
         if name is not None or not isinstance(use_case, ReadRawMarketDataUseCase):
-            settings = Settings()
+            settings = _get_settings()
             pool = await create_pool(settings.postgres_dsn)
 
         if name is not None:
@@ -136,11 +163,15 @@ async def _run_read_raw(
             await pool.close()
 
 
-async def _run_read_screen(trade_date: str, filters: dict[str, object], injected_use_case: object | None) -> dict[str, object]:
+async def _run_read_screen(
+    trade_date: str,
+    filters: dict[str, object],
+    injected_use_case: object | None,
+) -> dict[str, object]:
     use_case = injected_use_case
     if not isinstance(use_case, ReadScreeningResultsUseCase):
-        settings = Settings()
-        repository, pool = await _build_market_repository()
+        settings = _get_settings()
+        repository, pool = await _build_market_repository(settings)
         indicator_service = IndicatorService(
             allow_online_backfill=settings.allow_indicator_backfill_on_read,
             enable_local_fallback=settings.enable_local_indicator_fallback,
@@ -156,7 +187,7 @@ async def _run_read_screen(trade_date: str, filters: dict[str, object], injected
 async def _run_stats_date_range(injected_use_case: object | None) -> dict[str, object]:
     use_case = injected_use_case
     if use_case is None:
-        settings = Settings()
+        settings = _get_settings()
         pool = await create_pool(settings.postgres_dsn)
         repository = MarketDataRepository(pool, write_batch_size=settings.write_batch_size)
         provider = TushareAdapter(
@@ -178,13 +209,28 @@ async def _run_delete_by_date(
 ) -> dict[str, object]:
     use_case = injected_use_case
     if use_case is None:
-        repository, pool = await _build_market_repository()
+        settings = _get_settings()
+        repository, pool = await _build_market_repository(settings)
         use_case = DeleteByDateUseCase(repository)
         try:
             return await use_case.run(start_date=start_date, end_date=end_date)
         finally:
             await pool.close()
     return await use_case.run(start_date=start_date, end_date=end_date)
+
+
+async def _run_install_skill(
+    token: str | None,
+    force: bool,
+    injected_use_case: object | None,
+) -> dict[str, object]:
+    use_case = injected_use_case
+    if use_case is None:
+        use_case = InstallSkillUseCase(
+            installer=SkillInstaller(),
+            repo_root=Path(__file__).resolve().parent.parent,
+        )
+    return await use_case.run(token=token, force=force)
 
 
 @app.command("init-db")
@@ -242,11 +288,35 @@ def write(
                 progress=_emit_write_progress,
             )
         )
-        typer.echo(json.dumps(asdict(payload), default=str))
+        if is_dataclass(payload):
+            payload = asdict(payload)
+        typer.echo(json.dumps(payload, default=str))
     except DatabasePrecheckError as exc:
         _exit_with_json_error("postgres_unreachable", str(exc))
     except InstrumentLookupError as exc:
         raise typer.BadParameter(str(exc)) from exc
+
+
+@app.command("install-skill")
+def install_skill(
+    ctx: typer.Context,
+    token: str | None = typer.Option(None, "--token"),
+    force: bool = typer.Option(False, "--force"),
+) -> None:
+    """Install the standalone global CLI and skill files."""
+    try:
+        effective_token = token if token is not None else typer.prompt("TUSHARE token", hide_input=True)
+        payload = asyncio.run(
+            _run_install_skill(
+                token=effective_token,
+                force=force,
+                injected_use_case=ctx.obj.get("install_skill_use_case"),
+            )
+        )
+        _emit_install_skill_result(payload)
+    except ValueError as exc:
+        typer.echo(f"Error: {exc}")
+        raise typer.Exit(code=1)
 
 
 @read_app.command("raw")
@@ -349,6 +419,15 @@ def delete_by_date(
         _exit_with_json_error("postgres_unreachable", str(exc))
 
 
+@config_app.command("show")
+def config_show(ctx: typer.Context) -> None:
+    """Show effective runtime configuration values."""
+    env_file = ctx.obj.get("env_file") if ctx.obj is not None else None
+    values = resolve_runtime_env(env_file)
+    for name, value in values.items():
+        typer.echo(f"{name}={value}")
+
+
 def _validate_raw_lookup_selector(ts_code: str | None, name: str | None) -> None:
     if (ts_code is None) == (name is None):
         raise typer.BadParameter("Exactly one of --ts-code or --name must be provided.")
@@ -418,6 +497,31 @@ def _normalize_cli_date(value: str) -> str:
 
 def _emit_write_progress(message: str) -> None:
     typer.echo(message, err=True)
+
+
+def _emit_install_skill_result(payload: dict[str, object]) -> None:
+    data = payload.get("data", {})
+    typer.echo("Installed stock-cache global CLI and standalone skills.")
+    if isinstance(data, dict):
+        shared_home = data.get("shared_home")
+        if shared_home:
+            typer.echo(f"Shared home: {shared_home}")
+
+        skills = data.get("skills")
+        if isinstance(skills, list) and skills:
+            typer.echo("Installed skills:")
+            for skill in skills:
+                typer.echo(f"- {skill}")
+
+        compose_file = data.get("compose_file")
+        if compose_file:
+            typer.echo(f"Compose file: {compose_file}")
+
+    next_steps = payload.get("next_steps")
+    if isinstance(next_steps, list) and next_steps:
+        typer.echo("Next steps:")
+        for step in next_steps:
+            typer.echo(f"- {step}")
 
 
 def _exit_with_json_error(error: str, message: str) -> None:
