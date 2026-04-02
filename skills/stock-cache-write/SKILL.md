@@ -69,6 +69,12 @@ To override the default recent trading-day window for one run:
 stock-cache --env-file .env write --mode full --lookback-trading-days 30
 ```
 
+To refresh only the most recent trading day, use:
+
+```bash
+stock-cache --env-file .env write --mode full --lookback-trading-days 1
+```
+
 To sync an absolute trade-date range for the full universe:
 
 ```bash
@@ -112,6 +118,7 @@ stock-cache --env-file .env init-db
 4. Run the narrowest write that satisfies the task:
 
 - one symbol: `stock-cache --env-file .env write --mode single --ts-code 000001.SZ`
+- latest one trading day: `stock-cache --env-file .env write --mode full --lookback-trading-days 1`
 - one date window: `stock-cache --env-file .env write --mode full --start-date 2026-03-01 --end-date 2026-03-31`
 - general refresh: `stock-cache --env-file .env write --mode full`
 
