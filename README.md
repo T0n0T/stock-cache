@@ -1,147 +1,147 @@
 # Stock Cache
 
-`stock-cache` is a Typer-based CLI that pulls recent A-share market data from Tushare, stores normalized rows in PostgreSQL, and exposes JSON read commands for raw history and simple screening queries.
+`stock-cache` 是一个基于 Typer 的 CLI 工具，用于从 Tushare 拉取近期 A 股市场数据，将规范化后的行数据存入 PostgreSQL，并提供以 JSON 形式读取原始历史数据和执行简单筛选查询的命令。
 
-## What The Project Does
+## 项目功能
 
-- fetches the stock universe and recent trade dates from Tushare
-- bulk-syncs daily market, basic, moneyflow, adjustment, suspension, limit, and indicator payloads by trade date
-- persists normalized rows into PostgreSQL
-- records job-run summaries and writes a fixed status file for the latest write run
-- reads cached rows back as JSON for downstream scripts or manual inspection
+- 从 Tushare 获取股票列表和最近的交易日
+- 按交易日批量同步日行情、基础数据、资金流向、复权、停牌、涨跌停和指标等数据
+- 将规范化后的行数据写入 PostgreSQL
+- 记录任务运行摘要，并为最近一次写入任务写出固定状态文件
+- 以 JSON 形式读取缓存数据，供下游脚本或人工检查使用
 
-## Requirements
+## 运行要求
 
 - Python `3.13`
 - `uv`
 - PostgreSQL
-- a valid `TUSHARE_TOKEN`
+- 有效的 `TUSHARE_TOKEN`
 
-The repository includes a local PostgreSQL service definition in [compose.yml](compose.yml).
+仓库内已在 [compose.yml](compose.yml) 中提供本地 PostgreSQL 服务定义。
 
-## Quick Start
+## 快速开始
 
-1. Install dependencies:
+1. 安装依赖：
 
 ```bash
 uv sync
 ```
 
-2. Start PostgreSQL. One option is the bundled compose file:
+2. 启动 PostgreSQL。可以使用仓库自带的 compose 文件：
 
 ```bash
 docker compose up -d postgres
 ```
 
-3. Create your environment file:
+3. 创建环境变量文件：
 
 ```bash
 cp .env.example .env
 ```
 
-4. Update `.env` with at least:
+4. 至少在 `.env` 中配置：
 
 - `POSTGRES_DSN`
 - `TUSHARE_TOKEN`
 
-5. Initialize the database schema:
+5. 初始化数据库 schema：
 
 ```bash
 uv run stock-cache init-db
 ```
 
-6. Run an initial write:
+6. 执行首次写入：
 
 ```bash
 uv run stock-cache write --mode full
 ```
 
-To inspect all effective runtime configuration values from the current shell or env file, run:
+如果要查看当前 shell 或 env 文件下最终生效的运行时配置值，可执行：
 
 ```bash
 uv run stock-cache config show
 uv run stock-cache --env-file /path/to/.env config show
 ```
 
-## Running The CLI
+## 运行 CLI
 
-The supported entrypoints are:
+支持的入口形式如下：
 
 - `uv run stock-cache ...`
 - `uv run python -m cli ...`
 
-Examples below use the console-script form.
+下面的示例默认使用控制台脚本形式。
 
-To force the CLI to read a specific env file, pass the global option before the subcommand:
+如果要强制 CLI 读取指定 env 文件，请在子命令前传入全局参数：
 
 ```bash
 uv run stock-cache --env-file /path/to/.env write --mode full
 ```
 
-Shell-exported environment variables still override values loaded from `--env-file` or the default `.env`.
+通过 shell `export` 设置的环境变量仍然会覆盖 `--env-file` 或默认 `.env` 中加载的值。
 
-## Global Install And Standalone Skills
+## 全局安装与独立技能
 
-Install the tool and the standalone skills from this checkout:
+从当前代码检出目录安装该工具及其独立技能：
 
 ```bash
 uv run stock-cache install-skill --token YOUR_TUSHARE_TOKEN
 ```
 
-After install, both runtime forms are supported:
+安装完成后，支持以下两种运行方式：
 
 ```bash
 stock-cache --help
 uv tool run stock-cache --help
 ```
 
-The installed standalone home is:
+安装后的独立目录为：
 
 ```text
 ~/.agents/skills/stock-cache
 ```
 
-## Environment Variables
+## 环境变量
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `POSTGRES_DSN` | Yes | none | PostgreSQL connection string |
-| `TUSHARE_TOKEN` | Yes | none | Tushare API token |
-| `MAX_CONCURRENCY` | No | `20` | reserved concurrency setting |
-| `MAX_RETRIES` | No | `3` | retry count for retryable provider failures |
-| `RETRY_BASE_DELAY` | No | `1.0` | initial retry delay in seconds |
-| `RETRY_BACKOFF_FACTOR` | No | `2.0` | exponential backoff multiplier |
-| `RETRY_JITTER` | No | `0.2` | random retry jitter in seconds |
-| `REQUEST_TIMEOUT_SECONDS` | No | `20` | provider request timeout |
-| `DEFAULT_LOOKBACK_TRADING_DAYS` | No | `90` | write window size in recent trade dates |
-| `STATUS_FILE_PATH` | No | `.runtime/last-write-status.txt` | last write job summary file |
-| `ALLOW_INDICATOR_BACKFILL_ON_READ` | No | `true` | read-time indicator backfill policy flag |
-| `ENABLE_TUSHARE_INDICATORS` | No | `true` | provider indicator toggle |
-| `ENABLE_LOCAL_INDICATOR_FALLBACK` | No | `true` | allow local indicator fallback logic |
-| `WRITE_BATCH_SIZE` | No | `500` | maximum rows per repository upsert batch |
-| `LOG_LEVEL` | No | `INFO` | logging level |
+| `POSTGRES_DSN` | 是 | 无 | PostgreSQL 连接字符串 |
+| `TUSHARE_TOKEN` | 是 | 无 | Tushare API token |
+| `MAX_CONCURRENCY` | 否 | `20` | 预留的并发设置 |
+| `MAX_RETRIES` | 否 | `3` | 可重试 provider 失败时的重试次数 |
+| `RETRY_BASE_DELAY` | 否 | `1.0` | 初始重试延迟（秒） |
+| `RETRY_BACKOFF_FACTOR` | 否 | `2.0` | 指数退避倍数 |
+| `RETRY_JITTER` | 否 | `0.2` | 随机重试抖动（秒） |
+| `REQUEST_TIMEOUT_SECONDS` | 否 | `20` | provider 请求超时时间 |
+| `DEFAULT_LOOKBACK_TRADING_DAYS` | 否 | `90` | 默认写入窗口覆盖的近期交易日数量 |
+| `STATUS_FILE_PATH` | 否 | `.runtime/last-write-status.txt` | 最近一次写入任务的摘要状态文件 |
+| `ALLOW_INDICATOR_BACKFILL_ON_READ` | 否 | `true` | 读取时是否允许指标回填 |
+| `ENABLE_TUSHARE_INDICATORS` | 否 | `true` | provider 指标开关 |
+| `ENABLE_LOCAL_INDICATOR_FALLBACK` | 否 | `true` | 是否允许本地指标兜底逻辑 |
+| `WRITE_BATCH_SIZE` | 否 | `500` | repository 单次 upsert 的最大批量行数 |
+| `LOG_LEVEL` | 否 | `INFO` | 日志级别 |
 
-The example file lives at [`.env.example`](.env.example).
+示例文件见 [`.env.example`](.env.example)。
 
-Config precedence is:
+配置优先级如下：
 
-1. shell `export`, for example `export TUSHARE_TOKEN=...`
+1. shell `export`，例如 `export TUSHARE_TOKEN=...`
 2. `--env-file /path/to/.env`
-3. default `.env` in the current working directory
-4. field defaults defined in [src/config.py](src/config.py)
+3. 当前工作目录下默认的 `.env`
+4. [src/config.py](src/config.py) 中定义的字段默认值
 
-`uv run stock-cache config show` prints every configured variable as an `ENV_NAME=value` line using the final resolved runtime value after parsing and precedence rules are applied.
+`uv run stock-cache config show` 会在解析并应用优先级规则后，以 `ENV_NAME=value` 的形式输出每个配置变量的最终运行时值。
 
-## Database Initialization
+## 数据库初始化
 
-Run:
+执行：
 
 ```bash
 uv run stock-cache init-db
 uv run stock-cache --env-file /path/to/.env init-db
 ```
 
-This command loads [src/db/schema.sql](src/db/schema.sql), ensures the core tables exist, and prints JSON like:
+该命令会加载 [src/db/schema.sql](src/db/schema.sql)，确保核心数据表存在，并输出如下 JSON：
 
 ```json
 {
@@ -152,44 +152,44 @@ This command loads [src/db/schema.sql](src/db/schema.sql), ensures the core tabl
 }
 ```
 
-The core tables are:
+核心表包括：
 
 - `instruments`
 - `daily_market`
 - `daily_indicators`
 - `job_runs`
 
-## Write Workflow
+## 写入流程
 
-Run a sync job with:
+执行同步任务：
 
 ```bash
 uv run stock-cache write --mode full
 uv run stock-cache --env-file /path/to/.env write --mode full
 ```
 
-Sync a single stock by `ts_code`:
+按 `ts_code` 同步单只股票：
 
 ```bash
 uv run stock-cache write --mode single --ts-code 000001.SZ
 uv run stock-cache --env-file /path/to/.env write --mode single --ts-code 000001.SZ
 ```
 
-or resolve a single stock from the cached instruments table by name:
+或者通过名称从已缓存的 `instruments` 表中解析单只股票：
 
 ```bash
 uv run stock-cache write --mode single --name 平安银行
 uv run stock-cache --env-file /path/to/.env write --mode single --name 平安银行
 ```
 
-Override the default recent trading-day window from the CLI:
+通过 CLI 覆盖默认的近期交易日窗口：
 
 ```bash
 uv run stock-cache write --mode full --lookback-trading-days 30
 uv run stock-cache --env-file /path/to/.env write --mode full --lookback-trading-days 30
 ```
 
-Or sync an absolute trade-date range:
+或者同步指定的绝对交易日范围：
 
 ```bash
 uv run stock-cache write --mode full \
@@ -201,12 +201,12 @@ uv run stock-cache --env-file /path/to/.env write \
   --end-date 2026-03-31
 ```
 
-The CLI accepts two `--mode` values:
+CLI 支持两种 `--mode` 值：
 
-- `full`: sync all active instruments for the selected window
-- `single`: sync exactly one instrument selected by `--ts-code` or `--name`
+- `full`：同步所选窗口内的全部活跃股票
+- `single`：通过 `--ts-code` 或 `--name` 精确同步一只股票
 
-During a write run, the CLI prints progress lines to `stderr` so you can see what stage it is in. The final machine-readable job summary is still printed to `stdout`. A successful run looks like:
+写入执行期间，CLI 会向 `stderr` 输出进度信息，便于查看当前阶段；最终供机器读取的任务摘要仍会输出到 `stdout`。成功执行时示例如下：
 
 ```json
 {
@@ -220,29 +220,29 @@ During a write run, the CLI prints progress lines to `stderr` so you can see wha
 }
 ```
 
-Each write run also overwrites the status file at `STATUS_FILE_PATH`. The file contains a human-readable summary with counts plus successful and failed symbols.
+每次写入执行还会覆盖 `STATUS_FILE_PATH` 指向的状态文件。该文件包含便于人工阅读的摘要信息，包括计数以及成功、失败的股票列表。
 
-During `write --mode full`, the CLI now fetches one trade date at a time, normalizes that trade date immediately, and persists rows in chunks controlled by `WRITE_BATCH_SIZE`. This keeps write-memory usage bounded by the current trade date payload plus the current repository batch instead of the whole write window.
+在 `write --mode full` 模式下，CLI 会按交易日逐个拉取数据，立即对当前交易日做规范化处理，并按 `WRITE_BATCH_SIZE` 控制的分块方式持久化行数据。这样写入时的内存占用只与当前交易日载荷和当前 repository 批次有关，而不会增长到覆盖整个写入窗口。
 
-Write window rules:
+写入窗口规则如下：
 
-- `uv run stock-cache write --mode full` uses `DEFAULT_LOOKBACK_TRADING_DAYS`
-- `uv run stock-cache write --mode single --ts-code 000001.SZ` uses the same write window rules, but only for that instrument
-- `--ts-code` and `--name` can only be used with `--mode single`
-- `--mode single` requires exactly one of `--ts-code` or `--name`
-- `--lookback-trading-days` overrides `DEFAULT_LOOKBACK_TRADING_DAYS` for that command only
-- `--start-date` and `--end-date` must be provided together
-- `--lookback-trading-days` cannot be combined with `--start-date` / `--end-date`
+- `uv run stock-cache write --mode full` 使用 `DEFAULT_LOOKBACK_TRADING_DAYS`
+- `uv run stock-cache write --mode single --ts-code 000001.SZ` 使用相同的写入窗口规则，但仅作用于该股票
+- `--ts-code` 和 `--name` 只能与 `--mode single` 一起使用
+- `--mode single` 必须且只能提供 `--ts-code` 或 `--name` 其中一个
+- `--lookback-trading-days` 只会覆盖当前命令的 `DEFAULT_LOOKBACK_TRADING_DAYS`
+- `--start-date` 和 `--end-date` 必须同时提供
+- `--lookback-trading-days` 不能与 `--start-date` / `--end-date` 组合使用
 
-## Cache Stats
+## 缓存统计
 
-Use `stats date-range` to inspect the queryable cached trade-date segments in each table:
+使用 `stats date-range` 查看各表中可查询的缓存交易日区间：
 
 ```bash
 uv run stock-cache stats date-range
 ```
 
-Response shape:
+响应结构：
 
 ```json
 {
@@ -267,17 +267,17 @@ Response shape:
 }
 ```
 
-`continuous_ranges` is a two-dimensional array of actual cached trade dates grouped into continuous trading-date segments. It does not assume the cache is complete between the global minimum and maximum dates.
+`continuous_ranges` 是一个二维数组，表示按连续交易日区段分组后的实际缓存交易日。它不会假设全局最小日期和最大日期之间的数据一定完整。
 
-## Delete Cached Data
+## 删除缓存数据
 
-Delete one cached trade date:
+删除单个缓存交易日：
 
 ```bash
 uv run stock-cache delete by-date --trade-date 2026-03-31
 ```
 
-Delete a cached date range:
+删除一个缓存日期范围：
 
 ```bash
 uv run stock-cache delete by-date \
@@ -285,7 +285,7 @@ uv run stock-cache delete by-date \
   --end-date 2026-01-31
 ```
 
-Delete response shape:
+删除响应结构：
 
 ```json
 {
@@ -303,9 +303,9 @@ Delete response shape:
 }
 ```
 
-## Read Raw Data
+## 读取原始数据
 
-Use `read raw` to fetch cached history for one stock and date range:
+使用 `read raw` 获取单只股票在指定日期范围内的缓存历史数据：
 
 ```bash
 uv run stock-cache read raw \
@@ -314,7 +314,7 @@ uv run stock-cache read raw \
   --end-date 2026-03-30
 ```
 
-You can also resolve the stock by exact instrument name from the cached `instruments` table:
+也可以通过缓存 `instruments` 表中的精确股票名称进行解析：
 
 ```bash
 uv run stock-cache read raw \
@@ -323,9 +323,9 @@ uv run stock-cache read raw \
   --end-date 2026-03-30
 ```
 
-Provide exactly one of `--ts-code` or `--name`.
+`--ts-code` 和 `--name` 必须且只能提供一个。
 
-Response shape:
+响应结构：
 
 ```json
 {
@@ -345,9 +345,9 @@ Response shape:
 }
 ```
 
-`market` and `indicators` are serialized from the PostgreSQL cache, with date values emitted as ISO strings.
+`market` 和 `indicators` 都是从 PostgreSQL 缓存中序列化得到，日期值会以 ISO 字符串形式输出。
 
-`init-db`, `write`, `read raw`, and `read screen` all perform a PostgreSQL reachability check before continuing. If the configured `POSTGRES_DSN` is not reachable, the CLI exits with JSON like:
+`init-db`、`write`、`read raw` 和 `read screen` 在继续执行前都会先检查 PostgreSQL 是否可达。如果配置的 `POSTGRES_DSN` 无法连接，CLI 会以类似如下的 JSON 退出：
 
 ```json
 {
@@ -357,9 +357,9 @@ Response shape:
 }
 ```
 
-## Read Screened Data
+## 读取筛选数据
 
-Use `read screen` to query the cached dataset by trade date and filter thresholds:
+使用 `read screen` 按交易日和筛选阈值查询缓存数据集：
 
 ```bash
 uv run stock-cache read screen \
@@ -369,7 +369,7 @@ uv run stock-cache read screen \
   --macd-gte 0
 ```
 
-Available filters:
+可用筛选项：
 
 - `--pct-chg-gte`
 - `--turnover-rate-gte`
@@ -378,7 +378,7 @@ Available filters:
 - `--macd-gte`
 - `--kdj-j-gte`
 
-Response shape:
+响应结构：
 
 ```json
 {
@@ -405,9 +405,9 @@ Response shape:
 }
 ```
 
-## Development Workflow
+## 开发工作流
 
-Useful commands:
+常用命令：
 
 ```bash
 uv run stock-cache --help
@@ -415,21 +415,21 @@ uv run pytest
 uv run pytest tests/test_cli.py tests/test_config.py
 ```
 
-When working locally, prefer:
+本地开发时，建议优先遵循以下顺序：
 
-1. update or add focused tests for the changed behavior
-2. run targeted pytest commands first
-3. run broader validation once the touched area is stable
+1. 先为变更行为补充或更新聚焦测试
+2. 先运行有针对性的 pytest 命令
+3. 变更区域稳定后，再进行更大范围的验证
 
-## Repository Layout
+## 仓库结构
 
-- [src/cli.py](src/cli.py): CLI entrypoint
-- [src/config.py](src/config.py): settings
-- [src/db/](src/db): schema and PostgreSQL helpers
-- [src/providers/](src/providers): upstream provider integration
-- [src/repositories/](src/repositories): persistence layer
-- [src/services/](src/services): normalization, retry, status file support
-- [src/use_cases/](src/use_cases): application flows for write and read commands
-- [tests/](tests): unit and integration tests
+- [src/cli.py](src/cli.py): CLI 入口
+- [src/config.py](src/config.py): 配置项
+- [src/db/](src/db): schema 与 PostgreSQL 辅助代码
+- [src/providers/](src/providers): 上游 provider 集成
+- [src/repositories/](src/repositories): 持久化层
+- [src/services/](src/services): 规范化、重试、状态文件支持
+- [src/use_cases/](src/use_cases): 写入和读取命令的应用流程
+- [tests/](tests): 单元测试与集成测试
 
-For repository-level instructions aimed at code agents, see [AGENTS.md](AGENTS.md).
+面向代码代理的仓库级说明见 [AGENTS.md](AGENTS.md)。
