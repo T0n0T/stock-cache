@@ -215,8 +215,8 @@ CLI 支持两种 `--mode` 值：
   "started_at": "2026-03-31T12:00:00+00:00",
   "finished_at": "2026-03-31T12:00:01+00:00",
   "total_symbols": 1,
-  "success_symbols": ["000001.SZ"],
-  "failed_symbols": {}
+  "success_count": 1,
+  "failed_count": 0
 }
 ```
 

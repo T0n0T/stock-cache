@@ -42,6 +42,26 @@ class WriteMode(StrEnum):
     SINGLE = "single"
 
 
+def _summarize_write_payload(payload: object) -> object:
+    if is_dataclass(payload):
+        payload = asdict(payload)
+    if not isinstance(payload, dict):
+        return payload
+    success_symbols = payload.get("success_symbols")
+    failed_symbols = payload.get("failed_symbols")
+    if not isinstance(success_symbols, list) or not isinstance(failed_symbols, dict):
+        return payload
+    return {
+        "job_id": payload.get("job_id"),
+        "status": payload.get("status"),
+        "started_at": payload.get("started_at"),
+        "finished_at": payload.get("finished_at"),
+        "total_symbols": payload.get("total_symbols"),
+        "success_count": len(success_symbols),
+        "failed_count": len(failed_symbols),
+    }
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
@@ -288,8 +308,7 @@ def write(
                 progress=_emit_write_progress,
             )
         )
-        if is_dataclass(payload):
-            payload = asdict(payload)
+        payload = _summarize_write_payload(payload)
         typer.echo(json.dumps(payload, default=str))
     except DatabasePrecheckError as exc:
         _exit_with_json_error("postgres_unreachable", str(exc))

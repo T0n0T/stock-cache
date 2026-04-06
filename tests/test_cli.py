@@ -869,6 +869,26 @@ class FakeWriteUseCase:
         )
 
 
+class FakePartialWriteUseCase:
+    async def run(
+        self,
+        mode: str,
+        symbols: list[str] | None = None,
+        write_range: object | None = None,
+        progress: object | None = None,
+    ) -> FakeJobRunSummary:
+        _ = (mode, symbols, write_range, progress)
+        return FakeJobRunSummary(
+            job_id="20260331T120000Z",
+            status="partial_success",
+            started_at="2026-03-31T12:00:00+00:00",
+            finished_at="2026-03-31T12:00:02+00:00",
+            total_symbols=3,
+            success_symbols=["000001.SZ", "000002.SZ"],
+            failed_symbols={"000003.SZ": "upstream timeout"},
+        )
+
+
 def test_cli_write_runs_use_case_with_mode_option() -> None:
     use_case = FakeWriteUseCase()
 
@@ -881,8 +901,15 @@ def test_cli_write_runs_use_case_with_mode_option() -> None:
     assert result.exit_code == 0
     assert use_case.calls == [("full", None, None)]
     payload = json.loads(result.stdout)
-    assert payload["status"] == "success"
-    assert payload["success_symbols"] == ["000001.SZ"]
+    assert payload == {
+        "job_id": "20260331T120000Z",
+        "status": "success",
+        "started_at": "2026-03-31T12:00:00+00:00",
+        "finished_at": "2026-03-31T12:00:01+00:00",
+        "total_symbols": 1,
+        "success_count": 1,
+        "failed_count": 0,
+    }
 
 
 def test_cli_write_rejects_removed_failed_only_mode() -> None:
@@ -921,6 +948,26 @@ def test_cli_write_single_passes_ts_code_selector() -> None:
     assert use_case.calls == [("single", ["000001.SZ"], None)]
     payload = json.loads(result.stdout)
     assert payload["status"] == "success"
+
+
+def test_cli_write_outputs_summary_counts_without_symbol_lists() -> None:
+    result = runner.invoke(
+        app,
+        ["write", "--mode", "full"],
+        obj={"write_use_case": FakePartialWriteUseCase()},
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload == {
+        "job_id": "20260331T120000Z",
+        "status": "partial_success",
+        "started_at": "2026-03-31T12:00:00+00:00",
+        "finished_at": "2026-03-31T12:00:02+00:00",
+        "total_symbols": 3,
+        "success_count": 2,
+        "failed_count": 1,
+    }
 
 
 def test_cli_write_passes_lookback_override(monkeypatch) -> None:
