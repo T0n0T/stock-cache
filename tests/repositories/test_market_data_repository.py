@@ -4,9 +4,10 @@ import json
 import pytest
 
 import repositories.market_data as market_data_module
-from domain.models import DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 from repositories.market_data import (
     MarketDataRepository,
+    build_daily_index_upsert,
     build_daily_indicator_upsert,
     build_daily_market_upsert,
 )
@@ -163,6 +164,55 @@ def test_build_daily_indicator_upsert_serializes_nan_as_null_in_json_payload() -
     assert values[0][15] == '{"ema_qfq_5": null, "wr_bfq": 17.1}'
 
 
+def test_build_daily_index_upsert_uses_composite_key() -> None:
+    row = DailyIndexRow(
+        ts_code="000300.SH",
+        trade_date=date(2026, 3, 30),
+        name="沪深300",
+        group_name="major",
+        close=4000.0,
+        pct_chg=1.5,
+        pe=12.3,
+        pb=1.4,
+        float_mv=1000.0,
+        total_mv=1200.0,
+        source_daily="index_daily",
+        source_basic="index_dailybasic",
+        extra_index_jsonb={"sample": 1},
+    )
+
+    sql, values = build_daily_index_upsert([row])
+
+    assert "ON CONFLICT (ts_code, trade_date)" in sql
+    assert "group_name" in sql
+    assert "float_mv" in sql
+    assert values == [
+        (
+            "000300.SH",
+            date(2026, 3, 30),
+            "沪深300",
+            "major",
+            None,
+            None,
+            None,
+            4000.0,
+            None,
+            None,
+            1.5,
+            None,
+            None,
+            12.3,
+            1.4,
+            1000.0,
+            1200.0,
+            json.dumps({"sample": 1}, ensure_ascii=False),
+            "tushare",
+            "index_daily",
+            "index_dailybasic",
+        )
+    ]
+
+
 class _FakeAcquire:
     def __init__(self, connection: object) -> None:
         self._connection = connection
@@ -298,6 +348,18 @@ def _indicator_rows(count: int) -> list[DailyIndicatorRow]:
     ]
 
 
+def _index_rows(count: int) -> list[DailyIndexRow]:
+    return [
+        DailyIndexRow(
+            ts_code=f"{i:06d}.SH",
+            trade_date=date(2026, 3, 30),
+            group_name="major",
+            extra_index_jsonb={"idx": i},
+        )
+        for i in range(count)
+    ]
+
+
 @pytest.mark.asyncio
 async def test_upsert_daily_market_write_batches_splits_rows_by_batch_size(
     monkeypatch: pytest.MonkeyPatch,
@@ -392,3 +454,25 @@ async def test_upsert_daily_indicators_invalid_batch_size_falls_back_to_default_
 
     assert [len(args) for _, args in connection.executemany_calls] == [500, 1]
     assert builder_call_sizes == [500, 1]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_index_write_batches_splits_rows_by_batch_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=2)
+    rows = _index_rows(5)
+    original_builder = market_data_module.build_daily_index_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyIndexRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_index_upsert", _spy_builder)
+
+    await repository.upsert_daily_index(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
+    assert builder_call_sizes == [2, 2, 1]

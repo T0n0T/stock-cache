@@ -13,6 +13,7 @@ class InstallerPaths:
     compose_file: Path
     runtime_dir: Path
     pgsql_dir: Path
+    default_indexes_file: Path
     shared_readme: Path
     cli_marker: Path
 
@@ -38,6 +39,7 @@ class SkillInstaller:
             compose_file=shared_home / "compose.yml",
             runtime_dir=shared_home / ".runtime",
             pgsql_dir=shared_home / ".runtime" / "pgsql",
+            default_indexes_file=shared_home / ".runtime" / "default-indexes.csv",
             shared_readme=shared_home / "README.md",
             cli_marker=shared_home / ".installed-cli",
         )
@@ -51,6 +53,7 @@ class SkillInstaller:
         write_skill_body: str,
         shared_readme_body: str,
         env_body: str,
+        default_indexes_csv_body: str,
     ) -> dict[str, object]:
         repo_root = repo_root.resolve()
         paths = self._paths()
@@ -60,6 +63,7 @@ class SkillInstaller:
         self._write_text(paths.write_skill_dir / "SKILL.md", write_skill_body, force=force)
         self._write_text(paths.shared_readme, shared_readme_body, force=force)
         self._write_env(paths.env_file, env_body, force=force)
+        self._write_text(paths.default_indexes_file, default_indexes_csv_body, force=force)
         self._install_cli(repo_root=repo_root, marker=paths.cli_marker)
         return {
             "status": "ok",
@@ -69,6 +73,7 @@ class SkillInstaller:
                 "shared_home": str(paths.shared_home),
                 "skills": [str(paths.read_skill_dir), str(paths.write_skill_dir)],
                 "compose_file": str(paths.compose_file),
+                "default_indexes_file": str(paths.default_indexes_file),
                 "token_written": True,
             },
             "next_steps": [

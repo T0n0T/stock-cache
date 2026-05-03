@@ -73,6 +73,31 @@ class DailyIndicatorRow:
 
 
 @dataclass(slots=True)
+class DailyIndexRow:
+    ts_code: str
+    trade_date: date
+    name: str | None = None
+    group_name: str | None = None
+    open: float | None = None
+    high: float | None = None
+    low: float | None = None
+    close: float | None = None
+    pre_close: float | None = None
+    change: float | None = None
+    pct_chg: float | None = None
+    vol: float | None = None
+    amount: float | None = None
+    pe: float | None = None
+    pb: float | None = None
+    float_mv: float | None = None
+    total_mv: float | None = None
+    extra_index_jsonb: dict[str, object] = field(default_factory=dict)
+    source_provider: str = "tushare"
+    source_daily: str | None = None
+    source_basic: str | None = None
+
+
+@dataclass(slots=True)
 class JobRunSummary:
     job_id: str
     status: str

@@ -46,6 +46,8 @@ class _DeleteConnection:
         self.calls.append((query, start_date, end_date))
         if "delete from daily_market" in query.lower():
             return "DELETE 12"
+        if "delete from daily_indicators" in query.lower():
+            return "DELETE 9"
         return "DELETE 9"
 
 
@@ -58,6 +60,7 @@ async def test_fetch_trade_date_inventory_returns_sorted_iso_dates() -> None:
     assert payload == {
         "daily_market": ["2026-01-02", "2026-01-05"],
         "daily_indicators": ["2026-01-02"],
+        "daily_index": ["2026-01-02"],
     }
 
 
@@ -71,6 +74,8 @@ async def test_delete_trade_date_range_returns_deleted_row_counts() -> None:
     assert payload == {
         "daily_market_deleted": 12,
         "daily_indicators_deleted": 9,
+        "daily_index_deleted": 9,
     }
     assert connection.calls[0][1:] == (date(2026, 1, 1), date(2026, 1, 31))
     assert connection.calls[1][1:] == (date(2026, 1, 1), date(2026, 1, 31))
+    assert connection.calls[2][1:] == (date(2026, 1, 1), date(2026, 1, 31))

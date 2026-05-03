@@ -69,6 +69,14 @@ class FlakyProvider:
     async def fetch_indicators_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
         return [{"ts_code": "000001.SZ", "trade_date": trade_date, "macd": 0.1, "kdj_j": 70.0}]
 
+    def fetch_index_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        _ = (ts_code, start_date, end_date)
+        return []
+
+    def fetch_sw_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        _ = (ts_code, start_date, end_date)
+        return []
+
 
 class AlwaysFailProvider(FlakyProvider):
     async def fetch_daily_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
@@ -141,12 +149,50 @@ class SequencedPersistRepository:
     def __init__(self) -> None:
         self.market_trade_dates_by_call: list[list[str]] = []
         self.indicator_trade_dates_by_call: list[list[str]] = []
+        self.index_trade_dates_by_call: list[list[str]] = []
+        self.index_codes_by_call: list[list[str]] = []
 
     async def upsert_daily_market(self, rows: list[object]) -> None:
         self.market_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
 
     async def upsert_daily_indicators(self, rows: list[object]) -> None:
         self.indicator_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
+
+    async def upsert_daily_index(self, rows: list[object]) -> None:
+        self.index_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
+        self.index_codes_by_call.append([row.ts_code for row in rows])
+
+
+class IndexAwareProvider(StableTradeDateProvider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.index_daily_requests: list[tuple[str, str, str]] = []
+        self.sw_daily_requests: list[tuple[str, str, str]] = []
+
+    def fetch_index_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        self.index_daily_requests.append((ts_code, start_date, end_date))
+        return [
+            {"ts_code": ts_code, "trade_date": "20260327", "close": 100.0, "pct_chg": 1.0, "source_daily": "index_daily"},
+            {"ts_code": ts_code, "trade_date": "20260330", "close": 101.0, "pct_chg": 1.1, "source_daily": "index_daily"},
+        ]
+
+    def fetch_sw_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        self.sw_daily_requests.append((ts_code, start_date, end_date))
+        return [
+            {
+                "ts_code": ts_code,
+                "trade_date": "20260327",
+                "name": "SW Name",
+                "close": 200.0,
+                "pct_change": 2.0,
+                "pe": 10.0,
+                "pb": 1.5,
+                "float_mv": 1000.0,
+                "total_mv": 2000.0,
+                "source_daily": "sw_daily",
+                "source_basic": "sw_daily",
+            }
+        ]
 
 
 class FailOnTradeDatePersistRepository(SequencedPersistRepository):
@@ -344,6 +390,49 @@ async def test_full_mode_persists_each_trade_date_immediately(tmp_path: Path) ->
         ["20260325"],
         ["20260324"],
     ]
+
+
+@pytest.mark.asyncio
+async def test_full_mode_syncs_indexes_from_runtime_csv(tmp_path: Path) -> None:
+    provider = IndexAwareProvider()
+    repository = SequencedPersistRepository()
+    status_file = tmp_path / "last-write-status.txt"
+    index_list = tmp_path / "default-indexes.csv"
+    index_list.write_text(
+        "\n".join(
+            [
+                "ts_code,name,group_name,enabled",
+                "000300.SH,沪深300,major,true",
+                "801012.SI,农产品加工(申万),sw_secondary,true",
+                "801250.SI,申万制造,theme,true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            INDEX_LIST_PATH=index_list,
+        ),
+        primary_provider=provider,
+        market_repository=repository,
+        instrument_repository=None,
+        job_run_repository=None,
+    )
+
+    summary = await use_case.run(mode="full")
+
+    assert summary.status == "success"
+    assert summary.failed_symbols == {}
+    assert provider.index_daily_requests == [("000300.SH", "20260324", "20260330")]
+    assert provider.sw_daily_requests == [
+        ("801012.SI", "20260324", "20260330"),
+        ("801250.SI", "20260324", "20260330"),
+    ]
+    assert repository.index_codes_by_call == [["000300.SH", "000300.SH"], ["801012.SI"], ["801250.SI"]]
 
 
 @pytest.mark.asyncio

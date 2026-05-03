@@ -34,6 +34,7 @@ def test_installer_paths_build_expected_layout(tmp_path: Path) -> None:
         compose_file=tmp_path / ".agents" / "skills" / "stock-cache" / "compose.yml",
         runtime_dir=tmp_path / ".agents" / "skills" / "stock-cache" / ".runtime",
         pgsql_dir=tmp_path / ".agents" / "skills" / "stock-cache" / ".runtime" / "pgsql",
+        default_indexes_file=tmp_path / ".agents" / "skills" / "stock-cache" / ".runtime" / "default-indexes.csv",
         shared_readme=tmp_path / ".agents" / "skills" / "stock-cache" / "README.md",
         cli_marker=tmp_path / ".agents" / "skills" / "stock-cache" / ".installed-cli",
     )
@@ -56,7 +57,9 @@ def test_installer_creates_shared_home_and_skill_copies(tmp_path: Path) -> None:
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-1\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="ts_code,name,group_name,enabled\n000001.SH,上证指数,major,true\n",
     )
 
     assert (home_dir / ".agents" / "skills" / "stock-cache" / "compose.yml").exists()
@@ -66,7 +69,11 @@ def test_installer_creates_shared_home_and_skill_copies(tmp_path: Path) -> None:
         "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache",
         "TUSHARE_TOKEN=token-1",
         "STATUS_FILE_PATH=.runtime/last-write-status.txt",
+        "INDEX_LIST_PATH=.runtime/default-indexes.csv",
     ]
+    assert (
+        home_dir / ".agents" / "skills" / "stock-cache" / ".runtime" / "default-indexes.csv"
+    ).read_text(encoding="utf-8") == "ts_code,name,group_name,enabled\n000001.SH,上证指数,major,true\n"
     assert not (home_dir / ".agents" / "skills" / "stock-cache" / "config").exists()
     assert (home_dir / ".agents" / "skills" / "stock-cache-read" / "SKILL.md").is_symlink() is False
     assert (
@@ -84,6 +91,9 @@ def test_installer_creates_shared_home_and_skill_copies(tmp_path: Path) -> None:
         str(home_dir / ".agents" / "skills" / "stock-cache-write"),
     ]
     assert result["data"]["compose_file"] == str(home_dir / ".agents" / "skills" / "stock-cache" / "compose.yml")
+    assert result["data"]["default_indexes_file"] == str(
+        home_dir / ".agents" / "skills" / "stock-cache" / ".runtime" / "default-indexes.csv"
+    )
     assert result["next_steps"] == [
         "cd ~/.agents/skills/stock-cache",
         "docker compose up -d postgres",
@@ -108,7 +118,9 @@ def test_installer_requires_force_before_overwriting_existing_templates(tmp_path
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-1\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="one\n",
     )
 
     with pytest.raises(FileExistsError):
@@ -123,7 +135,9 @@ def test_installer_requires_force_before_overwriting_existing_templates(tmp_path
                 "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
                 "TUSHARE_TOKEN=token-1\n"
                 "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+                "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
             ),
+            default_indexes_csv_body="two\n",
         )
 
 
@@ -147,7 +161,9 @@ def test_installer_reinstalls_when_cli_already_present(tmp_path: Path) -> None:
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-1\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="one\n",
     )
 
     assert runner.calls == [["uv", "tool", "install", "--reinstall", "--from", str(repo_root), "stock-cache"]]
@@ -171,7 +187,9 @@ def test_installer_normalizes_repo_root_to_absolute_path_for_uv_install(tmp_path
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-1\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="one\n",
     )
 
     assert runner.calls == [["uv", "tool", "install", "--from", str(repo_root.resolve()), "stock-cache"]]
@@ -194,7 +212,9 @@ def test_installer_preserves_runtime_pgsql_directory_when_forcing(tmp_path: Path
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-1\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="one\n",
     )
 
     pgsql_file = home_dir / ".agents" / "skills" / "stock-cache" / ".runtime" / "pgsql" / "PG_VERSION"
@@ -211,7 +231,9 @@ def test_installer_preserves_runtime_pgsql_directory_when_forcing(tmp_path: Path
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-2\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="two\n",
     )
 
     assert pgsql_file.read_text(encoding="utf-8") == "17\n"
@@ -222,7 +244,11 @@ def test_installer_preserves_runtime_pgsql_directory_when_forcing(tmp_path: Path
         "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache",
         "TUSHARE_TOKEN=token-2",
         "STATUS_FILE_PATH=.runtime/last-write-status.txt",
+        "INDEX_LIST_PATH=.runtime/default-indexes.csv",
     ]
+    assert (
+        home_dir / ".agents" / "skills" / "stock-cache" / ".runtime" / "default-indexes.csv"
+    ).read_text(encoding="utf-8") == "two\n"
 
 
 def test_installer_allows_token_rotation_without_force_when_only_env_token_changes(tmp_path: Path) -> None:
@@ -242,7 +268,9 @@ def test_installer_allows_token_rotation_without_force_when_only_env_token_chang
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-1\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="one\n",
     )
 
     installer.install(
@@ -256,7 +284,9 @@ def test_installer_allows_token_rotation_without_force_when_only_env_token_chang
             "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache\n"
             "TUSHARE_TOKEN=token-2\n"
             "STATUS_FILE_PATH=.runtime/last-write-status.txt\n"
+            "INDEX_LIST_PATH=.runtime/default-indexes.csv\n"
         ),
+        default_indexes_csv_body="one\n",
     )
 
     assert not (home_dir / ".agents" / "skills" / "stock-cache" / "config").exists()
@@ -266,4 +296,5 @@ def test_installer_allows_token_rotation_without_force_when_only_env_token_chang
         "POSTGRES_DSN=postgresql://postgres:postgres@127.0.0.1:5432/stock_cache",
         "TUSHARE_TOKEN=token-2",
         "STATUS_FILE_PATH=.runtime/last-write-status.txt",
+        "INDEX_LIST_PATH=.runtime/default-indexes.csv",
     ]

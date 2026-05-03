@@ -87,6 +87,14 @@ class TushareAdapter:
         frame = self._safe_query(self._pro.stk_factor, ts_code=ts_code, start_date=start_date, end_date=end_date)
         return frame.to_dict("records")
 
+    def fetch_index_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        frame = self._safe_query(self._pro.index_daily, ts_code=ts_code, start_date=start_date, end_date=end_date)
+        return [{**row, "source_daily": "index_daily"} for row in frame.to_dict("records")]
+
+    def fetch_sw_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        frame = self._safe_query(self._pro.sw_daily, ts_code=ts_code, start_date=start_date, end_date=end_date)
+        return [{**row, "source_daily": "sw_daily", "source_basic": "sw_daily"} for row in frame.to_dict("records")]
+
     async def fetch_daily_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
         frame = await self._safe_query_async(self._pro.daily, trade_date=trade_date)
         return [{**row, "source_daily": "daily"} for row in frame.to_dict("records")]

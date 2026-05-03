@@ -15,6 +15,7 @@ def test_settings_load_default_values(monkeypatch, sample_dsn: str) -> None:
 
     assert settings.default_lookback_trading_days == 90
     assert settings.status_file_path.as_posix() == ".runtime/last-write-status.txt"
+    assert settings.index_list_path.as_posix() == "runtime/default-indexes.csv"
     assert settings.max_retries == 3
 
 
@@ -112,6 +113,7 @@ def test_settings_env_variable_names_include_all_declared_fields() -> None:
         "REQUEST_TIMEOUT_SECONDS",
         "DEFAULT_LOOKBACK_TRADING_DAYS",
         "STATUS_FILE_PATH",
+        "INDEX_LIST_PATH",
         "ALLOW_INDICATOR_BACKFILL_ON_READ",
         "ENABLE_TUSHARE_INDICATORS",
         "ENABLE_LOCAL_INDICATOR_FALLBACK",
@@ -146,6 +148,7 @@ def test_resolve_runtime_env_returns_all_effective_values(monkeypatch, tmp_path:
     assert values["MAX_CONCURRENCY"] == "11"
     assert values["ALLOW_INDICATOR_BACKFILL_ON_READ"] == "false"
     assert values["STATUS_FILE_PATH"] == ".runtime/last-write-status.txt"
+    assert values["INDEX_LIST_PATH"] == "runtime/default-indexes.csv"
 
 
 def test_resolve_runtime_env_stringifies_parsed_shell_values(monkeypatch, sample_dsn: str) -> None:

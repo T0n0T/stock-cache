@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     request_timeout_seconds: int = Field(default=20, alias="REQUEST_TIMEOUT_SECONDS")
     default_lookback_trading_days: int = Field(default=90, alias="DEFAULT_LOOKBACK_TRADING_DAYS")
     status_file_path: Path = Field(default=Path(".runtime/last-write-status.txt"), alias="STATUS_FILE_PATH")
+    index_list_path: Path = Field(default=Path("runtime/default-indexes.csv"), alias="INDEX_LIST_PATH")
     allow_indicator_backfill_on_read: bool = Field(default=True, alias="ALLOW_INDICATOR_BACKFILL_ON_READ")
     enable_tushare_indicators: bool = Field(default=True, alias="ENABLE_TUSHARE_INDICATORS")
     enable_local_indicator_fallback: bool = Field(default=True, alias="ENABLE_LOCAL_INDICATOR_FALLBACK")

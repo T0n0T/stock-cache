@@ -35,6 +35,9 @@ def test_install_skill_use_case_builds_template_payloads(tmp_path: Path) -> None
     assert "stock-cache --env-file .env init-db" in call["write_skill_body"]
     assert "~/.agents/skills/stock-cache" in call["shared_readme_body"]
     assert "TUSHARE_TOKEN=abc123" in call["env_body"]
+    assert "INDEX_LIST_PATH=.runtime/default-indexes.csv" in call["env_body"]
+    assert "default-indexes.csv" in call["shared_readme_body"]
+    assert "default_indexes_csv_body" in call
 
 
 def test_install_skill_use_case_rejects_blank_token(tmp_path: Path) -> None:

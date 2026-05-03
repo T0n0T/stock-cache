@@ -536,6 +536,10 @@ def _emit_install_skill_result(payload: dict[str, object]) -> None:
         if compose_file:
             typer.echo(f"Compose file: {compose_file}")
 
+        default_indexes_file = data.get("default_indexes_file")
+        if default_indexes_file:
+            typer.echo(f"Default index list: {default_indexes_file}")
+
     next_steps = payload.get("next_steps")
     if isinstance(next_steps, list) and next_steps:
         typer.echo("Next steps:")

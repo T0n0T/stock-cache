@@ -25,6 +25,14 @@ Prefer `--env-file .env` on every CLI command instead of assuming the shell alre
 stock-cache --env-file .env config show
 ```
 
+The installed standalone runtime also includes an editable default index list at:
+
+```text
+~/.agents/skills/stock-cache/.runtime/default-indexes.csv
+```
+
+`write --mode full` uses this CSV to decide which indexes to sync. Edit the file when you want to add, remove, or disable indexes without changing code.
+
 Start PostgreSQL as needed, for example with the bundled compose definition in:
 
 ```bash
@@ -50,6 +58,11 @@ Run a normal cache refresh with the standalone CLI:
 ```bash
 stock-cache --env-file .env write --mode full
 ```
+
+That full write now syncs both:
+
+- stock market data for the active A-share universe
+- index daily data from `.runtime/default-indexes.csv`
 
 To sync one stock by `ts_code`:
 

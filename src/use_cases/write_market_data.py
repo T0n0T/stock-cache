@@ -5,7 +5,8 @@ from typing import Callable
 
 from config import Settings
 from domain.errors import StockCacheError
-from domain.models import JobRunSummary
+from domain.models import DailyIndexRow, JobRunSummary
+from services.index_list import load_index_definitions
 from services.normalizer import normalize_market_batches, normalize_symbol_bundle
 from services.retry import with_retries
 from services.status_reporter import StatusReporter
@@ -124,6 +125,13 @@ class WriteMarketDataUseCase:
                 self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
         if target_symbols and not failures:
             successes = list(target_symbols)
+        if trade_dates:
+            index_failures = await self._sync_indexes(
+                start_date=min(trade_dates),
+                end_date=max(trade_dates),
+                progress=progress,
+            )
+            failures.update(index_failures)
 
         summary = JobRunSummary(
             job_id=self.now_provider().strftime("%Y%m%dT%H%M%SZ"),
@@ -310,3 +318,96 @@ class WriteMarketDataUseCase:
     @staticmethod
     def _emit_progress(progress: Callable[[str], None], message: str) -> None:
         progress(message)
+
+    async def _sync_indexes(
+        self,
+        start_date: str,
+        end_date: str,
+        progress: Callable[[str], None],
+    ) -> dict[str, str]:
+        if self.market_repository is None:
+            return {}
+
+        definitions = load_index_definitions(self.settings.index_list_path)
+        if not definitions:
+            return {}
+
+        failures: dict[str, str] = {}
+        self._emit_progress(progress, f"syncing {len(definitions)} configured index(es): {start_date} -> {end_date}")
+        for definition in definitions:
+            try:
+                rows = self._fetch_index_rows(definition.ts_code, definition.group_name, start_date, end_date)
+                if rows:
+                    for row in rows:
+                        if not row.name:
+                            row.name = definition.name
+                    await self.market_repository.upsert_daily_index(rows)
+            except StockCacheError as exc:
+                failures[f"__index__:{definition.ts_code}"] = str(exc)
+                self._emit_progress(progress, f"index {definition.ts_code} failed: {exc}")
+            except Exception as exc:
+                failures[f"__index__:{definition.ts_code}"] = str(exc)
+                self._emit_progress(progress, f"index {definition.ts_code} failed: {exc}")
+        return failures
+
+    def _fetch_index_rows(
+        self,
+        ts_code: str,
+        group_name: str,
+        start_date: str,
+        end_date: str,
+    ) -> list[DailyIndexRow]:
+        if group_name in {"sw_secondary", "theme"}:
+            payload = self.primary_provider.fetch_sw_daily(ts_code, start_date, end_date)
+        else:
+            payload = self.primary_provider.fetch_index_daily(ts_code, start_date, end_date)
+
+        rows: list[DailyIndexRow] = []
+        core_fields = {
+            "ts_code",
+            "trade_date",
+            "name",
+            "open",
+            "high",
+            "low",
+            "close",
+            "pre_close",
+            "change",
+            "pct_chg",
+            "pct_change",
+            "vol",
+            "amount",
+            "pe",
+            "pb",
+            "float_mv",
+            "total_mv",
+            "source_daily",
+            "source_basic",
+        }
+        for item in payload:
+            trade_date = str(item["trade_date"])
+            rows.append(
+                DailyIndexRow(
+                    ts_code=ts_code,
+                    trade_date=datetime.strptime(trade_date, "%Y%m%d").date(),
+                    name=item.get("name"),
+                    group_name=group_name,
+                    open=item.get("open"),
+                    high=item.get("high"),
+                    low=item.get("low"),
+                    close=item.get("close"),
+                    pre_close=item.get("pre_close"),
+                    change=item.get("change"),
+                    pct_chg=item.get("pct_chg", item.get("pct_change")),
+                    vol=item.get("vol"),
+                    amount=item.get("amount"),
+                    pe=item.get("pe"),
+                    pb=item.get("pb"),
+                    float_mv=item.get("float_mv"),
+                    total_mv=item.get("total_mv"),
+                    extra_index_jsonb={key: value for key, value in item.items() if key not in core_fields},
+                    source_daily=str(item.get("source_daily") or ""),
+                    source_basic=item.get("source_basic"),
+                )
+            )
+        return rows

@@ -8,6 +8,7 @@ class FakeMarketRepository:
         return {
             "daily_market": ["2026-01-02", "2026-01-05", "2026-01-06", "2026-02-10"],
             "daily_indicators": ["2026-01-02", "2026-01-05", "2026-01-06"],
+            "daily_index": ["2026-01-02", "2026-01-05"],
         }
 
 
@@ -37,14 +38,19 @@ async def test_stats_date_range_returns_continuous_trade_date_segments() -> None
         "max_trade_date": "2026-01-06",
         "continuous_ranges": [["2026-01-02", "2026-01-05", "2026-01-06"]],
     }
-    assert provider.calls == [("20260102", "20260210"), ("20260102", "20260106")]
+    assert payload["data"]["daily_index"] == {
+        "min_trade_date": "2026-01-02",
+        "max_trade_date": "2026-01-05",
+        "continuous_ranges": [["2026-01-02", "2026-01-05"]],
+    }
+    assert provider.calls == [("20260102", "20260210"), ("20260102", "20260106"), ("20260102", "20260105")]
 
 
 @pytest.mark.asyncio
 async def test_stats_date_range_returns_empty_sections_when_cache_is_empty() -> None:
     class EmptyRepository:
         async def fetch_trade_date_inventory(self) -> dict[str, list[str]]:
-            return {"daily_market": [], "daily_indicators": []}
+            return {"daily_market": [], "daily_indicators": [], "daily_index": []}
 
     provider = FakeTradeCalendarProvider()
     payload = await StatsDateRangeUseCase(EmptyRepository(), provider).run()
@@ -55,6 +61,11 @@ async def test_stats_date_range_returns_empty_sections_when_cache_is_empty() -> 
         "continuous_ranges": [],
     }
     assert payload["data"]["daily_indicators"] == {
+        "min_trade_date": None,
+        "max_trade_date": None,
+        "continuous_ranges": [],
+    }
+    assert payload["data"]["daily_index"] == {
         "min_trade_date": None,
         "max_trade_date": None,
         "continuous_ranges": [],

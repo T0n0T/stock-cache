@@ -6,6 +6,7 @@
 
 - 从 Tushare 获取股票列表和最近的交易日
 - 按交易日批量同步日行情、基础数据、资金流向、复权、停牌、涨跌停和指标等数据
+- 从可配置的默认指数清单中同步主要指数、主题指数和申万二级行业指数日线
 - 将规范化后的行数据写入 PostgreSQL
 - 记录任务运行摘要，并为最近一次写入任务写出固定状态文件
 - 以 JSON 形式读取缓存数据，供下游脚本或人工检查使用
@@ -101,6 +102,12 @@ uv tool run stock-cache --help
 ~/.agents/skills/stock-cache
 ```
 
+安装后可直接编辑的默认指数清单位于：
+
+```text
+~/.agents/skills/stock-cache/.runtime/default-indexes.csv
+```
+
 ## 环境变量
 
 | Variable | Required | Default | Purpose |
@@ -115,6 +122,7 @@ uv tool run stock-cache --help
 | `REQUEST_TIMEOUT_SECONDS` | 否 | `20` | provider 请求超时时间 |
 | `DEFAULT_LOOKBACK_TRADING_DAYS` | 否 | `90` | 默认写入窗口覆盖的近期交易日数量 |
 | `STATUS_FILE_PATH` | 否 | `.runtime/last-write-status.txt` | 最近一次写入任务的摘要状态文件 |
+| `INDEX_LIST_PATH` | 否 | `runtime/default-indexes.csv` | 默认指数清单 CSV 路径，`write --mode full` 会按此同步指数 |
 | `ALLOW_INDICATOR_BACKFILL_ON_READ` | 否 | `true` | 读取时是否允许指标回填 |
 | `ENABLE_TUSHARE_INDICATORS` | 否 | `true` | provider 指标开关 |
 | `ENABLE_LOCAL_INDICATOR_FALLBACK` | 否 | `true` | 是否允许本地指标兜底逻辑 |
@@ -146,7 +154,7 @@ uv run stock-cache --env-file /path/to/.env init-db
 ```json
 {
   "status": "ok",
-  "created_tables": ["daily_indicators", "daily_market", "instruments", "job_runs"],
+  "created_tables": ["daily_index", "daily_indicators", "daily_market", "instruments", "job_runs"],
   "already_present": [],
   "missing": []
 }
@@ -155,6 +163,7 @@ uv run stock-cache --env-file /path/to/.env init-db
 核心表包括：
 
 - `instruments`
+- `daily_index`
 - `daily_market`
 - `daily_indicators`
 - `job_runs`
@@ -206,6 +215,8 @@ CLI 支持两种 `--mode` 值：
 - `full`：同步所选窗口内的全部活跃股票
 - `single`：通过 `--ts-code` 或 `--name` 精确同步一只股票
 
+`write --mode full` 还会读取 `INDEX_LIST_PATH` 指向的 CSV，并同步其中 `enabled=true` 的指数日线。仓库默认清单是 [runtime/default-indexes.csv](runtime/default-indexes.csv)，安装后的独立运行时默认清单是 `~/.agents/skills/stock-cache/.runtime/default-indexes.csv`。
+
 写入执行期间，CLI 会向 `stderr` 输出进度信息，便于查看当前阶段；最终供机器读取的任务摘要仍会输出到 `stdout`。成功执行时示例如下：
 
 ```json
@@ -223,6 +234,20 @@ CLI 支持两种 `--mode` 值：
 每次写入执行还会覆盖 `STATUS_FILE_PATH` 指向的状态文件。该文件包含便于人工阅读的摘要信息，包括计数以及成功、失败的股票列表。
 
 在 `write --mode full` 模式下，CLI 会按交易日逐个拉取数据，立即对当前交易日做规范化处理，并按 `WRITE_BATCH_SIZE` 控制的分块方式持久化行数据。这样写入时的内存占用只与当前交易日载荷和当前 repository 批次有关，而不会增长到覆盖整个写入窗口。
+
+指数同步会按 `INDEX_LIST_PATH` 中配置的 `ts_code` 与 `group_name` 逐个拉取：
+
+- `major` 组默认走 `index_daily`
+- `sw_secondary` 和 `theme` 组默认走 `sw_daily`
+
+CSV 最低字段要求如下：
+
+```csv
+ts_code,name,group_name,enabled
+000300.SH,沪深300,major,true
+801012.SI,农产品加工(申万),sw_secondary,true
+801250.SI,申万制造,theme,true
+```
 
 写入窗口规则如下：
 
@@ -262,6 +287,14 @@ uv run stock-cache stats date-range
         ["2026-01-02", "2026-01-05", "2026-01-06"],
         ["2026-03-31"]
       ]
+    },
+    "daily_index": {
+      "min_trade_date": "2026-01-02",
+      "max_trade_date": "2026-03-31",
+      "continuous_ranges": [
+        ["2026-01-02", "2026-01-05", "2026-01-06"],
+        ["2026-03-31"]
+      ]
     }
   }
 }
@@ -295,10 +328,11 @@ uv run stock-cache delete by-date \
   },
   "data": {
     "daily_market_deleted": 12,
-    "daily_indicators_deleted": 9
+    "daily_indicators_deleted": 9,
+    "daily_index_deleted": 3
   },
   "meta": {
-    "total_deleted_rows": 21
+    "total_deleted_rows": 24
   }
 }
 ```

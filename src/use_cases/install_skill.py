@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from services.install_templates import (
+    render_default_indexes_csv,
     render_installed_readme,
     render_installed_read_skill,
     render_installed_write_skill,
@@ -32,4 +33,5 @@ class InstallSkillUseCase:
             write_skill_body=render_installed_write_skill(),
             shared_readme_body=render_installed_readme(),
             env_body=render_shared_env(effective_token),
+            default_indexes_csv_body=render_default_indexes_csv(),
         )

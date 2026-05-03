@@ -37,6 +37,7 @@ class FakeInstallSkillUseCase:
                     "/home/example/.agents/skills/stock-cache-write",
                 ],
                 "compose_file": "/home/example/.agents/skills/stock-cache/compose.yml",
+                "default_indexes_file": "/home/example/.agents/skills/stock-cache/.runtime/default-indexes.csv",
                 "token_written": True,
             },
             "next_steps": [
@@ -99,6 +100,7 @@ def test_cli_config_show_prints_values_from_explicit_env_file(monkeypatch, tmp_p
                 "REQUEST_TIMEOUT_SECONDS=12",
                 "DEFAULT_LOOKBACK_TRADING_DAYS=30",
                 "STATUS_FILE_PATH=runtime/custom-status.txt",
+                "INDEX_LIST_PATH=runtime/custom-indexes.csv",
                 "ALLOW_INDICATOR_BACKFILL_ON_READ=false",
                 "ENABLE_TUSHARE_INDICATORS=false",
                 "ENABLE_LOCAL_INDICATOR_FALLBACK=false",
@@ -124,6 +126,7 @@ def test_cli_config_show_prints_values_from_explicit_env_file(monkeypatch, tmp_p
         "REQUEST_TIMEOUT_SECONDS=12\n"
         "DEFAULT_LOOKBACK_TRADING_DAYS=30\n"
         "STATUS_FILE_PATH=runtime/custom-status.txt\n"
+        "INDEX_LIST_PATH=runtime/custom-indexes.csv\n"
         "ALLOW_INDICATOR_BACKFILL_ON_READ=false\n"
         "ENABLE_TUSHARE_INDICATORS=false\n"
         "ENABLE_LOCAL_INDICATOR_FALLBACK=false\n"
@@ -234,6 +237,7 @@ def test_cli_install_skill_passes_flags_to_use_case() -> None:
     assert "/home/example/.agents/skills/stock-cache-read" in result.stdout
     assert "/home/example/.agents/skills/stock-cache-write" in result.stdout
     assert "Compose file: /home/example/.agents/skills/stock-cache/compose.yml" in result.stdout
+    assert "Default index list: /home/example/.agents/skills/stock-cache/.runtime/default-indexes.csv" in result.stdout
     assert "Next steps:" in result.stdout
     assert "cd ~/.agents/skills/stock-cache" in result.stdout
     assert "docker compose up -d postgres" in result.stdout
@@ -1232,6 +1236,14 @@ def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn:
         _ = (self, trade_date)
         return [{"ts_code": "000001.SZ", "trade_date": "20260331", "macd": 0.11, "kdj_j": 81.0}]
 
+    def fake_fetch_index_daily(self: object, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        _ = (self, ts_code, start_date, end_date)
+        return []
+
+    def fake_fetch_sw_daily(self: object, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        _ = (self, ts_code, start_date, end_date)
+        return []
+
     monkeypatch.setattr(cli_module, "AkshareAdapter", fail_akshare_init, raising=False)
     monkeypatch.setattr("cli.create_pool", fake_create_pool)
     monkeypatch.setattr(
@@ -1274,6 +1286,8 @@ def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn:
         "providers.tushare_adapter.TushareAdapter.fetch_indicators_by_trade_date",
         fake_fetch_indicators_by_trade_date,
     )
+    monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_index_daily", fake_fetch_index_daily)
+    monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_sw_daily", fake_fetch_sw_daily)
 
     result = runner.invoke(app, ["write", "--mode", "full"])
 

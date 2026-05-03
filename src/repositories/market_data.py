@@ -5,7 +5,7 @@ from typing import Callable, TypeVar
 
 import asyncpg
 
-from domain.models import DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 
 RowT = TypeVar("RowT")
 
@@ -55,6 +55,11 @@ class MarketDataRepository:
         if not rows:
             return
         await self._upsert_in_chunks(rows, build_daily_indicator_upsert)
+
+    async def upsert_daily_index(self, rows: list[DailyIndexRow]) -> None:
+        if not rows:
+            return
+        await self._upsert_in_chunks(rows, build_daily_index_upsert)
 
     async def _upsert_in_chunks(
         self,
@@ -230,10 +235,18 @@ class MarketDataRepository:
                 order by trade_date
                 """
             )
+            index_rows = await connection.fetch(
+                """
+                select distinct trade_date
+                from daily_index
+                order by trade_date
+                """
+            )
 
         return {
             "daily_market": [_coerce_date(row["trade_date"]).isoformat() for row in market_rows],
             "daily_indicators": [_coerce_date(row["trade_date"]).isoformat() for row in indicator_rows],
+            "daily_index": [_coerce_date(row["trade_date"]).isoformat() for row in index_rows],
         }
 
     async def delete_trade_date_range(self, start_date: str, end_date: str) -> dict[str, int]:
@@ -256,10 +269,19 @@ class MarketDataRepository:
                 start,
                 end,
             )
+            index_result = await connection.execute(
+                """
+                delete from daily_index
+                where trade_date between $1 and $2
+                """,
+                start,
+                end,
+            )
 
         return {
             "daily_market_deleted": _affected_row_count(market_result),
             "daily_indicators_deleted": _affected_row_count(indicator_result),
+            "daily_index_deleted": _affected_row_count(index_result),
         }
 
 
@@ -450,6 +472,84 @@ def build_daily_indicator_upsert(
             row.source_provider,
             row.source_interface,
             row.calc_fallback_used,
+        )
+        for row in rows
+    ]
+
+
+def build_daily_index_upsert(rows: list[DailyIndexRow]) -> tuple[str, list[tuple[object, ...]]]:
+    sql = """
+    INSERT INTO daily_index (
+        ts_code,
+        trade_date,
+        name,
+        group_name,
+        open,
+        high,
+        low,
+        close,
+        pre_close,
+        change,
+        pct_chg,
+        vol,
+        amount,
+        pe,
+        pb,
+        float_mv,
+        total_mv,
+        extra_index_jsonb,
+        source_provider,
+        source_daily,
+        source_basic
+    )
+    VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+    )
+    ON CONFLICT (ts_code, trade_date) DO UPDATE
+    SET name = EXCLUDED.name,
+        group_name = EXCLUDED.group_name,
+        open = EXCLUDED.open,
+        high = EXCLUDED.high,
+        low = EXCLUDED.low,
+        close = EXCLUDED.close,
+        pre_close = EXCLUDED.pre_close,
+        change = EXCLUDED.change,
+        pct_chg = EXCLUDED.pct_chg,
+        vol = EXCLUDED.vol,
+        amount = EXCLUDED.amount,
+        pe = EXCLUDED.pe,
+        pb = EXCLUDED.pb,
+        float_mv = EXCLUDED.float_mv,
+        total_mv = EXCLUDED.total_mv,
+        extra_index_jsonb = EXCLUDED.extra_index_jsonb,
+        source_provider = EXCLUDED.source_provider,
+        source_daily = EXCLUDED.source_daily,
+        source_basic = EXCLUDED.source_basic,
+        updated_at = NOW()
+    """
+    return sql, [
+        (
+            row.ts_code,
+            row.trade_date,
+            row.name,
+            row.group_name,
+            row.open,
+            row.high,
+            row.low,
+            row.close,
+            row.pre_close,
+            row.change,
+            row.pct_chg,
+            row.vol,
+            row.amount,
+            row.pe,
+            row.pb,
+            row.float_mv,
+            row.total_mv,
+            json.dumps(_json_ready(row.extra_index_jsonb), ensure_ascii=False),
+            row.source_provider,
+            row.source_daily,
+            row.source_basic,
         )
         for row in rows
     ]

@@ -175,3 +175,26 @@ stock-cache stats --help
 stock-cache read raw --help
 stock-cache read screen --help
 ```
+
+## Large JSON Parsing Pitfall
+
+`stock-cache read raw` can return a large JSON payload for multi-month windows. When calling it through wrapper tools that cap or truncate stdout, direct JSON parsing may fail with errors such as `JSONDecodeError` even though the CLI output is valid.
+
+For calculations over larger windows, redirect the CLI output to a temporary file first, then parse that file locally:
+
+```bash
+cd ~/.agents/skills/stock-cache
+stock-cache --env-file .env read raw \
+  --ts-code 002460.SZ \
+  --start-date 2026-02-01 \
+  --end-date 2026-04-24 > /tmp/stock-raw.json
+python3 - <<'PY'
+import json
+with open('/tmp/stock-raw.json') as f:
+    data = json.load(f)
+market = sorted(data['data']['market'], key=lambda x: x['trade_date'])
+print(market[-1])
+PY
+```
+
+Prefer `jq` projection for small answers, but use the temp-file pattern when you need to compute rolling metrics from a long raw history.

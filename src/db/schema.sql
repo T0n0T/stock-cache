@@ -81,6 +81,35 @@ CREATE TABLE IF NOT EXISTS daily_indicators (
   PRIMARY KEY (ts_code, trade_date)
 );
 
+CREATE TABLE IF NOT EXISTS daily_index (
+  ts_code TEXT NOT NULL,
+  trade_date DATE NOT NULL,
+  name TEXT,
+  group_name TEXT,
+  open DOUBLE PRECISION,
+  high DOUBLE PRECISION,
+  low DOUBLE PRECISION,
+  close DOUBLE PRECISION,
+  pre_close DOUBLE PRECISION,
+  change DOUBLE PRECISION,
+  pct_chg DOUBLE PRECISION,
+  vol DOUBLE PRECISION,
+  amount DOUBLE PRECISION,
+  pe DOUBLE PRECISION,
+  pb DOUBLE PRECISION,
+  float_mv DOUBLE PRECISION,
+  total_mv DOUBLE PRECISION,
+  extra_index_jsonb JSONB NOT NULL DEFAULT '{}'::jsonb,
+  source_provider TEXT NOT NULL,
+  source_daily TEXT,
+  source_basic TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (ts_code, trade_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_index_trade_date ON daily_index (trade_date);
+CREATE INDEX IF NOT EXISTS idx_daily_index_group_name_trade_date ON daily_index (group_name, trade_date);
+
 CREATE TABLE IF NOT EXISTS job_runs (
   job_id TEXT PRIMARY KEY,
   job_type TEXT NOT NULL,
