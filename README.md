@@ -177,6 +177,18 @@ uv run stock-cache write --mode full
 uv run stock-cache --env-file /path/to/.env write --mode full
 ```
 
+只同步默认指数清单中的指数：
+
+```bash
+uv run stock-cache write --mode indexes \
+  --start-date 2025-01-01 \
+  --end-date 2026-05-04
+uv run stock-cache --env-file /path/to/.env write \
+  --mode indexes \
+  --start-date 2025-01-01 \
+  --end-date 2026-05-04
+```
+
 按 `ts_code` 同步单只股票：
 
 ```bash
@@ -210,12 +222,15 @@ uv run stock-cache --env-file /path/to/.env write \
   --end-date 2026-03-31
 ```
 
-CLI 支持两种 `--mode` 值：
+CLI 支持三种 `--mode` 值：
 
-- `full`：同步所选窗口内的全部活跃股票
+- `full`：同步所选窗口内的全部活跃股票，并在股票阶段完成后同步默认指数清单
 - `single`：通过 `--ts-code` 或 `--name` 精确同步一只股票
+- `indexes`：只同步默认指数清单中的指数，不拉取股票数据
 
 `write --mode full` 还会读取 `INDEX_LIST_PATH` 指向的 CSV，并同步其中 `enabled=true` 的指数日线。仓库默认清单是 [runtime/default-indexes.csv](runtime/default-indexes.csv)，安装后的独立运行时默认清单是 `~/.agents/skills/stock-cache/.runtime/default-indexes.csv`。
+
+如果只想运行指数阶段，可以直接使用 `write --mode indexes`。它复用相同的日期窗口规则，但不会拉取股票数据。
 
 写入执行期间，CLI 会向 `stderr` 输出进度信息，便于查看当前阶段；最终供机器读取的任务摘要仍会输出到 `stdout`。成功执行时示例如下：
 

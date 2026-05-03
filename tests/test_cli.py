@@ -1163,6 +1163,70 @@ def test_cli_write_emits_progress_to_stderr(monkeypatch) -> None:
     assert payload["status"] == "success"
 
 
+def test_cli_write_indexes_mode_passes_absolute_date_range(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    async def fake_run_write(
+        mode: str,
+        ts_code: str | None,
+        name: str | None,
+        write_range: object | None,
+        injected_use_case: object | None,
+        progress: object | None,
+    ) -> object:
+        captured["mode"] = mode
+        captured["ts_code"] = ts_code
+        captured["name"] = name
+        captured["write_range"] = write_range
+        captured["injected_use_case"] = injected_use_case
+        captured["progress"] = progress
+        return FakeJobRunSummary(
+            job_id="20260331T120000Z",
+            status="success",
+            started_at="2026-03-31T12:00:00+00:00",
+            finished_at="2026-03-31T12:00:01+00:00",
+            total_symbols=0,
+            success_symbols=[],
+            failed_symbols={},
+        )
+
+    monkeypatch.setattr("cli._run_write", fake_run_write, raising=False)
+
+    result = runner.invoke(
+        app,
+        ["write", "--mode", "indexes", "--start-date", "2026-01-01", "--end-date", "2026-03-31"],
+    )
+
+    assert result.exit_code == 0
+    assert captured["mode"] == "indexes"
+    assert captured["ts_code"] is None
+    assert captured["name"] is None
+    assert captured["write_range"].start_date == "20260101"
+    assert captured["write_range"].end_date == "20260331"
+    assert callable(captured["progress"])
+
+
+def test_cli_write_indexes_mode_rejects_mixing_lookback_and_date_range() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "write",
+            "--mode",
+            "indexes",
+            "--lookback-trading-days",
+            "30",
+            "--start-date",
+            "2026-01-01",
+            "--end-date",
+            "2026-03-31",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "--lookback-trading-days" in result.output
+    assert "cannot be combined" in result.output
+
+
 def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn: str, tmp_path) -> None:
     monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
     monkeypatch.setenv("TUSHARE_TOKEN", "token")

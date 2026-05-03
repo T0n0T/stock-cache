@@ -33,6 +33,12 @@ The installed standalone runtime also includes an editable default index list at
 
 `write --mode full` uses this CSV to decide which indexes to sync. Edit the file when you want to add, remove, or disable indexes without changing code.
 
+If you only want the index phase, use:
+
+```bash
+stock-cache --env-file .env write --mode indexes --start-date 2025-01-01 --end-date 2026-05-04
+```
+
 Start PostgreSQL as needed, for example with the bundled compose definition in:
 
 ```bash
@@ -100,6 +106,7 @@ Range rules:
 
 - `stock-cache write --mode full` still uses `DEFAULT_LOOKBACK_TRADING_DAYS`
 - `stock-cache write --mode single --ts-code 000001.SZ` uses the same date-window rules, but only for that instrument
+- `stock-cache write --mode indexes` uses the same date-window rules, but only for configured indexes
 - `--ts-code` and `--name` can only be used with `--mode single`
 - `--mode single` requires exactly one of `--ts-code` or `--name`
 - `--lookback-trading-days` overrides the default lookback for that command only

@@ -151,6 +151,63 @@ class WriteMarketDataUseCase:
         self._emit_progress(progress, f"write finished: status={summary.status}")
         return summary
 
+    async def run_indexes_only(
+        self,
+        write_range: WriteDateRange | None = None,
+        progress: Callable[[str], None] | None = None,
+    ) -> JobRunSummary:
+        if progress is None:
+            progress = lambda message: None
+        reporter = StatusReporter(self.settings.status_file_path)
+        started_at = self.now_provider().isoformat()
+        try:
+            self._emit_progress(progress, "write-indexes started")
+            trade_dates = self._trade_dates(write_range=write_range)
+            self._emit_progress(
+                progress,
+                f"resolved {len(trade_dates)} trade date(s): {min(trade_dates)} -> {max(trade_dates)}",
+            )
+            failures = await self._sync_indexes(
+                start_date=min(trade_dates),
+                end_date=max(trade_dates),
+                progress=progress,
+            )
+        except Exception as exc:
+            summary = JobRunSummary(
+                job_id=self.now_provider().strftime("%Y%m%dT%H%M%SZ"),
+                status="failed",
+                started_at=started_at,
+                finished_at=self.now_provider().isoformat(),
+                total_symbols=0,
+                success_symbols=[],
+                failed_symbols={"__startup__": str(exc)},
+            )
+            reporter.write(summary)
+            if self.job_run_repository is not None:
+                await self.job_run_repository.insert_job_run(
+                    summary,
+                    status_file_path=str(self.settings.status_file_path),
+                )
+            return summary
+
+        summary = JobRunSummary(
+            job_id=self.now_provider().strftime("%Y%m%dT%H%M%SZ"),
+            status="success" if not failures else "partial_success",
+            started_at=started_at,
+            finished_at=self.now_provider().isoformat(),
+            total_symbols=0,
+            success_symbols=[],
+            failed_symbols=failures,
+        )
+        reporter.write(summary)
+        if self.job_run_repository is not None:
+            await self.job_run_repository.insert_job_run(
+                summary,
+                status_file_path=str(self.settings.status_file_path),
+            )
+        self._emit_progress(progress, f"write-indexes finished: status={summary.status}")
+        return summary
+
     async def _run_single_symbol_write(
         self,
         target_symbols: list[str],

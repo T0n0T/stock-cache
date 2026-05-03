@@ -436,6 +436,46 @@ async def test_full_mode_syncs_indexes_from_runtime_csv(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_run_indexes_only_syncs_indexes_without_loading_instruments(tmp_path: Path) -> None:
+    provider = IndexAwareProvider()
+    repository = SequencedPersistRepository()
+    status_file = tmp_path / "last-write-status.txt"
+    index_list = tmp_path / "default-indexes.csv"
+    index_list.write_text(
+        "\n".join(
+            [
+                "ts_code,name,group_name,enabled",
+                "000300.SH,沪深300,major,true",
+                "801012.SI,农产品加工(申万),sw_secondary,true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            INDEX_LIST_PATH=index_list,
+        ),
+        primary_provider=provider,
+        market_repository=repository,
+        instrument_repository=None,
+        job_run_repository=None,
+        now_provider=lambda: datetime(2026, 3, 30, 12, tzinfo=UTC),
+    )
+
+    summary = await use_case.run_indexes_only(write_range=WriteDateRange(lookback_trading_days=2))
+
+    assert summary.status == "success"
+    assert provider.instrument_fetches == 0
+    assert provider.trade_date_requests == [("20260330", 2)]
+    assert provider.index_daily_requests == [("000300.SH", "20260327", "20260330")]
+    assert provider.sw_daily_requests == [("801012.SI", "20260327", "20260330")]
+
+
+@pytest.mark.asyncio
 async def test_full_mode_continues_after_trade_date_persist_failure(tmp_path: Path) -> None:
     provider = StableTradeDateProvider()
     repository = FailOnTradeDatePersistRepository("20260327")

@@ -40,6 +40,7 @@ app.add_typer(config_app, name="config")
 class WriteMode(StrEnum):
     FULL = "full"
     SINGLE = "single"
+    INDEXES = "indexes"
 
 
 def _summarize_write_payload(payload: object) -> object:
@@ -138,6 +139,8 @@ async def _run_write(
                 instrument_repository=instrument_repository,
                 job_run_repository=job_run_repository,
             )
+        if mode is WriteMode.INDEXES:
+            return await use_case.run_indexes_only(write_range=write_range, progress=progress)
         return await use_case.run(mode=mode.value, symbols=symbols, write_range=write_range, progress=progress)
     finally:
         if pool is not None:
@@ -273,7 +276,8 @@ def write(
         "--mode",
         help=(
             "Write mode. 'full' syncs all active instruments in the selected window. "
-            "'single' syncs exactly one instrument selected by --ts-code or --name."
+            "'single' syncs exactly one instrument selected by --ts-code or --name. "
+            "'indexes' syncs only configured index daily data."
         ),
     ),
     ts_code: str | None = typer.Option(
