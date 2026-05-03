@@ -469,6 +469,9 @@ async def test_run_indexes_only_syncs_indexes_without_loading_instruments(tmp_pa
     summary = await use_case.run_indexes_only(write_range=WriteDateRange(lookback_trading_days=2))
 
     assert summary.status == "success"
+    assert summary.total_symbols == 2
+    assert summary.success_symbols == ["000300.SH", "801012.SI"]
+    assert summary.failed_symbols == {}
     assert provider.instrument_fetches == 0
     assert provider.trade_date_requests == [("20260330", 2)]
     assert provider.index_daily_requests == [("000300.SH", "20260327", "20260330")]

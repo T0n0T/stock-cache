@@ -167,10 +167,12 @@ class WriteMarketDataUseCase:
                 progress,
                 f"resolved {len(trade_dates)} trade date(s): {min(trade_dates)} -> {max(trade_dates)}",
             )
+            definitions = load_index_definitions(self.settings.index_list_path)
             failures = await self._sync_indexes(
                 start_date=min(trade_dates),
                 end_date=max(trade_dates),
                 progress=progress,
+                definitions=definitions,
             )
         except Exception as exc:
             summary = JobRunSummary(
@@ -195,8 +197,8 @@ class WriteMarketDataUseCase:
             status="success" if not failures else "partial_success",
             started_at=started_at,
             finished_at=self.now_provider().isoformat(),
-            total_symbols=0,
-            success_symbols=[],
+            total_symbols=len(definitions),
+            success_symbols=[definition.ts_code for definition in definitions if definition.ts_code not in failures],
             failed_symbols=failures,
         )
         reporter.write(summary)
@@ -381,11 +383,13 @@ class WriteMarketDataUseCase:
         start_date: str,
         end_date: str,
         progress: Callable[[str], None],
+        definitions: list[object] | None = None,
     ) -> dict[str, str]:
         if self.market_repository is None:
             return {}
 
-        definitions = load_index_definitions(self.settings.index_list_path)
+        if definitions is None:
+            definitions = load_index_definitions(self.settings.index_list_path)
         if not definitions:
             return {}
 
