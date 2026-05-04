@@ -106,6 +106,19 @@ class MarketDataRepository:
                 start,
                 end,
             )
+            index_rows = await connection.fetch(
+                """
+                select ts_code, trade_date, name, group_name, open, high, low, close,
+                       pre_close, change, pct_chg, vol, amount, pe, pb, float_mv,
+                       total_mv, extra_index_jsonb, source_provider, source_daily, source_basic
+                from daily_index
+                where ts_code = $1 and trade_date between $2 and $3
+                order by trade_date
+                """,
+                ts_code,
+                start,
+                end,
+            )
 
         return {
             "market": [
@@ -169,6 +182,32 @@ class MarketDataRepository:
                     calc_fallback_used=row["calc_fallback_used"],
                 )
                 for row in indicator_rows
+            ],
+            "indexes": [
+                DailyIndexRow(
+                    ts_code=row["ts_code"],
+                    trade_date=_coerce_date(row["trade_date"]),
+                    name=row["name"],
+                    group_name=row["group_name"],
+                    open=row["open"],
+                    high=row["high"],
+                    low=row["low"],
+                    close=row["close"],
+                    pre_close=row["pre_close"],
+                    change=row["change"],
+                    pct_chg=row["pct_chg"],
+                    vol=row["vol"],
+                    amount=row["amount"],
+                    pe=row["pe"],
+                    pb=row["pb"],
+                    float_mv=row["float_mv"],
+                    total_mv=row["total_mv"],
+                    extra_index_jsonb=_decode_jsonb(row["extra_index_jsonb"]),
+                    source_provider=row["source_provider"],
+                    source_daily=row["source_daily"],
+                    source_basic=row["source_basic"],
+                )
+                for row in index_rows
             ],
         }
 

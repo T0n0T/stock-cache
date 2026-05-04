@@ -277,27 +277,53 @@ class _FakeConnection:
                     "source_moneyflow": "moneyflow",
                 }
             ]
+        if self.calls == 2:
+            return [
+                {
+                    "ts_code": "000001.SZ",
+                    "trade_date": date(2026, 3, 30),
+                    "macd": 0.1,
+                    "macd_dif": 0.2,
+                    "macd_dea": 0.3,
+                    "kdj_k": 40.0,
+                    "kdj_d": 41.0,
+                    "kdj_j": 42.0,
+                    "rsi_6": 55.0,
+                    "rsi_12": 50.0,
+                    "rsi_24": 48.0,
+                    "boll_upper": 13.0,
+                    "boll_mid": 12.0,
+                    "boll_lower": 11.0,
+                    "cci": 101.0,
+                    "extra_factors_jsonb": '{"ema_qfq_5": 12.2, "wr_bfq": 17.1}',
+                    "source_provider": "tushare",
+                    "source_interface": "stk_factor_pro",
+                    "calc_fallback_used": False,
+                }
+            ]
         return [
             {
-                "ts_code": "000001.SZ",
-                "trade_date": date(2026, 3, 30),
-                "macd": 0.1,
-                "macd_dif": 0.2,
-                "macd_dea": 0.3,
-                "kdj_k": 40.0,
-                "kdj_d": 41.0,
-                "kdj_j": 42.0,
-                "rsi_6": 55.0,
-                "rsi_12": 50.0,
-                "rsi_24": 48.0,
-                "boll_upper": 13.0,
-                "boll_mid": 12.0,
-                "boll_lower": 11.0,
-                "cci": 101.0,
-                "extra_factors_jsonb": '{"ema_qfq_5": 12.2, "wr_bfq": 17.1}',
+                "ts_code": "399303.SZ",
+                "trade_date": date(2026, 4, 30),
+                "name": "国证2000",
+                "group_name": "major",
+                "open": 10936.8943,
+                "high": 11012.2111,
+                "low": 10910.4294,
+                "close": 10989.9289,
+                "pre_close": 10930.0073,
+                "change": 59.9216,
+                "pct_chg": 0.5482,
+                "vol": 443411672.0,
+                "amount": 837416148.6,
+                "pe": None,
+                "pb": None,
+                "float_mv": None,
+                "total_mv": None,
+                "extra_index_jsonb": '{"sample": 1}',
                 "source_provider": "tushare",
-                "source_interface": "stk_factor_pro",
-                "calc_fallback_used": False,
+                "source_daily": "index_daily",
+                "source_basic": None,
             }
         ]
 
@@ -316,6 +342,9 @@ async def test_fetch_raw_decodes_jsonb_strings_from_postgres() -> None:
         "ema_qfq_5": 12.2,
         "wr_bfq": 17.1,
     }
+    assert payload["indexes"][0].name == "国证2000"
+    assert payload["indexes"][0].trade_date == date(2026, 4, 30)
+    assert payload["indexes"][0].extra_index_jsonb == {"sample": 1}
 
 
 class _WriteRecordingConnection:

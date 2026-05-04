@@ -326,6 +326,7 @@ class FakeMarketRepository:
         return {
             "market": [DailyMarketRow(ts_code=ts_code, trade_date=date(2026, 3, 30), close=12.4)],
             "indicators": [DailyIndicatorRow(ts_code=ts_code, trade_date=date(2026, 3, 30), macd=0.1)],
+            "indexes": [],
         }
 
 

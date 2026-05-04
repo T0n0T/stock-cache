@@ -20,11 +20,13 @@ class ReadRawMarketDataUseCase:
         rows = await self._market_repository.fetch_raw(ts_code=ts_code, start_date=start_date, end_date=end_date)
         market = [_json_ready(asdict(row)) for row in rows["market"]]
         indicators = [_json_ready(asdict(row)) for row in rows["indicators"]]
+        indexes = [_json_ready(asdict(row)) for row in rows["indexes"]]
         return {
             "query": {"ts_code": ts_code, "start_date": start_date, "end_date": end_date},
-            "data": {"market": market, "indicators": indicators},
+            "data": {"market": market, "indicators": indicators, "indexes": indexes},
             "meta": {
                 "row_count_market": len(market),
                 "row_count_indicators": len(indicators),
+                "row_count_indexes": len(indexes),
             },
         }

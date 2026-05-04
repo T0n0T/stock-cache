@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from domain.models import DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 from use_cases.read_raw import ReadRawMarketDataUseCase
 
 
@@ -11,6 +11,7 @@ class FakeMarketRepository:
         return {
             "market": [DailyMarketRow(ts_code=ts_code, trade_date=date(2026, 3, 30), close=12.4)],
             "indicators": [DailyIndicatorRow(ts_code=ts_code, trade_date=date(2026, 3, 30), macd=0.1)],
+            "indexes": [],
         }
 
 
@@ -27,3 +28,39 @@ async def test_read_raw_returns_json_ready_payload() -> None:
     assert payload["data"]["market"][0]["close"] == 12.4
     assert payload["data"]["market"][0]["trade_date"] == "2026-03-30"
     assert payload["data"]["indicators"][0]["trade_date"] == "2026-03-30"
+    assert payload["meta"]["row_count_indexes"] == 0
+
+
+class FakeIndexRepository:
+    async def fetch_raw(self, ts_code: str, start_date: str, end_date: str) -> dict[str, list[object]]:
+        return {
+            "market": [],
+            "indicators": [],
+            "indexes": [
+                DailyIndexRow(
+                    ts_code=ts_code,
+                    trade_date=date(2026, 4, 30),
+                    name="国证2000",
+                    group_name="major",
+                    close=10989.9289,
+                    pct_chg=0.5482,
+                    source_daily="index_daily",
+                )
+            ],
+        }
+
+
+@pytest.mark.asyncio
+async def test_read_raw_returns_index_rows_for_index_ts_code() -> None:
+    payload = await ReadRawMarketDataUseCase(FakeIndexRepository()).run(
+        ts_code="399303.SZ",
+        start_date="2026-04-30",
+        end_date="2026-04-30",
+    )
+
+    assert payload["query"]["ts_code"] == "399303.SZ"
+    assert payload["meta"]["row_count_market"] == 0
+    assert payload["meta"]["row_count_indicators"] == 0
+    assert payload["meta"]["row_count_indexes"] == 1
+    assert payload["data"]["indexes"][0]["name"] == "国证2000"
+    assert payload["data"]["indexes"][0]["trade_date"] == "2026-04-30"
