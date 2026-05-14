@@ -115,6 +115,8 @@ def test_cli_config_show_prints_values_from_explicit_env_file(monkeypatch, tmp_p
     result = runner.invoke(app, ["--env-file", str(env_file), "config", "show"])
 
     assert result.exit_code == 0
+    expected_status_path = (tmp_path / "runtime" / "custom-status.txt").resolve()
+    expected_index_path = (tmp_path / "runtime" / "custom-indexes.csv").resolve()
     assert result.stdout == (
         "POSTGRES_DSN=postgresql://file:file@127.0.0.1:5432/file_db\n"
         "TUSHARE_TOKEN=file-token\n"
@@ -125,8 +127,8 @@ def test_cli_config_show_prints_values_from_explicit_env_file(monkeypatch, tmp_p
         "RETRY_JITTER=0.1\n"
         "REQUEST_TIMEOUT_SECONDS=12\n"
         "DEFAULT_LOOKBACK_TRADING_DAYS=30\n"
-        "STATUS_FILE_PATH=runtime/custom-status.txt\n"
-        "INDEX_LIST_PATH=runtime/custom-indexes.csv\n"
+        f"STATUS_FILE_PATH={expected_status_path}\n"
+        f"INDEX_LIST_PATH={expected_index_path}\n"
         "ALLOW_INDICATOR_BACKFILL_ON_READ=false\n"
         "ENABLE_TUSHARE_INDICATORS=false\n"
         "ENABLE_LOCAL_INDICATOR_FALLBACK=false\n"
@@ -1357,6 +1359,172 @@ def test_cli_write_does_not_instantiate_akshare_adapter(monkeypatch, sample_dsn:
     result = runner.invoke(app, ["write", "--mode", "full"])
 
     assert result.exit_code == 0
+
+
+def test_cli_write_full_uses_installed_default_index_list_from_other_working_directory(
+    monkeypatch, sample_dsn: str, tmp_path: Path
+) -> None:
+    home_dir = tmp_path / "home"
+    standalone_home = home_dir / ".agents" / "skills" / "stock-cache"
+    index_list_path = standalone_home / ".runtime" / "default-indexes.csv"
+    index_list_path.parent.mkdir(parents=True)
+    index_list_path.write_text(
+        "\n".join(
+            [
+                "ts_code,name,group_name,enabled",
+                "000300.SH,沪深300,major,true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    monkeypatch.setenv("HOME", str(home_dir))
+    monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
+    monkeypatch.setenv("TUSHARE_TOKEN", "token")
+    monkeypatch.setenv("STATUS_FILE_PATH", str(tmp_path / "status.txt"))
+    monkeypatch.setenv("DEFAULT_LOOKBACK_TRADING_DAYS", "1")
+
+    captured: dict[str, object] = {}
+
+    class FakePool:
+        async def close(self) -> None:
+            return None
+
+    class FakeMarketRepository:
+        def __init__(self, pool: object, write_batch_size: int) -> None:
+            _ = (pool, write_batch_size)
+
+        async def upsert_daily_market(self, rows: list[object]) -> None:
+            _ = rows
+
+        async def upsert_daily_indicators(self, rows: list[object]) -> None:
+            _ = rows
+
+        async def upsert_daily_index(self, rows: list[object]) -> None:
+            _ = rows
+
+    class FakeInstrumentRepository:
+        def __init__(self, pool: object) -> None:
+            _ = pool
+
+        async def upsert_instruments(self, instruments: list[Instrument]) -> None:
+            _ = instruments
+
+    class FakeJobRunRepository:
+        def __init__(self, pool: object) -> None:
+            _ = pool
+
+        async def insert_job_run(self, summary: object, status_file_path: str, job_type: str = "write") -> None:
+            _ = (summary, status_file_path, job_type)
+
+    async def fake_create_pool(dsn: str) -> FakePool:
+        assert dsn == sample_dsn
+        return FakePool()
+
+    def fake_fetch_instruments(self: object) -> list[Instrument]:
+        _ = self
+        return [
+            Instrument(
+                ts_code="000001.SZ",
+                symbol="000001",
+                name="Ping An",
+                exchange="SZ",
+                list_status="L",
+                is_st=False,
+            )
+        ]
+
+    def fake_fetch_recent_trade_dates(self: object, end_date: str, limit: int) -> list[str]:
+        _ = (self, end_date, limit)
+        return ["20260331"]
+
+    async def fake_fetch_daily_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": "20260331", "close": 11.6, "pct_chg": 2.2}]
+
+    async def fake_fetch_daily_basic_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": "20260331", "turnover_rate": 3.3, "total_mv": 456.7}]
+
+    async def fake_fetch_moneyflow_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": "20260331", "net_mf_amount": 9.8}]
+
+    async def fake_fetch_adj_factor_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return []
+
+    async def fake_fetch_stk_limit_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return []
+
+    async def fake_fetch_suspend_d_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return []
+
+    async def fake_fetch_indicators_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": "20260331", "macd": 0.11, "kdj_j": 81.0}]
+
+    def fake_fetch_index_daily(self: object, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        _ = self
+        captured["index_daily_request"] = (ts_code, start_date, end_date)
+        captured["index_list_path"] = cli_module._get_settings().index_list_path
+        return []
+
+    def fake_fetch_sw_daily(self: object, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
+        _ = (self, ts_code, start_date, end_date)
+        return []
+
+    monkeypatch.setattr("cli.create_pool", fake_create_pool)
+    monkeypatch.setattr("cli.MarketDataRepository", FakeMarketRepository)
+    monkeypatch.setattr("cli.InstrumentRepository", FakeInstrumentRepository)
+    monkeypatch.setattr("cli.JobRunRepository", FakeJobRunRepository)
+    monkeypatch.setattr("providers.tushare_adapter.ts.pro_api", lambda token: object())
+    monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_instruments", fake_fetch_instruments)
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_recent_trade_dates",
+        fake_fetch_recent_trade_dates,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_daily_by_trade_date",
+        fake_fetch_daily_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_daily_basic_by_trade_date",
+        fake_fetch_daily_basic_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_moneyflow_by_trade_date",
+        fake_fetch_moneyflow_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_adj_factor_by_trade_date",
+        fake_fetch_adj_factor_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_stk_limit_by_trade_date",
+        fake_fetch_stk_limit_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_suspend_d_by_trade_date",
+        fake_fetch_suspend_d_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_indicators_by_trade_date",
+        fake_fetch_indicators_by_trade_date,
+    )
+    monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_index_daily", fake_fetch_index_daily)
+    monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_sw_daily", fake_fetch_sw_daily)
+
+    result = runner.invoke(app, ["write", "--mode", "full"])
+
+    assert result.exit_code == 0
+    assert captured["index_daily_request"] == ("000300.SH", "20260331", "20260331")
+    assert captured["index_list_path"] == index_list_path
     payload = json.loads(result.stdout)
     assert payload["status"] == "success"
 

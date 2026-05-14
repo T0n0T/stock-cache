@@ -15,7 +15,7 @@ def test_settings_load_default_values(monkeypatch, sample_dsn: str) -> None:
 
     assert settings.default_lookback_trading_days == 90
     assert settings.status_file_path.as_posix() == ".runtime/last-write-status.txt"
-    assert settings.index_list_path.as_posix() == "runtime/default-indexes.csv"
+    assert settings.index_list_path.as_posix() == ".runtime/default-indexes.csv"
     assert settings.max_retries == 3
 
 
@@ -71,6 +71,53 @@ def test_settings_loads_values_from_explicit_env_file(monkeypatch, tmp_path: Pat
 
     assert settings.postgres_dsn == "postgresql://file:file@127.0.0.1:5432/file_db"
     assert settings.tushare_token == "file-token"
+
+
+def test_settings_from_explicit_env_file_resolves_relative_runtime_paths_from_env_directory(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.delenv("POSTGRES_DSN", raising=False)
+    monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    env_dir = tmp_path / "standalone-home"
+    env_dir.mkdir()
+    env_file = env_dir / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "POSTGRES_DSN=postgresql://file:file@127.0.0.1:5432/file_db",
+                "TUSHARE_TOKEN=file-token",
+                "STATUS_FILE_PATH=.runtime/custom-status.txt",
+                "INDEX_LIST_PATH=.runtime/custom-indexes.csv",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    settings = Settings.from_env_file(env_file)
+
+    assert settings.status_file_path == env_dir / ".runtime" / "custom-status.txt"
+    assert settings.index_list_path == env_dir / ".runtime" / "custom-indexes.csv"
+
+
+def test_settings_from_env_file_none_uses_installed_home_for_default_runtime_paths(
+    monkeypatch, tmp_path: Path, sample_dsn: str
+) -> None:
+    home_dir = tmp_path / "home"
+    standalone_home = home_dir / ".agents" / "skills" / "stock-cache"
+    elsewhere = tmp_path / "elsewhere"
+    (standalone_home / ".runtime").mkdir(parents=True)
+    elsewhere.mkdir()
+    monkeypatch.setenv("HOME", str(home_dir))
+    monkeypatch.chdir(elsewhere)
+    monkeypatch.setenv("POSTGRES_DSN", sample_dsn)
+    monkeypatch.setenv("TUSHARE_TOKEN", "token")
+
+    settings = Settings.from_env_file(None)
+
+    assert settings.status_file_path == standalone_home / ".runtime" / "last-write-status.txt"
+    assert settings.index_list_path == standalone_home / ".runtime" / "default-indexes.csv"
 
 
 def test_settings_prefers_shell_environment_over_explicit_env_file(monkeypatch, tmp_path: Path) -> None:
@@ -147,8 +194,8 @@ def test_resolve_runtime_env_returns_all_effective_values(monkeypatch, tmp_path:
     assert values["TUSHARE_TOKEN"] == "file-token"
     assert values["MAX_CONCURRENCY"] == "11"
     assert values["ALLOW_INDICATOR_BACKFILL_ON_READ"] == "false"
-    assert values["STATUS_FILE_PATH"] == ".runtime/last-write-status.txt"
-    assert values["INDEX_LIST_PATH"] == "runtime/default-indexes.csv"
+    assert values["STATUS_FILE_PATH"] == str((tmp_path / ".runtime" / "last-write-status.txt").resolve())
+    assert values["INDEX_LIST_PATH"] == str((tmp_path / ".runtime" / "default-indexes.csv").resolve())
 
 
 def test_resolve_runtime_env_stringifies_parsed_shell_values(monkeypatch, sample_dsn: str) -> None:

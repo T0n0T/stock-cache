@@ -121,8 +121,8 @@ uv tool run stock-cache --help
 | `RETRY_JITTER` | 否 | `0.2` | 随机重试抖动（秒） |
 | `REQUEST_TIMEOUT_SECONDS` | 否 | `20` | provider 请求超时时间 |
 | `DEFAULT_LOOKBACK_TRADING_DAYS` | 否 | `90` | 默认写入窗口覆盖的近期交易日数量 |
-| `STATUS_FILE_PATH` | 否 | `.runtime/last-write-status.txt` | 最近一次写入任务的摘要状态文件 |
-| `INDEX_LIST_PATH` | 否 | `runtime/default-indexes.csv` | 默认指数清单 CSV 路径，`write --mode full` 会按此同步指数 |
+| `STATUS_FILE_PATH` | 否 | `.runtime/last-write-status.txt` | 最近一次写入任务的摘要状态文件；若使用 `--env-file` 且值为相对路径，则相对该 `.env` 文件目录解析；安装后的独立 CLI 在未显式配置时会默认指向 `~/.agents/skills/stock-cache/.runtime/last-write-status.txt` |
+| `INDEX_LIST_PATH` | 否 | `.runtime/default-indexes.csv` | 默认指数清单 CSV 路径；若使用 `--env-file` 且值为相对路径，则相对该 `.env` 文件目录解析；安装后的独立 CLI 在未显式配置时会默认指向 `~/.agents/skills/stock-cache/.runtime/default-indexes.csv`，仓库内开发场景则回退到 `runtime/default-indexes.csv` |
 | `ALLOW_INDICATOR_BACKFILL_ON_READ` | 否 | `true` | 读取时是否允许指标回填 |
 | `ENABLE_TUSHARE_INDICATORS` | 否 | `true` | provider 指标开关 |
 | `ENABLE_LOCAL_INDICATOR_FALLBACK` | 否 | `true` | 是否允许本地指标兜底逻辑 |
@@ -228,7 +228,7 @@ CLI 支持三种 `--mode` 值：
 - `single`：通过 `--ts-code` 或 `--name` 精确同步一只股票
 - `indexes`：只同步默认指数清单中的指数，不拉取股票数据
 
-`write --mode full` 还会读取 `INDEX_LIST_PATH` 指向的 CSV，并同步其中 `enabled=true` 的指数日线。仓库默认清单是 [runtime/default-indexes.csv](runtime/default-indexes.csv)，安装后的独立运行时默认清单是 `~/.agents/skills/stock-cache/.runtime/default-indexes.csv`。
+`write --mode full` 还会读取 `INDEX_LIST_PATH` 指向的 CSV，并同步其中 `enabled=true` 的指数日线。若通过 `--env-file` 提供相对路径，CLI 会按该 `.env` 文件所在目录解析；未显式配置时，安装后的独立运行时默认清单是 `~/.agents/skills/stock-cache/.runtime/default-indexes.csv`，仓库内开发场景则回退到 [runtime/default-indexes.csv](runtime/default-indexes.csv)。
 
 如果只想运行指数阶段，可以直接使用 `write --mode indexes`。它复用相同的日期窗口规则，但不会拉取股票数据。
 

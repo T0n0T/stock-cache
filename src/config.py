@@ -3,6 +3,9 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEFAULT_STATUS_FILE_PATH = Path(".runtime/last-write-status.txt")
+DEFAULT_INDEX_LIST_PATH = Path(".runtime/default-indexes.csv")
+
 
 class Settings(BaseSettings):
     postgres_dsn: str = Field(alias="POSTGRES_DSN")
@@ -14,8 +17,8 @@ class Settings(BaseSettings):
     retry_jitter: float = Field(default=0.2, alias="RETRY_JITTER")
     request_timeout_seconds: int = Field(default=20, alias="REQUEST_TIMEOUT_SECONDS")
     default_lookback_trading_days: int = Field(default=90, alias="DEFAULT_LOOKBACK_TRADING_DAYS")
-    status_file_path: Path = Field(default=Path(".runtime/last-write-status.txt"), alias="STATUS_FILE_PATH")
-    index_list_path: Path = Field(default=Path("runtime/default-indexes.csv"), alias="INDEX_LIST_PATH")
+    status_file_path: Path = Field(default=DEFAULT_STATUS_FILE_PATH, alias="STATUS_FILE_PATH")
+    index_list_path: Path = Field(default=DEFAULT_INDEX_LIST_PATH, alias="INDEX_LIST_PATH")
     allow_indicator_backfill_on_read: bool = Field(default=True, alias="ALLOW_INDICATOR_BACKFILL_ON_READ")
     enable_tushare_indicators: bool = Field(default=True, alias="ENABLE_TUSHARE_INDICATORS")
     enable_local_indicator_fallback: bool = Field(default=True, alias="ENABLE_LOCAL_INDICATOR_FALLBACK")
@@ -27,12 +30,14 @@ class Settings(BaseSettings):
     @classmethod
     def from_env_file(cls, env_file: str | Path | None) -> "Settings":
         if env_file is None:
-            return cls()
+            settings = cls()
+            return _normalize_runtime_paths(settings, env_file=None)
 
         env_path = Path(env_file)
         if not env_path.exists():
             raise FileNotFoundError(f"Env file not found: {env_path}")
-        return cls(_env_file=env_path)
+        settings = cls(_env_file=env_path)
+        return _normalize_runtime_paths(settings, env_file=env_path)
 
 
 def settings_env_variable_names() -> tuple[str, ...]:
@@ -49,6 +54,53 @@ def _stringify_setting_value(value: object) -> str:
     if isinstance(value, Path):
         return value.as_posix()
     return str(value)
+
+
+def _standalone_home() -> Path:
+    return Path.home() / ".agents" / "skills" / "stock-cache"
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _resolve_explicit_relative_runtime_path(path: Path, env_file: Path | None) -> Path:
+    if path.is_absolute():
+        return path
+    if env_file is not None:
+        return (env_file.resolve().parent / path).resolve()
+    return path
+
+
+def _resolve_default_status_file_path(path: Path, env_file: Path | None) -> Path:
+    path = _resolve_explicit_relative_runtime_path(path, env_file)
+    if path.is_absolute() or env_file is not None or path != DEFAULT_STATUS_FILE_PATH:
+        return path
+    standalone_home = _standalone_home()
+    if standalone_home.exists():
+        return (standalone_home / path).resolve()
+    return path
+
+
+def _resolve_default_index_list_path(path: Path, env_file: Path | None) -> Path:
+    path = _resolve_explicit_relative_runtime_path(path, env_file)
+    if path.is_absolute() or env_file is not None or path != DEFAULT_INDEX_LIST_PATH:
+        return path
+
+    standalone_home = _standalone_home()
+    if standalone_home.exists():
+        return (standalone_home / path).resolve()
+
+    repo_default_path = (_repo_root() / "runtime" / "default-indexes.csv").resolve()
+    if repo_default_path.exists():
+        return repo_default_path
+    return path
+
+
+def _normalize_runtime_paths(settings: Settings, env_file: Path | None) -> Settings:
+    settings.status_file_path = _resolve_default_status_file_path(settings.status_file_path, env_file)
+    settings.index_list_path = _resolve_default_index_list_path(settings.index_list_path, env_file)
+    return settings
 
 
 def resolve_runtime_env(
