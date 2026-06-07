@@ -114,7 +114,7 @@ uv tool run stock-cache --help
 | --- | --- | --- | --- |
 | `POSTGRES_DSN` | 是 | 无 | PostgreSQL 连接字符串 |
 | `TUSHARE_TOKEN` | 是 | 无 | Tushare API token |
-| `MAX_CONCURRENCY` | 否 | `20` | 预留的并发设置 |
+| `MAX_CONCURRENCY` | 否 | `20` | `write --mode full` 按交易日并发写入时的默认并发数 |
 | `MAX_RETRIES` | 否 | `3` | 可重试 provider 失败时的重试次数 |
 | `RETRY_BASE_DELAY` | 否 | `1.0` | 初始重试延迟（秒） |
 | `RETRY_BACKOFF_FACTOR` | 否 | `2.0` | 指数退避倍数 |
@@ -224,6 +224,15 @@ uv run stock-cache --env-file /path/to/.env write \
   --end-date 2026-03-31
 ```
 
+补齐较长时间区间时，可以单次覆盖并发数：
+
+```bash
+uv run stock-cache write --mode full \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-31 \
+  --max-concurrency 4
+```
+
 CLI 支持三种 `--mode` 值：
 
 - `full`：同步所选窗口内的全部活跃股票，并在股票阶段完成后同步默认指数清单
@@ -250,7 +259,7 @@ CLI 支持三种 `--mode` 值：
 
 每次写入执行还会覆盖 `STATUS_FILE_PATH` 指向的状态文件。该文件包含便于人工阅读的摘要信息，包括计数以及成功、失败的股票列表。
 
-在 `write --mode full` 模式下，CLI 会按交易日逐个拉取数据，立即对当前交易日做规范化处理，并按 `WRITE_BATCH_SIZE` 控制的分块方式持久化行数据。这样写入时的内存占用只与当前交易日载荷和当前 repository 批次有关，而不会增长到覆盖整个写入窗口。
+在 `write --mode full` 模式下，CLI 会按交易日受限并发拉取数据，并立即对每个交易日做规范化处理，再按 `WRITE_BATCH_SIZE` 控制的分块方式持久化行数据。这样写入时的内存占用只与当前并发交易日载荷和当前 repository 批次有关，而不会增长到覆盖整个写入窗口。
 
 指数同步会按 `INDEX_LIST_PATH` 中配置的 `ts_code` 与 `group_name` 逐个拉取：
 
@@ -275,6 +284,7 @@ ts_code,name,group_name,enabled
 - `--lookback-trading-days` 只会覆盖当前命令的 `DEFAULT_LOOKBACK_TRADING_DAYS`
 - `--start-date` 和 `--end-date` 必须同时提供
 - `--lookback-trading-days` 不能与 `--start-date` / `--end-date` 组合使用
+- `--max-concurrency` 只影响 `write --mode full` 的股票交易日写入阶段；指数阶段仍按清单逐个同步
 
 ## 缓存统计
 

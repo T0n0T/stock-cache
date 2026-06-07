@@ -102,6 +102,15 @@ stock-cache --env-file .env write --mode full \
   --end-date 2026-03-31
 ```
 
+To backfill a larger absolute date range with bounded trade-date concurrency:
+
+```bash
+stock-cache --env-file .env write --mode full \
+  --start-date 2026-01-01 \
+  --end-date 2026-03-31 \
+  --max-concurrency 4
+```
+
 Range rules:
 
 - `stock-cache write --mode full` still uses `DEFAULT_LOOKBACK_TRADING_DAYS`
@@ -112,6 +121,7 @@ Range rules:
 - `--lookback-trading-days` overrides the default lookback for that command only
 - `--start-date` and `--end-date` must be passed together
 - `--lookback-trading-days` cannot be combined with `--start-date` / `--end-date`
+- `--max-concurrency` overrides `MAX_CONCURRENCY` for the full-mode stock trade-date phase only
 
 ## Fastest Safe Workflow
 
@@ -140,6 +150,7 @@ stock-cache --env-file .env init-db
 - one symbol: `stock-cache --env-file .env write --mode single --ts-code 000001.SZ`
 - latest one trading day: `stock-cache --env-file .env write --mode full --lookback-trading-days 1`
 - one date window: `stock-cache --env-file .env write --mode full --start-date 2026-03-01 --end-date 2026-03-31`
+- larger backfill window: `stock-cache --env-file .env write --mode full --start-date 2026-01-01 --end-date 2026-03-31 --max-concurrency 4`
 - general refresh: `stock-cache --env-file .env write --mode full`
 
 Prefer a targeted `single` or explicit date-range rewrite over a blind full refresh when the task is to repair one symbol or one known bad window.

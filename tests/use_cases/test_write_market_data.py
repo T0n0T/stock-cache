@@ -1,3 +1,4 @@
+import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -169,6 +170,21 @@ class StableTradeDateProvider(FlakyProvider):
         return [{"ts_code": "000001.SZ", "trade_date": trade_date, "close": 12.3, "pct_chg": 1.1}]
 
 
+class ConcurrentTradeDateProvider(StableTradeDateProvider):
+    def __init__(self) -> None:
+        super().__init__()
+        self.active_requests = 0
+        self.max_active_requests = 0
+
+    async def fetch_daily_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
+        self.batch_dates.append(trade_date)
+        self.active_requests += 1
+        self.max_active_requests = max(self.max_active_requests, self.active_requests)
+        await asyncio.sleep(0.01)
+        self.active_requests -= 1
+        return [{"ts_code": "000001.SZ", "trade_date": trade_date, "close": 12.3, "pct_chg": 1.1}]
+
+
 class SequencedPersistRepository:
     def __init__(self) -> None:
         self.market_trade_dates_by_call: list[list[str]] = []
@@ -303,7 +319,7 @@ async def test_write_use_case_uses_configured_lookback_window(tmp_path: Path) ->
     await use_case.run(mode="full")
 
     assert provider.trade_date_requests == [("20260330", 5)]
-    assert provider.batch_dates == ["20260330", "20260330", "20260327", "20260326", "20260325", "20260324"]
+    assert sorted(provider.batch_dates) == ["20260324", "20260325", "20260326", "20260327", "20260330", "20260330"]
 
 
 @pytest.mark.asyncio
@@ -328,7 +344,7 @@ async def test_write_use_case_allows_cli_lookback_override(tmp_path: Path) -> No
 
     assert provider.trade_date_requests == [("20260330", 2)]
     assert provider.trade_date_range_requests == []
-    assert provider.batch_dates == ["20260330", "20260330", "20260327"]
+    assert sorted(provider.batch_dates) == ["20260327", "20260330", "20260330"]
 
 
 @pytest.mark.asyncio
@@ -356,7 +372,31 @@ async def test_write_use_case_uses_absolute_trade_date_range(tmp_path: Path) -> 
 
     assert provider.trade_date_requests == []
     assert provider.trade_date_range_requests == [("20260101", "20260331")]
-    assert provider.batch_dates == ["20260102", "20260102", "20260105", "20260331"]
+    assert sorted(provider.batch_dates) == ["20260102", "20260102", "20260105", "20260331"]
+
+
+@pytest.mark.asyncio
+async def test_full_mode_processes_trade_dates_with_configured_concurrency(tmp_path: Path) -> None:
+    provider = ConcurrentTradeDateProvider()
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            INDEX_LIST_PATH=_empty_index_list(tmp_path),
+            MAX_CONCURRENCY=2,
+        ),
+        primary_provider=provider,
+        market_repository=None,
+        instrument_repository=None,
+        job_run_repository=None,
+    )
+
+    summary = await use_case.run(mode="full")
+
+    assert summary.status == "success"
+    assert provider.max_active_requests == 2
 
 
 @pytest.mark.asyncio
@@ -448,6 +488,30 @@ async def test_full_mode_persists_each_trade_date_immediately(tmp_path: Path) ->
         ["20260325"],
         ["20260324"],
     ]
+
+
+@pytest.mark.asyncio
+async def test_full_mode_limits_trade_date_concurrency(tmp_path: Path) -> None:
+    provider = ConcurrentTradeDateProvider()
+    status_file = tmp_path / "last-write-status.txt"
+    use_case = WriteMarketDataUseCase(
+        settings=Settings(
+            POSTGRES_DSN="postgresql://postgres:postgres@localhost:5432/stock_cache",
+            TUSHARE_TOKEN="token",
+            STATUS_FILE_PATH=status_file,
+            INDEX_LIST_PATH=_empty_index_list(tmp_path),
+        ),
+        primary_provider=provider,
+        market_repository=None,
+        instrument_repository=None,
+        job_run_repository=None,
+    )
+
+    summary = await use_case.run(mode="full", max_concurrency=2)
+
+    assert summary.status == "success"
+    assert provider.max_active_requests == 2
+    assert sorted(provider.batch_dates) == ["20260324", "20260325", "20260326", "20260327", "20260330"]
 
 
 @pytest.mark.asyncio

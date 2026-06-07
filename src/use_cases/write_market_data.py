@@ -33,6 +33,7 @@ class WriteMarketDataUseCase:
         mode: str,
         symbols: list[str] | None = None,
         write_range: WriteDateRange | None = None,
+        max_concurrency: int | None = None,
         progress: Callable[[str], None] | None = None,
     ) -> JobRunSummary:
         if progress is None:
@@ -87,49 +88,17 @@ class WriteMarketDataUseCase:
         if mode != "full":
             raise ValueError(f"unsupported write mode: {mode}")
 
-        successes: list[str] = []
         failures: dict[str, str] = {}
         target_symbol_set = set(target_symbols)
-        for index, trade_date in enumerate(trade_dates, start=1):
-            self._emit_progress(progress, f"syncing trade date {trade_date} ({index}/{len(trade_dates)})")
-            try:
-                payload = await with_retries(
-                    lambda trade_date=trade_date: self._fetch_trade_date_payload(trade_date),
-                    max_retries=self.settings.max_retries,
-                    base_delay=self.settings.retry_base_delay,
-                    backoff_factor=self.settings.retry_backoff_factor,
-                    jitter=self.settings.retry_jitter,
-                )
-                bundle = normalize_market_batches(
-                    daily_rows=payload[0],
-                    daily_basic_rows=payload[1],
-                    moneyflow_rows=payload[2],
-                    adj_factor_rows=payload[3],
-                    limit_rows=payload[4],
-                    suspend_rows=payload[5],
-                    indicator_rows=payload[6],
-                    cyq_chips_rows=payload[7],
-                    cyq_perf_rows=payload[8],
-                    target_symbols=target_symbol_set,
-                )
-                if self.market_repository is not None:
-                    self._emit_progress(
-                        progress,
-                        f"persisting {len(bundle.market_rows)} market row(s), {len(bundle.indicator_rows)} indicator row(s), "
-                        f"{len(bundle.cyq_chips_rows)} cyq chip row(s), and {len(bundle.cyq_perf_rows)} cyq perf row(s)",
-                    )
-                    await self.market_repository.upsert_daily_market(bundle.market_rows)
-                    await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
-                    await self.market_repository.upsert_daily_cyq_chips(bundle.cyq_chips_rows)
-                    await self.market_repository.upsert_daily_cyq_perf(bundle.cyq_perf_rows)
-            except StockCacheError as exc:
-                failures[f"__trade_date__:{trade_date}"] = str(exc)
-                self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
-            except Exception as exc:
-                failures[f"__trade_date__:{trade_date}"] = str(exc)
-                self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
-        if target_symbols and not failures:
-            successes = list(target_symbols)
+        failures.update(
+            await self._sync_trade_dates(
+                trade_dates=trade_dates,
+                target_symbol_set=target_symbol_set,
+                progress=progress,
+                max_concurrency=max_concurrency,
+            )
+        )
+        successes = list(target_symbols) if target_symbols and not failures else []
         if trade_dates:
             index_failures = await self._sync_indexes(
                 start_date=min(trade_dates),
@@ -155,6 +124,63 @@ class WriteMarketDataUseCase:
             )
         self._emit_progress(progress, f"write finished: status={summary.status}")
         return summary
+
+    async def _sync_trade_dates(
+        self,
+        trade_dates: list[str],
+        target_symbol_set: set[str],
+        progress: Callable[[str], None],
+        max_concurrency: int | None,
+    ) -> dict[str, str]:
+        concurrency = max(1, max_concurrency or self.settings.max_concurrency)
+        semaphore = asyncio.Semaphore(concurrency)
+        total_trade_dates = len(trade_dates)
+
+        async def sync_one(index: int, trade_date: str) -> tuple[str, str | None]:
+            async with semaphore:
+                self._emit_progress(progress, f"syncing trade date {trade_date} ({index}/{total_trade_dates})")
+                try:
+                    payload = await with_retries(
+                        lambda trade_date=trade_date: self._fetch_trade_date_payload(trade_date),
+                        max_retries=self.settings.max_retries,
+                        base_delay=self.settings.retry_base_delay,
+                        backoff_factor=self.settings.retry_backoff_factor,
+                        jitter=self.settings.retry_jitter,
+                    )
+                    bundle = normalize_market_batches(
+                        daily_rows=payload[0],
+                        daily_basic_rows=payload[1],
+                        moneyflow_rows=payload[2],
+                        adj_factor_rows=payload[3],
+                        limit_rows=payload[4],
+                        suspend_rows=payload[5],
+                        indicator_rows=payload[6],
+                        cyq_chips_rows=payload[7],
+                        cyq_perf_rows=payload[8],
+                        target_symbols=target_symbol_set,
+                    )
+                    if self.market_repository is not None:
+                        self._emit_progress(
+                            progress,
+                            f"persisting {len(bundle.market_rows)} market row(s), {len(bundle.indicator_rows)} indicator row(s), "
+                            f"{len(bundle.cyq_chips_rows)} cyq chip row(s), and {len(bundle.cyq_perf_rows)} cyq perf row(s)",
+                        )
+                        await self.market_repository.upsert_daily_market(bundle.market_rows)
+                        await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
+                        await self.market_repository.upsert_daily_cyq_chips(bundle.cyq_chips_rows)
+                        await self.market_repository.upsert_daily_cyq_perf(bundle.cyq_perf_rows)
+                except StockCacheError as exc:
+                    self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
+                    return trade_date, str(exc)
+                except Exception as exc:
+                    self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
+                    return trade_date, str(exc)
+                return trade_date, None
+
+        results = await asyncio.gather(
+            *(sync_one(index, trade_date) for index, trade_date in enumerate(trade_dates, start=1))
+        )
+        return {f"__trade_date__:{trade_date}": error for trade_date, error in results if error is not None}
 
     async def run_indexes_only(
         self,

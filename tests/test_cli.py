@@ -722,9 +722,10 @@ def test_run_write_resolves_single_name_when_building_live_use_case(monkeypatch,
             mode: str,
             symbols: list[str] | None = None,
             write_range: object | None = None,
+            max_concurrency: int | None = None,
             progress: object | None = None,
         ) -> FakeJobRunSummary:
-            _ = progress
+            _ = (max_concurrency, progress)
             calls["mode"] = mode
             calls["symbols"] = symbols
             calls["write_range"] = write_range
@@ -759,6 +760,7 @@ def test_run_write_resolves_single_name_when_building_live_use_case(monkeypatch,
             ts_code=None,
             name="Ping An",
             write_range=None,
+            max_concurrency=None,
             injected_use_case=None,
             progress=None,
         )
@@ -799,9 +801,10 @@ def test_run_write_passes_configured_batch_size_to_market_repository(monkeypatch
             mode: str,
             symbols: list[str] | None = None,
             write_range: object | None = None,
+            max_concurrency: int | None = None,
             progress: object | None = None,
         ) -> FakeJobRunSummary:
-            _ = (mode, symbols, write_range, progress)
+            _ = (mode, symbols, write_range, max_concurrency, progress)
             return FakeJobRunSummary(
                 job_id="20260331T120000Z",
                 status="success",
@@ -831,6 +834,7 @@ def test_run_write_passes_configured_batch_size_to_market_repository(monkeypatch
             ts_code=None,
             name=None,
             write_range=None,
+            max_concurrency=None,
             injected_use_case=None,
             progress=None,
         )
@@ -854,17 +858,18 @@ class FakeJobRunSummary:
 
 class FakeWriteUseCase:
     def __init__(self) -> None:
-        self.calls: list[tuple[str, list[str] | None, object | None]] = []
+        self.calls: list[tuple[str, list[str] | None, object | None, int | None]] = []
 
     async def run(
         self,
         mode: str,
         symbols: list[str] | None = None,
         write_range: object | None = None,
+        max_concurrency: int | None = None,
         progress: object | None = None,
     ) -> FakeJobRunSummary:
         _ = progress
-        self.calls.append((mode, symbols, write_range))
+        self.calls.append((mode, symbols, write_range, max_concurrency))
         return FakeJobRunSummary(
             job_id="20260331T120000Z",
             status="success",
@@ -882,9 +887,10 @@ class FakePartialWriteUseCase:
         mode: str,
         symbols: list[str] | None = None,
         write_range: object | None = None,
+        max_concurrency: int | None = None,
         progress: object | None = None,
     ) -> FakeJobRunSummary:
-        _ = (mode, symbols, write_range, progress)
+        _ = (mode, symbols, write_range, max_concurrency, progress)
         return FakeJobRunSummary(
             job_id="20260331T120000Z",
             status="partial_success",
@@ -906,7 +912,7 @@ def test_cli_write_runs_use_case_with_mode_option() -> None:
     )
 
     assert result.exit_code == 0
-    assert use_case.calls == [("full", None, None)]
+    assert use_case.calls == [("full", None, None, None)]
     payload = json.loads(result.stdout)
     assert payload == {
         "job_id": "20260331T120000Z",
@@ -952,9 +958,22 @@ def test_cli_write_single_passes_ts_code_selector() -> None:
     )
 
     assert result.exit_code == 0
-    assert use_case.calls == [("single", ["000001.SZ"], None)]
+    assert use_case.calls == [("single", ["000001.SZ"], None, None)]
     payload = json.loads(result.stdout)
     assert payload["status"] == "success"
+
+
+def test_cli_write_passes_max_concurrency_override() -> None:
+    use_case = FakeWriteUseCase()
+
+    result = runner.invoke(
+        app,
+        ["write", "--mode", "full", "--max-concurrency", "3"],
+        obj={"write_use_case": use_case},
+    )
+
+    assert result.exit_code == 0
+    assert use_case.calls == [("full", None, None, 3)]
 
 
 def test_cli_write_outputs_summary_counts_without_symbol_lists() -> None:
@@ -985,6 +1004,7 @@ def test_cli_write_passes_lookback_override(monkeypatch) -> None:
         ts_code: str | None,
         name: str | None,
         write_range: object | None,
+        max_concurrency: int | None,
         injected_use_case: object | None,
         progress: object | None,
     ) -> object:
@@ -992,6 +1012,7 @@ def test_cli_write_passes_lookback_override(monkeypatch) -> None:
         captured["ts_code"] = ts_code
         captured["name"] = name
         captured["write_range"] = write_range
+        captured["max_concurrency"] = max_concurrency
         captured["injected_use_case"] = injected_use_case
         captured["progress"] = progress
         return FakeJobRunSummary(
@@ -1012,6 +1033,7 @@ def test_cli_write_passes_lookback_override(monkeypatch) -> None:
     assert captured["mode"] == "full"
     assert captured["ts_code"] is None
     assert captured["name"] is None
+    assert captured["max_concurrency"] is None
     assert captured["injected_use_case"] is None
     assert callable(captured["progress"])
     assert captured["write_range"].lookback_trading_days == 30
@@ -1027,6 +1049,7 @@ def test_cli_write_passes_absolute_date_range(monkeypatch) -> None:
         ts_code: str | None,
         name: str | None,
         write_range: object | None,
+        max_concurrency: int | None,
         injected_use_case: object | None,
         progress: object | None,
     ) -> object:
@@ -1034,6 +1057,7 @@ def test_cli_write_passes_absolute_date_range(monkeypatch) -> None:
         captured["ts_code"] = ts_code
         captured["name"] = name
         captured["write_range"] = write_range
+        captured["max_concurrency"] = max_concurrency
         captured["progress"] = progress
         return FakeJobRunSummary(
             job_id="20260331T120000Z",
@@ -1064,6 +1088,7 @@ def test_cli_write_passes_absolute_date_range(monkeypatch) -> None:
     assert captured["mode"] == "full"
     assert captured["ts_code"] is None
     assert captured["name"] is None
+    assert captured["max_concurrency"] is None
     assert callable(captured["progress"])
     assert captured["write_range"].lookback_trading_days is None
     assert captured["write_range"].start_date == "20260101"
@@ -1114,10 +1139,11 @@ def test_cli_write_reports_postgres_precheck_failure(monkeypatch) -> None:
         ts_code: str | None,
         name: str | None,
         write_range: object | None,
+        max_concurrency: int | None,
         injected_use_case: object | None,
         progress: object | None,
     ) -> object:
-        _ = (mode, ts_code, name, write_range, injected_use_case, progress)
+        _ = (mode, ts_code, name, write_range, max_concurrency, injected_use_case, progress)
         raise DatabasePrecheckError("PostgreSQL is not reachable at configured POSTGRES_DSN.")
 
     monkeypatch.setattr("cli._run_write", fake_run_write, raising=False)
@@ -1139,10 +1165,11 @@ def test_cli_write_emits_progress_to_stderr(monkeypatch) -> None:
         ts_code: str | None,
         name: str | None,
         write_range: object | None,
+        max_concurrency: int | None,
         injected_use_case: object | None,
         progress: object | None,
     ) -> object:
-        _ = (mode, ts_code, name, write_range, injected_use_case)
+        _ = (mode, ts_code, name, write_range, max_concurrency, injected_use_case)
         assert callable(progress)
         progress("starting write")
         progress("finished write")
@@ -1174,6 +1201,7 @@ def test_cli_write_indexes_mode_passes_absolute_date_range(monkeypatch) -> None:
         ts_code: str | None,
         name: str | None,
         write_range: object | None,
+        max_concurrency: int | None,
         injected_use_case: object | None,
         progress: object | None,
     ) -> object:
@@ -1181,6 +1209,7 @@ def test_cli_write_indexes_mode_passes_absolute_date_range(monkeypatch) -> None:
         captured["ts_code"] = ts_code
         captured["name"] = name
         captured["write_range"] = write_range
+        captured["max_concurrency"] = max_concurrency
         captured["injected_use_case"] = injected_use_case
         captured["progress"] = progress
         return FakeJobRunSummary(
@@ -1204,6 +1233,7 @@ def test_cli_write_indexes_mode_passes_absolute_date_range(monkeypatch) -> None:
     assert captured["mode"] == "indexes"
     assert captured["ts_code"] is None
     assert captured["name"] is None
+    assert captured["max_concurrency"] is None
     assert captured["write_range"].start_date == "20260101"
     assert captured["write_range"].end_date == "20260331"
     assert callable(captured["progress"])

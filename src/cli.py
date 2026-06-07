@@ -101,6 +101,7 @@ async def _run_write(
     ts_code: str | None,
     name: str | None,
     write_range: WriteDateRange | None,
+    max_concurrency: int | None,
     injected_use_case: object | None,
     progress: Callable[[str], None] | None,
 ) -> object:
@@ -141,7 +142,13 @@ async def _run_write(
             )
         if mode is WriteMode.INDEXES:
             return await use_case.run_indexes_only(write_range=write_range, progress=progress)
-        return await use_case.run(mode=mode.value, symbols=symbols, write_range=write_range, progress=progress)
+        return await use_case.run(
+            mode=mode.value,
+            symbols=symbols,
+            write_range=write_range,
+            max_concurrency=max_concurrency,
+            progress=progress,
+        )
     finally:
         if pool is not None:
             await pool.close()
@@ -293,6 +300,12 @@ def write(
     lookback_trading_days: int | None = typer.Option(None, "--lookback-trading-days", min=1),
     start_date: str | None = typer.Option(None, "--start-date"),
     end_date: str | None = typer.Option(None, "--end-date"),
+    max_concurrency: int | None = typer.Option(
+        None,
+        "--max-concurrency",
+        min=1,
+        help="Override MAX_CONCURRENCY for full-mode trade-date writes.",
+    ),
 ) -> None:
     """Write cached market data."""
     _validate_write_selector(mode=mode, ts_code=ts_code, name=name)
@@ -308,6 +321,7 @@ def write(
                 ts_code=ts_code,
                 name=name,
                 write_range=write_range,
+                max_concurrency=max_concurrency,
                 injected_use_case=ctx.obj.get("write_use_case"),
                 progress=_emit_write_progress,
             )
