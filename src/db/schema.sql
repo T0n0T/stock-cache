@@ -110,6 +110,41 @@ CREATE TABLE IF NOT EXISTS daily_index (
 CREATE INDEX IF NOT EXISTS idx_daily_index_trade_date ON daily_index (trade_date);
 CREATE INDEX IF NOT EXISTS idx_daily_index_group_name_trade_date ON daily_index (group_name, trade_date);
 
+CREATE TABLE IF NOT EXISTS daily_cyq_chips (
+  ts_code TEXT NOT NULL,
+  trade_date DATE NOT NULL,
+  price DOUBLE PRECISION NOT NULL,
+  percent DOUBLE PRECISION,
+  extra_chips_jsonb JSONB NOT NULL DEFAULT '{}'::jsonb,
+  source_provider TEXT NOT NULL,
+  source_interface TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (ts_code, trade_date, price)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_cyq_chips_trade_date ON daily_cyq_chips (trade_date);
+
+CREATE TABLE IF NOT EXISTS daily_cyq_perf (
+  ts_code TEXT NOT NULL,
+  trade_date DATE NOT NULL,
+  his_low DOUBLE PRECISION,
+  his_high DOUBLE PRECISION,
+  cost_5pct DOUBLE PRECISION,
+  cost_15pct DOUBLE PRECISION,
+  cost_50pct DOUBLE PRECISION,
+  cost_85pct DOUBLE PRECISION,
+  cost_95pct DOUBLE PRECISION,
+  weight_avg DOUBLE PRECISION,
+  winner_rate DOUBLE PRECISION,
+  extra_perf_jsonb JSONB NOT NULL DEFAULT '{}'::jsonb,
+  source_provider TEXT NOT NULL,
+  source_interface TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (ts_code, trade_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_cyq_perf_trade_date ON daily_cyq_perf (trade_date);
+
 CREATE TABLE IF NOT EXISTS job_runs (
   job_id TEXT PRIMARY KEY,
   job_type TEXT NOT NULL,

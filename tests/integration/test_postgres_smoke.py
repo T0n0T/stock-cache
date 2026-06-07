@@ -9,6 +9,8 @@ from db.pool import create_pool
 
 
 CORE_TABLES = [
+    "daily_cyq_chips",
+    "daily_cyq_perf",
     "daily_index",
     "daily_indicators",
     "daily_market",

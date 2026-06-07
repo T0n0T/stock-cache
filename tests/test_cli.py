@@ -1406,6 +1406,12 @@ def test_cli_write_full_uses_installed_default_index_list_from_other_working_dir
         async def upsert_daily_index(self, rows: list[object]) -> None:
             _ = rows
 
+        async def upsert_daily_cyq_chips(self, rows: list[object]) -> None:
+            _ = rows
+
+        async def upsert_daily_cyq_perf(self, rows: list[object]) -> None:
+            _ = rows
+
     class FakeInstrumentRepository:
         def __init__(self, pool: object) -> None:
             _ = pool
@@ -1469,6 +1475,14 @@ def test_cli_write_full_uses_installed_default_index_list_from_other_working_dir
         _ = (self, trade_date)
         return [{"ts_code": "000001.SZ", "trade_date": "20260331", "macd": 0.11, "kdj_j": 81.0}]
 
+    async def fake_fetch_cyq_chips_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": "20260331", "price": 12.3, "percent": 0.4}]
+
+    async def fake_fetch_cyq_perf_by_trade_date(self: object, trade_date: str) -> list[dict[str, object]]:
+        _ = (self, trade_date)
+        return [{"ts_code": "000001.SZ", "trade_date": "20260331", "cost_50pct": 11.8}]
+
     def fake_fetch_index_daily(self: object, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         _ = self
         captured["index_daily_request"] = (ts_code, start_date, end_date)
@@ -1516,6 +1530,14 @@ def test_cli_write_full_uses_installed_default_index_list_from_other_working_dir
     monkeypatch.setattr(
         "providers.tushare_adapter.TushareAdapter.fetch_indicators_by_trade_date",
         fake_fetch_indicators_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_cyq_chips_by_trade_date",
+        fake_fetch_cyq_chips_by_trade_date,
+    )
+    monkeypatch.setattr(
+        "providers.tushare_adapter.TushareAdapter.fetch_cyq_perf_by_trade_date",
+        fake_fetch_cyq_perf_by_trade_date,
     )
     monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_index_daily", fake_fetch_index_daily)
     monkeypatch.setattr("providers.tushare_adapter.TushareAdapter.fetch_sw_daily", fake_fetch_sw_daily)

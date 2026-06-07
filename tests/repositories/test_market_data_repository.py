@@ -4,9 +4,11 @@ import json
 import pytest
 
 import repositories.market_data as market_data_module
-from domain.models import DailyIndexRow, DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyCyqChipRow, DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 from repositories.market_data import (
     MarketDataRepository,
+    build_daily_cyq_chips_upsert,
+    build_daily_cyq_perf_upsert,
     build_daily_index_upsert,
     build_daily_indicator_upsert,
     build_daily_market_upsert,
@@ -213,6 +215,74 @@ def test_build_daily_index_upsert_uses_composite_key() -> None:
     ]
 
 
+def test_build_daily_cyq_chips_upsert_uses_price_bucket_key() -> None:
+    row = DailyCyqChipRow(
+        ts_code="000001.SZ",
+        trade_date=date(2026, 3, 30),
+        price=12.34,
+        percent=0.56,
+        source_interface="cyq_chips",
+        extra_chips_jsonb={"bucket": "sample"},
+    )
+
+    sql, values = build_daily_cyq_chips_upsert([row])
+
+    assert "ON CONFLICT (ts_code, trade_date, price)" in sql
+    assert "extra_chips_jsonb" in sql
+    assert values == [
+        (
+            "000001.SZ",
+            date(2026, 3, 30),
+            12.34,
+            0.56,
+            json.dumps({"bucket": "sample"}, ensure_ascii=False),
+            "tushare",
+            "cyq_chips",
+        )
+    ]
+
+
+def test_build_daily_cyq_perf_upsert_uses_symbol_trade_date_key() -> None:
+    row = DailyCyqPerfRow(
+        ts_code="000001.SZ",
+        trade_date=date(2026, 3, 30),
+        his_low=8.1,
+        his_high=15.2,
+        cost_5pct=9.3,
+        cost_15pct=10.4,
+        cost_50pct=11.5,
+        cost_85pct=12.6,
+        cost_95pct=13.7,
+        weight_avg=11.8,
+        winner_rate=0.72,
+        source_interface="cyq_perf",
+        extra_perf_jsonb={"sample": 1},
+    )
+
+    sql, values = build_daily_cyq_perf_upsert([row])
+
+    assert "ON CONFLICT (ts_code, trade_date)" in sql
+    assert "winner_rate" in sql
+    assert values == [
+        (
+            "000001.SZ",
+            date(2026, 3, 30),
+            8.1,
+            15.2,
+            9.3,
+            10.4,
+            11.5,
+            12.6,
+            13.7,
+            11.8,
+            0.72,
+            json.dumps({"sample": 1}, ensure_ascii=False),
+            "tushare",
+            "cyq_perf",
+        )
+    ]
+
+
 class _FakeAcquire:
     def __init__(self, connection: object) -> None:
         self._connection = connection
@@ -301,29 +371,60 @@ class _FakeConnection:
                     "calc_fallback_used": False,
                 }
             ]
+        if self.calls == 3:
+            return [
+                {
+                    "ts_code": "399303.SZ",
+                    "trade_date": date(2026, 4, 30),
+                    "name": "国证2000",
+                    "group_name": "major",
+                    "open": 10936.8943,
+                    "high": 11012.2111,
+                    "low": 10910.4294,
+                    "close": 10989.9289,
+                    "pre_close": 10930.0073,
+                    "change": 59.9216,
+                    "pct_chg": 0.5482,
+                    "vol": 443411672.0,
+                    "amount": 837416148.6,
+                    "pe": None,
+                    "pb": None,
+                    "float_mv": None,
+                    "total_mv": None,
+                    "extra_index_jsonb": '{"sample": 1}',
+                    "source_provider": "tushare",
+                    "source_daily": "index_daily",
+                    "source_basic": None,
+                }
+            ]
+        if self.calls == 4:
+            return [
+                {
+                    "ts_code": "000001.SZ",
+                    "trade_date": date(2026, 3, 30),
+                    "price": 12.34,
+                    "percent": 0.56,
+                    "extra_chips_jsonb": '{"bucket": "sample"}',
+                    "source_provider": "tushare",
+                    "source_interface": "cyq_chips",
+                }
+            ]
         return [
             {
-                "ts_code": "399303.SZ",
-                "trade_date": date(2026, 4, 30),
-                "name": "国证2000",
-                "group_name": "major",
-                "open": 10936.8943,
-                "high": 11012.2111,
-                "low": 10910.4294,
-                "close": 10989.9289,
-                "pre_close": 10930.0073,
-                "change": 59.9216,
-                "pct_chg": 0.5482,
-                "vol": 443411672.0,
-                "amount": 837416148.6,
-                "pe": None,
-                "pb": None,
-                "float_mv": None,
-                "total_mv": None,
-                "extra_index_jsonb": '{"sample": 1}',
+                "ts_code": "000001.SZ",
+                "trade_date": date(2026, 3, 30),
+                "his_low": 8.1,
+                "his_high": 15.2,
+                "cost_5pct": 9.3,
+                "cost_15pct": 10.4,
+                "cost_50pct": 11.5,
+                "cost_85pct": 12.6,
+                "cost_95pct": 13.7,
+                "weight_avg": 11.8,
+                "winner_rate": 0.72,
+                "extra_perf_jsonb": '{"sample": 1}',
                 "source_provider": "tushare",
-                "source_daily": "index_daily",
-                "source_basic": None,
+                "source_interface": "cyq_perf",
             }
         ]
 
@@ -345,6 +446,10 @@ async def test_fetch_raw_decodes_jsonb_strings_from_postgres() -> None:
     assert payload["indexes"][0].name == "国证2000"
     assert payload["indexes"][0].trade_date == date(2026, 4, 30)
     assert payload["indexes"][0].extra_index_jsonb == {"sample": 1}
+    assert payload["cyq_chips"][0].price == 12.34
+    assert payload["cyq_chips"][0].extra_chips_jsonb == {"bucket": "sample"}
+    assert payload["cyq_perf"][0].cost_50pct == 11.5
+    assert payload["cyq_perf"][0].extra_perf_jsonb == {"sample": 1}
 
 
 class _WriteRecordingConnection:
@@ -384,6 +489,31 @@ def _index_rows(count: int) -> list[DailyIndexRow]:
             trade_date=date(2026, 3, 30),
             group_name="major",
             extra_index_jsonb={"idx": i},
+        )
+        for i in range(count)
+    ]
+
+
+def _cyq_chip_rows(count: int) -> list[DailyCyqChipRow]:
+    return [
+        DailyCyqChipRow(
+            ts_code="000001.SZ",
+            trade_date=date(2026, 3, 30),
+            price=float(i),
+            percent=0.1,
+            extra_chips_jsonb={"idx": i},
+        )
+        for i in range(count)
+    ]
+
+
+def _cyq_perf_rows(count: int) -> list[DailyCyqPerfRow]:
+    return [
+        DailyCyqPerfRow(
+            ts_code=f"{i:06d}.SZ",
+            trade_date=date(2026, 3, 30),
+            cost_50pct=10.0 + i,
+            extra_perf_jsonb={"idx": i},
         )
         for i in range(count)
     ]
@@ -502,6 +632,50 @@ async def test_upsert_daily_index_write_batches_splits_rows_by_batch_size(
     monkeypatch.setattr(market_data_module, "build_daily_index_upsert", _spy_builder)
 
     await repository.upsert_daily_index(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
+    assert builder_call_sizes == [2, 2, 1]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_cyq_chips_write_batches_splits_rows_by_batch_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=2)
+    rows = _cyq_chip_rows(5)
+    original_builder = market_data_module.build_daily_cyq_chips_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyCyqChipRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_cyq_chips_upsert", _spy_builder)
+
+    await repository.upsert_daily_cyq_chips(rows)
+
+    assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
+    assert builder_call_sizes == [2, 2, 1]
+
+
+@pytest.mark.asyncio
+async def test_upsert_daily_cyq_perf_write_batches_splits_rows_by_batch_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    connection = _WriteRecordingConnection()
+    repository = MarketDataRepository(_FakePool(connection), write_batch_size=2)
+    rows = _cyq_perf_rows(5)
+    original_builder = market_data_module.build_daily_cyq_perf_upsert
+    builder_call_sizes: list[int] = []
+
+    def _spy_builder(chunk_rows: list[DailyCyqPerfRow]) -> tuple[str, list[tuple[object, ...]]]:
+        builder_call_sizes.append(len(chunk_rows))
+        return original_builder(chunk_rows)
+
+    monkeypatch.setattr(market_data_module, "build_daily_cyq_perf_upsert", _spy_builder)
+
+    await repository.upsert_daily_cyq_perf(rows)
 
     assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
     assert builder_call_sizes == [2, 2, 1]

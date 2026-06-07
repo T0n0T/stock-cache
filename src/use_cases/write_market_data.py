@@ -108,15 +108,20 @@ class WriteMarketDataUseCase:
                     limit_rows=payload[4],
                     suspend_rows=payload[5],
                     indicator_rows=payload[6],
+                    cyq_chips_rows=payload[7],
+                    cyq_perf_rows=payload[8],
                     target_symbols=target_symbol_set,
                 )
                 if self.market_repository is not None:
                     self._emit_progress(
                         progress,
-                        f"persisting {len(bundle.market_rows)} market row(s) and {len(bundle.indicator_rows)} indicator row(s)",
+                        f"persisting {len(bundle.market_rows)} market row(s), {len(bundle.indicator_rows)} indicator row(s), "
+                        f"{len(bundle.cyq_chips_rows)} cyq chip row(s), and {len(bundle.cyq_perf_rows)} cyq perf row(s)",
                     )
                     await self.market_repository.upsert_daily_market(bundle.market_rows)
                     await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
+                    await self.market_repository.upsert_daily_cyq_chips(bundle.cyq_chips_rows)
+                    await self.market_repository.upsert_daily_cyq_perf(bundle.cyq_perf_rows)
             except StockCacheError as exc:
                 failures[f"__trade_date__:{trade_date}"] = str(exc)
                 self._emit_progress(progress, f"trade date {trade_date} failed: {exc}")
@@ -243,14 +248,19 @@ class WriteMarketDataUseCase:
                     daily_basic_rows=payload[1],
                     moneyflow_rows=payload[2],
                     indicator_rows=payload[3],
+                    cyq_chips_rows=payload[4],
+                    cyq_perf_rows=payload[5],
                 )
                 if self.market_repository is not None:
                     self._emit_progress(
                         progress,
-                        f"persisting {len(bundle.market_rows)} market row(s) and {len(bundle.indicator_rows)} indicator row(s)",
+                        f"persisting {len(bundle.market_rows)} market row(s), {len(bundle.indicator_rows)} indicator row(s), "
+                        f"{len(bundle.cyq_chips_rows)} cyq chip row(s), and {len(bundle.cyq_perf_rows)} cyq perf row(s)",
                     )
                     await self.market_repository.upsert_daily_market(bundle.market_rows)
                     await self.market_repository.upsert_daily_indicators(bundle.indicator_rows)
+                    await self.market_repository.upsert_daily_cyq_chips(bundle.cyq_chips_rows)
+                    await self.market_repository.upsert_daily_cyq_perf(bundle.cyq_perf_rows)
                 successes = [ts_code]
             except StockCacheError as exc:
                 failures[ts_code] = str(exc)
@@ -288,6 +298,8 @@ class WriteMarketDataUseCase:
         list[dict[str, object]],
         list[dict[str, object]],
         list[dict[str, object]],
+        list[dict[str, object]],
+        list[dict[str, object]],
     ]:
         return await self._fetch_trade_date_payload_for_provider(self.primary_provider, trade_date)
 
@@ -301,12 +313,16 @@ class WriteMarketDataUseCase:
         list[dict[str, object]],
         list[dict[str, object]],
         list[dict[str, object]],
+        list[dict[str, object]],
+        list[dict[str, object]],
     ]:
         return (
             self.primary_provider.fetch_daily(ts_code, start_date, end_date),
             self.primary_provider.fetch_daily_basic(ts_code, start_date, end_date),
             self.primary_provider.fetch_moneyflow(ts_code, start_date, end_date),
             self.primary_provider.fetch_indicators(ts_code, start_date, end_date),
+            self.primary_provider.fetch_cyq_chips(ts_code, start_date, end_date),
+            self.primary_provider.fetch_cyq_perf(ts_code, start_date, end_date),
         )
 
     @staticmethod
@@ -314,6 +330,8 @@ class WriteMarketDataUseCase:
         provider: object,
         trade_date: str,
     ) -> tuple[
+        list[dict[str, object]],
+        list[dict[str, object]],
         list[dict[str, object]],
         list[dict[str, object]],
         list[dict[str, object]],
@@ -330,6 +348,8 @@ class WriteMarketDataUseCase:
             limit_rows,
             suspend_rows,
             indicator_rows,
+            cyq_chips_rows,
+            cyq_perf_rows,
         ) = await asyncio.gather(
             provider.fetch_daily_by_trade_date(trade_date),
             provider.fetch_daily_basic_by_trade_date(trade_date),
@@ -338,6 +358,8 @@ class WriteMarketDataUseCase:
             provider.fetch_stk_limit_by_trade_date(trade_date),
             provider.fetch_suspend_d_by_trade_date(trade_date),
             provider.fetch_indicators_by_trade_date(trade_date),
+            provider.fetch_cyq_chips_by_trade_date(trade_date),
+            provider.fetch_cyq_perf_by_trade_date(trade_date),
         )
         return (
             daily_rows,
@@ -347,6 +369,8 @@ class WriteMarketDataUseCase:
             limit_rows,
             suspend_rows,
             indicator_rows,
+            cyq_chips_rows,
+            cyq_perf_rows,
         )
 
     def _trade_dates(self, write_range: WriteDateRange | None = None) -> list[str]:

@@ -98,6 +98,35 @@ class DailyIndexRow:
 
 
 @dataclass(slots=True)
+class DailyCyqChipRow:
+    ts_code: str
+    trade_date: date
+    price: float | None = None
+    percent: float | None = None
+    extra_chips_jsonb: dict[str, object] = field(default_factory=dict)
+    source_provider: str = "tushare"
+    source_interface: str = "cyq_chips"
+
+
+@dataclass(slots=True)
+class DailyCyqPerfRow:
+    ts_code: str
+    trade_date: date
+    his_low: float | None = None
+    his_high: float | None = None
+    cost_5pct: float | None = None
+    cost_15pct: float | None = None
+    cost_50pct: float | None = None
+    cost_85pct: float | None = None
+    cost_95pct: float | None = None
+    weight_avg: float | None = None
+    winner_rate: float | None = None
+    extra_perf_jsonb: dict[str, object] = field(default_factory=dict)
+    source_provider: str = "tushare"
+    source_interface: str = "cyq_perf"
+
+
+@dataclass(slots=True)
 class JobRunSummary:
     job_id: str
     status: str

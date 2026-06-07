@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from domain.models import DailyIndexRow, DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyCyqChipRow, DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 from use_cases.read_raw import ReadRawMarketDataUseCase
 
 
@@ -12,6 +12,8 @@ class FakeMarketRepository:
             "market": [DailyMarketRow(ts_code=ts_code, trade_date=date(2026, 3, 30), close=12.4)],
             "indicators": [DailyIndicatorRow(ts_code=ts_code, trade_date=date(2026, 3, 30), macd=0.1)],
             "indexes": [],
+            "cyq_chips": [DailyCyqChipRow(ts_code=ts_code, trade_date=date(2026, 3, 30), price=12.3)],
+            "cyq_perf": [DailyCyqPerfRow(ts_code=ts_code, trade_date=date(2026, 3, 30), cost_50pct=11.8)],
         }
 
 
@@ -29,6 +31,10 @@ async def test_read_raw_returns_json_ready_payload() -> None:
     assert payload["data"]["market"][0]["trade_date"] == "2026-03-30"
     assert payload["data"]["indicators"][0]["trade_date"] == "2026-03-30"
     assert payload["meta"]["row_count_indexes"] == 0
+    assert payload["data"]["cyq_chips"][0]["price"] == 12.3
+    assert payload["data"]["cyq_perf"][0]["cost_50pct"] == 11.8
+    assert payload["meta"]["row_count_cyq_chips"] == 1
+    assert payload["meta"]["row_count_cyq_perf"] == 1
 
 
 class FakeIndexRepository:
@@ -47,6 +53,8 @@ class FakeIndexRepository:
                     source_daily="index_daily",
                 )
             ],
+            "cyq_chips": [],
+            "cyq_perf": [],
         }
 
 

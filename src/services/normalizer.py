@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 
-from domain.models import DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyCyqChipRow, DailyCyqPerfRow, DailyIndicatorRow, DailyMarketRow
 
 
 @dataclass(slots=True)
 class NormalizedSymbolBundle:
     market_rows: list[DailyMarketRow]
     indicator_rows: list[DailyIndicatorRow]
+    cyq_chips_rows: list[DailyCyqChipRow]
+    cyq_perf_rows: list[DailyCyqPerfRow]
 
 
 def _parse_trade_date(value: str) -> date:
@@ -43,6 +45,8 @@ def normalize_market_batches(
     limit_rows: list[dict[str, object]],
     suspend_rows: list[dict[str, object]],
     indicator_rows: list[dict[str, object]],
+    cyq_chips_rows: list[dict[str, object]] | None = None,
+    cyq_perf_rows: list[dict[str, object]] | None = None,
     target_symbols: set[str] | None = None,
 ) -> NormalizedSymbolBundle:
     merged_market: dict[tuple[str, str], dict[str, object]] = {}
@@ -51,6 +55,16 @@ def normalize_market_batches(
 
     merged_indicators: dict[tuple[str, str], dict[str, object]] = {}
     _merge_rows(indicator_rows, merged_indicators, target_symbols)
+    merged_cyq_chips: dict[tuple[str, str, str], dict[str, object]] = {}
+    for row in cyq_chips_rows or []:
+        ts_code = str(row["ts_code"])
+        if target_symbols is not None and ts_code not in target_symbols:
+            continue
+        trade_date = str(row["trade_date"])
+        price = str(row.get("price"))
+        merged_cyq_chips.setdefault((ts_code, trade_date, price), {}).update(row)
+    merged_cyq_perf: dict[tuple[str, str], dict[str, object]] = {}
+    _merge_rows(cyq_perf_rows or [], merged_cyq_perf, target_symbols)
 
     market_core_fields = {
         "ts_code",
@@ -168,6 +182,27 @@ def normalize_market_batches(
         "total_mv",
         "circ_mv",
     }
+    cyq_chips_core_fields = {
+        "ts_code",
+        "trade_date",
+        "price",
+        "percent",
+        "source_interface",
+    }
+    cyq_perf_core_fields = {
+        "ts_code",
+        "trade_date",
+        "his_low",
+        "his_high",
+        "cost_5pct",
+        "cost_15pct",
+        "cost_50pct",
+        "cost_85pct",
+        "cost_95pct",
+        "weight_avg",
+        "winner_rate",
+        "source_interface",
+    }
 
     market = [
         DailyMarketRow(
@@ -229,7 +264,42 @@ def normalize_market_batches(
         )
         for (ts_code, trade_date), payload in sorted(merged_indicators.items())
     ]
-    return NormalizedSymbolBundle(market_rows=market, indicator_rows=indicators)
+    chips = [
+        DailyCyqChipRow(
+            ts_code=ts_code,
+            trade_date=_parse_trade_date(trade_date),
+            price=payload.get("price"),
+            percent=payload.get("percent"),
+            extra_chips_jsonb={key: value for key, value in payload.items() if key not in cyq_chips_core_fields},
+            source_interface=str(payload.get("source_interface") or "cyq_chips"),
+        )
+        for (ts_code, trade_date, _price), payload in sorted(merged_cyq_chips.items())
+        if payload.get("price") is not None
+    ]
+    perf = [
+        DailyCyqPerfRow(
+            ts_code=ts_code,
+            trade_date=_parse_trade_date(trade_date),
+            his_low=payload.get("his_low"),
+            his_high=payload.get("his_high"),
+            cost_5pct=payload.get("cost_5pct"),
+            cost_15pct=payload.get("cost_15pct"),
+            cost_50pct=payload.get("cost_50pct"),
+            cost_85pct=payload.get("cost_85pct"),
+            cost_95pct=payload.get("cost_95pct"),
+            weight_avg=payload.get("weight_avg"),
+            winner_rate=payload.get("winner_rate"),
+            extra_perf_jsonb={key: value for key, value in payload.items() if key not in cyq_perf_core_fields},
+            source_interface=str(payload.get("source_interface") or "cyq_perf"),
+        )
+        for (ts_code, trade_date), payload in sorted(merged_cyq_perf.items())
+    ]
+    return NormalizedSymbolBundle(
+        market_rows=market,
+        indicator_rows=indicators,
+        cyq_chips_rows=chips,
+        cyq_perf_rows=perf,
+    )
 
 
 def normalize_symbol_bundle(
@@ -238,11 +308,15 @@ def normalize_symbol_bundle(
     daily_basic_rows: list[dict[str, object]],
     moneyflow_rows: list[dict[str, object]],
     indicator_rows: list[dict[str, object]],
+    cyq_chips_rows: list[dict[str, object]] | None = None,
+    cyq_perf_rows: list[dict[str, object]] | None = None,
 ) -> NormalizedSymbolBundle:
     daily_rows = [{**row, "ts_code": ts_code} for row in daily_rows]
     daily_basic_rows = [{**row, "ts_code": ts_code} for row in daily_basic_rows]
     moneyflow_rows = [{**row, "ts_code": ts_code} for row in moneyflow_rows]
     indicator_rows = [{**row, "ts_code": ts_code} for row in indicator_rows]
+    cyq_chips_rows = [{**row, "ts_code": ts_code} for row in cyq_chips_rows or []]
+    cyq_perf_rows = [{**row, "ts_code": ts_code} for row in cyq_perf_rows or []]
     return normalize_market_batches(
         daily_rows=daily_rows,
         daily_basic_rows=daily_basic_rows,
@@ -251,5 +325,7 @@ def normalize_symbol_bundle(
         limit_rows=[],
         suspend_rows=[],
         indicator_rows=indicator_rows,
+        cyq_chips_rows=cyq_chips_rows,
+        cyq_perf_rows=cyq_perf_rows,
         target_symbols={ts_code},
     )

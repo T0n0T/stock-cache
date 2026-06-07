@@ -35,6 +35,13 @@ class _InventoryConnection:
                 {"trade_date": date(2026, 1, 2)},
                 {"trade_date": date(2026, 1, 5)},
             ]
+        if "from daily_cyq_chips" in query.lower():
+            return [
+                {"trade_date": date(2026, 1, 2)},
+                {"trade_date": date(2026, 1, 5)},
+            ]
+        if "from daily_cyq_perf" in query.lower():
+            return [{"trade_date": date(2026, 1, 5)}]
         return [{"trade_date": date(2026, 1, 2)}]
 
 
@@ -48,6 +55,12 @@ class _DeleteConnection:
             return "DELETE 12"
         if "delete from daily_indicators" in query.lower():
             return "DELETE 9"
+        if "delete from daily_index" in query.lower():
+            return "DELETE 3"
+        if "delete from daily_cyq_chips" in query.lower():
+            return "DELETE 30"
+        if "delete from daily_cyq_perf" in query.lower():
+            return "DELETE 6"
         return "DELETE 9"
 
 
@@ -61,6 +74,8 @@ async def test_fetch_trade_date_inventory_returns_sorted_iso_dates() -> None:
         "daily_market": ["2026-01-02", "2026-01-05"],
         "daily_indicators": ["2026-01-02"],
         "daily_index": ["2026-01-02"],
+        "daily_cyq_chips": ["2026-01-02", "2026-01-05"],
+        "daily_cyq_perf": ["2026-01-05"],
     }
 
 
@@ -74,8 +89,12 @@ async def test_delete_trade_date_range_returns_deleted_row_counts() -> None:
     assert payload == {
         "daily_market_deleted": 12,
         "daily_indicators_deleted": 9,
-        "daily_index_deleted": 9,
+        "daily_index_deleted": 3,
+        "daily_cyq_chips_deleted": 30,
+        "daily_cyq_perf_deleted": 6,
     }
     assert connection.calls[0][1:] == (date(2026, 1, 1), date(2026, 1, 31))
     assert connection.calls[1][1:] == (date(2026, 1, 1), date(2026, 1, 31))
     assert connection.calls[2][1:] == (date(2026, 1, 1), date(2026, 1, 31))
+    assert connection.calls[3][1:] == (date(2026, 1, 1), date(2026, 1, 31))
+    assert connection.calls[4][1:] == (date(2026, 1, 1), date(2026, 1, 31))

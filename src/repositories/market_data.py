@@ -5,7 +5,7 @@ from typing import Callable, TypeVar
 
 import asyncpg
 
-from domain.models import DailyIndexRow, DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyCyqChipRow, DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 
 RowT = TypeVar("RowT")
 
@@ -61,6 +61,16 @@ class MarketDataRepository:
             return
         await self._upsert_in_chunks(rows, build_daily_index_upsert)
 
+    async def upsert_daily_cyq_chips(self, rows: list[DailyCyqChipRow]) -> None:
+        if not rows:
+            return
+        await self._upsert_in_chunks(rows, build_daily_cyq_chips_upsert)
+
+    async def upsert_daily_cyq_perf(self, rows: list[DailyCyqPerfRow]) -> None:
+        if not rows:
+            return
+        await self._upsert_in_chunks(rows, build_daily_cyq_perf_upsert)
+
     async def _upsert_in_chunks(
         self,
         rows: list[RowT],
@@ -112,6 +122,32 @@ class MarketDataRepository:
                        pre_close, change, pct_chg, vol, amount, pe, pb, float_mv,
                        total_mv, extra_index_jsonb, source_provider, source_daily, source_basic
                 from daily_index
+                where ts_code = $1 and trade_date between $2 and $3
+                order by trade_date
+                """,
+                ts_code,
+                start,
+                end,
+            )
+            cyq_chip_rows = await connection.fetch(
+                """
+                select ts_code, trade_date, price, percent, extra_chips_jsonb,
+                       source_provider, source_interface
+                from daily_cyq_chips
+                where ts_code = $1 and trade_date between $2 and $3
+                order by trade_date, price
+                """,
+                ts_code,
+                start,
+                end,
+            )
+            cyq_perf_rows = await connection.fetch(
+                """
+                select ts_code, trade_date, his_low, his_high, cost_5pct,
+                       cost_15pct, cost_50pct, cost_85pct, cost_95pct,
+                       weight_avg, winner_rate, extra_perf_jsonb,
+                       source_provider, source_interface
+                from daily_cyq_perf
                 where ts_code = $1 and trade_date between $2 and $3
                 order by trade_date
                 """,
@@ -209,6 +245,37 @@ class MarketDataRepository:
                 )
                 for row in index_rows
             ],
+            "cyq_chips": [
+                DailyCyqChipRow(
+                    ts_code=row["ts_code"],
+                    trade_date=_coerce_date(row["trade_date"]),
+                    price=row["price"],
+                    percent=row["percent"],
+                    extra_chips_jsonb=_decode_jsonb(row["extra_chips_jsonb"]),
+                    source_provider=row["source_provider"],
+                    source_interface=row["source_interface"],
+                )
+                for row in cyq_chip_rows
+            ],
+            "cyq_perf": [
+                DailyCyqPerfRow(
+                    ts_code=row["ts_code"],
+                    trade_date=_coerce_date(row["trade_date"]),
+                    his_low=row["his_low"],
+                    his_high=row["his_high"],
+                    cost_5pct=row["cost_5pct"],
+                    cost_15pct=row["cost_15pct"],
+                    cost_50pct=row["cost_50pct"],
+                    cost_85pct=row["cost_85pct"],
+                    cost_95pct=row["cost_95pct"],
+                    weight_avg=row["weight_avg"],
+                    winner_rate=row["winner_rate"],
+                    extra_perf_jsonb=_decode_jsonb(row["extra_perf_jsonb"]),
+                    source_provider=row["source_provider"],
+                    source_interface=row["source_interface"],
+                )
+                for row in cyq_perf_rows
+            ],
         }
 
     async def screen(self, trade_date: str, filters: dict[str, object]) -> list[dict[str, object]]:
@@ -281,11 +348,27 @@ class MarketDataRepository:
                 order by trade_date
                 """
             )
+            cyq_chip_rows = await connection.fetch(
+                """
+                select distinct trade_date
+                from daily_cyq_chips
+                order by trade_date
+                """
+            )
+            cyq_perf_rows = await connection.fetch(
+                """
+                select distinct trade_date
+                from daily_cyq_perf
+                order by trade_date
+                """
+            )
 
         return {
             "daily_market": [_coerce_date(row["trade_date"]).isoformat() for row in market_rows],
             "daily_indicators": [_coerce_date(row["trade_date"]).isoformat() for row in indicator_rows],
             "daily_index": [_coerce_date(row["trade_date"]).isoformat() for row in index_rows],
+            "daily_cyq_chips": [_coerce_date(row["trade_date"]).isoformat() for row in cyq_chip_rows],
+            "daily_cyq_perf": [_coerce_date(row["trade_date"]).isoformat() for row in cyq_perf_rows],
         }
 
     async def delete_trade_date_range(self, start_date: str, end_date: str) -> dict[str, int]:
@@ -316,11 +399,29 @@ class MarketDataRepository:
                 start,
                 end,
             )
+            cyq_chips_result = await connection.execute(
+                """
+                delete from daily_cyq_chips
+                where trade_date between $1 and $2
+                """,
+                start,
+                end,
+            )
+            cyq_perf_result = await connection.execute(
+                """
+                delete from daily_cyq_perf
+                where trade_date between $1 and $2
+                """,
+                start,
+                end,
+            )
 
         return {
             "daily_market_deleted": _affected_row_count(market_result),
             "daily_indicators_deleted": _affected_row_count(indicator_result),
             "daily_index_deleted": _affected_row_count(index_result),
+            "daily_cyq_chips_deleted": _affected_row_count(cyq_chips_result),
+            "daily_cyq_perf_deleted": _affected_row_count(cyq_perf_result),
         }
 
 
@@ -589,6 +690,94 @@ def build_daily_index_upsert(rows: list[DailyIndexRow]) -> tuple[str, list[tuple
             row.source_provider,
             row.source_daily,
             row.source_basic,
+        )
+        for row in rows
+    ]
+
+
+def build_daily_cyq_chips_upsert(rows: list[DailyCyqChipRow]) -> tuple[str, list[tuple[object, ...]]]:
+    sql = """
+    INSERT INTO daily_cyq_chips (
+        ts_code,
+        trade_date,
+        price,
+        percent,
+        extra_chips_jsonb,
+        source_provider,
+        source_interface
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ON CONFLICT (ts_code, trade_date, price) DO UPDATE
+    SET percent = EXCLUDED.percent,
+        extra_chips_jsonb = EXCLUDED.extra_chips_jsonb,
+        source_provider = EXCLUDED.source_provider,
+        source_interface = EXCLUDED.source_interface,
+        updated_at = NOW()
+    """
+    return sql, [
+        (
+            row.ts_code,
+            row.trade_date,
+            row.price,
+            row.percent,
+            json.dumps(_json_ready(row.extra_chips_jsonb), ensure_ascii=False),
+            row.source_provider,
+            row.source_interface,
+        )
+        for row in rows
+    ]
+
+
+def build_daily_cyq_perf_upsert(rows: list[DailyCyqPerfRow]) -> tuple[str, list[tuple[object, ...]]]:
+    sql = """
+    INSERT INTO daily_cyq_perf (
+        ts_code,
+        trade_date,
+        his_low,
+        his_high,
+        cost_5pct,
+        cost_15pct,
+        cost_50pct,
+        cost_85pct,
+        cost_95pct,
+        weight_avg,
+        winner_rate,
+        extra_perf_jsonb,
+        source_provider,
+        source_interface
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    ON CONFLICT (ts_code, trade_date) DO UPDATE
+    SET his_low = EXCLUDED.his_low,
+        his_high = EXCLUDED.his_high,
+        cost_5pct = EXCLUDED.cost_5pct,
+        cost_15pct = EXCLUDED.cost_15pct,
+        cost_50pct = EXCLUDED.cost_50pct,
+        cost_85pct = EXCLUDED.cost_85pct,
+        cost_95pct = EXCLUDED.cost_95pct,
+        weight_avg = EXCLUDED.weight_avg,
+        winner_rate = EXCLUDED.winner_rate,
+        extra_perf_jsonb = EXCLUDED.extra_perf_jsonb,
+        source_provider = EXCLUDED.source_provider,
+        source_interface = EXCLUDED.source_interface,
+        updated_at = NOW()
+    """
+    return sql, [
+        (
+            row.ts_code,
+            row.trade_date,
+            row.his_low,
+            row.his_high,
+            row.cost_5pct,
+            row.cost_15pct,
+            row.cost_50pct,
+            row.cost_85pct,
+            row.cost_95pct,
+            row.weight_avg,
+            row.winner_rate,
+            json.dumps(_json_ready(row.extra_perf_jsonb), ensure_ascii=False),
+            row.source_provider,
+            row.source_interface,
         )
         for row in rows
     ]

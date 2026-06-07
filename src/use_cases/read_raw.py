@@ -21,12 +21,22 @@ class ReadRawMarketDataUseCase:
         market = [_json_ready(asdict(row)) for row in rows["market"]]
         indicators = [_json_ready(asdict(row)) for row in rows["indicators"]]
         indexes = [_json_ready(asdict(row)) for row in rows["indexes"]]
+        cyq_chips = [_json_ready(asdict(row)) for row in rows.get("cyq_chips", [])]
+        cyq_perf = [_json_ready(asdict(row)) for row in rows.get("cyq_perf", [])]
         return {
             "query": {"ts_code": ts_code, "start_date": start_date, "end_date": end_date},
-            "data": {"market": market, "indicators": indicators, "indexes": indexes},
+            "data": {
+                "market": market,
+                "indicators": indicators,
+                "indexes": indexes,
+                "cyq_chips": cyq_chips,
+                "cyq_perf": cyq_perf,
+            },
             "meta": {
                 "row_count_market": len(market),
                 "row_count_indicators": len(indicators),
                 "row_count_indexes": len(indexes),
+                "row_count_cyq_chips": len(cyq_chips),
+                "row_count_cyq_perf": len(cyq_perf),
             },
         }

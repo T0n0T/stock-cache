@@ -151,6 +151,60 @@ def test_normalize_market_batches_merges_bulk_rows_by_symbol_and_trade_date() ->
     }
 
 
+def test_normalize_market_batches_builds_cyq_rows() -> None:
+    result = normalize_market_batches(
+        daily_rows=[],
+        daily_basic_rows=[],
+        moneyflow_rows=[],
+        adj_factor_rows=[],
+        limit_rows=[],
+        suspend_rows=[],
+        indicator_rows=[],
+        cyq_chips_rows=[
+            {
+                "ts_code": "000001.SZ",
+                "trade_date": "20260330",
+                "price": 12.34,
+                "percent": 0.56,
+                "source_interface": "cyq_chips",
+                "extra_bucket": "kept",
+            }
+        ],
+        cyq_perf_rows=[
+            {
+                "ts_code": "000001.SZ",
+                "trade_date": "20260330",
+                "his_low": 8.1,
+                "his_high": 15.2,
+                "cost_5pct": 9.3,
+                "cost_15pct": 10.4,
+                "cost_50pct": 11.5,
+                "cost_85pct": 12.6,
+                "cost_95pct": 13.7,
+                "weight_avg": 11.8,
+                "winner_rate": 0.72,
+                "source_interface": "cyq_perf",
+                "extra_metric": "kept",
+            }
+        ],
+    )
+
+    assert len(result.cyq_chips_rows) == 1
+    chip = result.cyq_chips_rows[0]
+    assert chip.ts_code == "000001.SZ"
+    assert chip.trade_date == date(2026, 3, 30)
+    assert chip.price == 12.34
+    assert chip.percent == 0.56
+    assert chip.source_interface == "cyq_chips"
+    assert chip.extra_chips_jsonb == {"extra_bucket": "kept"}
+    assert len(result.cyq_perf_rows) == 1
+    perf = result.cyq_perf_rows[0]
+    assert perf.cost_50pct == 11.5
+    assert perf.winner_rate == 0.72
+    assert perf.source_interface == "cyq_perf"
+    assert perf.extra_perf_jsonb == {"extra_metric": "kept"}
+
+
 def test_normalize_market_batches_maps_stk_factor_pro_suffix_fields_to_core_indicator_columns() -> None:
     result = normalize_market_batches(
         daily_rows=[],
