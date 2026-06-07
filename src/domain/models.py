@@ -10,6 +10,7 @@ class Instrument:
     exchange: str
     list_status: str
     is_st: bool
+    industry: str | None = None
 
 
 @dataclass(slots=True)

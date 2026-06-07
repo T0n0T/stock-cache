@@ -30,14 +30,16 @@ class InstrumentRepository:
             ts_code,
             symbol,
             name,
+            industry,
             exchange,
             list_status,
             is_st
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (ts_code) DO UPDATE
         SET symbol = EXCLUDED.symbol,
             name = EXCLUDED.name,
+            industry = EXCLUDED.industry,
             exchange = EXCLUDED.exchange,
             list_status = EXCLUDED.list_status,
             is_st = EXCLUDED.is_st,
@@ -48,6 +50,7 @@ class InstrumentRepository:
                 instrument.ts_code,
                 instrument.symbol,
                 instrument.name,
+                instrument.industry,
                 instrument.exchange,
                 instrument.list_status,
                 instrument.is_st,
@@ -59,7 +62,7 @@ class InstrumentRepository:
 
     async def find_by_name(self, name: str) -> Instrument:
         sql = """
-        SELECT ts_code, symbol, name, exchange, list_status, is_st
+        SELECT ts_code, symbol, name, industry, exchange, list_status, is_st
         FROM instruments
         WHERE name = $1
         ORDER BY ts_code
@@ -81,4 +84,5 @@ class InstrumentRepository:
             exchange=row["exchange"],
             list_status=row["list_status"],
             is_st=row["is_st"],
+            industry=row["industry"],
         )

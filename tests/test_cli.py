@@ -1644,6 +1644,7 @@ def test_tushare_adapter_fetch_instruments_maps_stock_basic_rows(monkeypatch) ->
                 "ts_code": "000001.SZ",
                 "symbol": "000001",
                 "name": "Ping An Bank",
+                "industry": "银行",
                 "exchange": "SZSE",
                 "list_status": "L",
             }
@@ -1661,6 +1662,7 @@ def test_tushare_adapter_fetch_instruments_maps_stock_basic_rows(monkeypatch) ->
     assert instruments[0].ts_code == "000001.SZ"
     assert instruments[0].symbol == "000001"
     assert instruments[0].name == "Ping An Bank"
+    assert instruments[0].industry == "银行"
     assert instruments[0].exchange == "SZSE"
     assert instruments[0].list_status == "L"
     assert instruments[0].is_st is False
@@ -1687,6 +1689,30 @@ def test_tushare_adapter_fetch_instruments_infers_exchange_from_ts_code_when_mis
     assert len(instruments) == 1
     assert instruments[0].exchange == "SSE"
     assert instruments[0].list_status == "L"
+
+
+def test_tushare_adapter_fetch_instruments_normalizes_nan_industry(monkeypatch) -> None:
+    frame = FakeFrame(
+        [
+            {
+                "ts_code": "600000.SH",
+                "symbol": "600000",
+                "name": "浦发银行",
+                "industry": float("nan"),
+                "exchange": "SSE",
+                "list_status": "L",
+            }
+        ]
+    )
+    client = FakeTushareProClient(frame)
+
+    monkeypatch.setattr("providers.tushare_adapter.ts.pro_api", lambda token: client)
+
+    adapter = TushareAdapter("demo-token")
+    instruments = list(adapter.fetch_instruments())
+
+    assert len(instruments) == 1
+    assert instruments[0].industry is None
 
 
 def test_tushare_adapter_fetch_recent_trade_dates_returns_open_days(monkeypatch) -> None:

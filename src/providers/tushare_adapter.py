@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta
+import math
 from collections.abc import Sequence
 from queue import Empty, Queue
 from threading import Thread
@@ -21,6 +22,15 @@ def _infer_exchange(ts_code: str) -> str:
     return ""
 
 
+def _optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    text = str(value).strip()
+    return text or None
+
+
 class TushareAdapter:
     def __init__(self, token: str, timeout_seconds: float = 20) -> None:
         self._pro = ts.pro_api(token)
@@ -36,6 +46,7 @@ class TushareAdapter:
                 exchange=row.get("exchange") or _infer_exchange(str(row["ts_code"])),
                 list_status=str(row.get("list_status") or "L"),
                 is_st=False,
+                industry=_optional_text(row.get("industry")),
             )
             for row in frame.to_dict("records")
         ]

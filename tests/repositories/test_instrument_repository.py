@@ -1,5 +1,6 @@
 import pytest
 
+from domain.models import Instrument
 from repositories.instruments import (
     InstrumentNameAmbiguousError,
     InstrumentNotFoundError,
@@ -30,10 +31,38 @@ class _FakeConnection:
     def __init__(self, rows: list[dict[str, object]]) -> None:
         self._rows = rows
         self.calls: list[tuple[str, str]] = []
+        self.executemany_calls: list[tuple[str, list[tuple[object, ...]]]] = []
 
     async def fetch(self, query: str, name: str) -> list[dict[str, object]]:
         self.calls.append((query, name))
         return self._rows
+
+    async def executemany(self, query: str, values: list[tuple[object, ...]]) -> None:
+        self.executemany_calls.append((query, values))
+
+
+@pytest.mark.asyncio
+async def test_upsert_instruments_writes_industry() -> None:
+    connection = _FakeConnection([])
+    repository = InstrumentRepository(_FakePool(connection))
+
+    await repository.upsert_instruments(
+        [
+            Instrument(
+                ts_code="000001.SZ",
+                symbol="000001",
+                name="Ping An Bank",
+                exchange="SZSE",
+                list_status="L",
+                is_st=False,
+                industry="银行",
+            )
+        ]
+    )
+
+    query, values = connection.executemany_calls[0]
+    assert "industry" in query
+    assert values == [("000001.SZ", "000001", "Ping An Bank", "银行", "SZSE", "L", False)]
 
 
 @pytest.mark.asyncio
@@ -44,6 +73,7 @@ async def test_find_by_name_returns_unique_instrument() -> None:
                 "ts_code": "000001.SZ",
                 "symbol": "000001",
                 "name": "Ping An Bank",
+                "industry": "银行",
                 "exchange": "SZSE",
                 "list_status": "L",
                 "is_st": False,
@@ -56,6 +86,7 @@ async def test_find_by_name_returns_unique_instrument() -> None:
     assert instrument.ts_code == "000001.SZ"
     assert instrument.symbol == "000001"
     assert instrument.name == "Ping An Bank"
+    assert instrument.industry == "银行"
     assert connection.calls[0][1] == "Ping An Bank"
 
 

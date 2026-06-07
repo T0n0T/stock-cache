@@ -36,7 +36,10 @@ The codebase uses a flat `src` layout. Keep imports like `from config import Set
 
 - For CLI or packaging changes, run at least `uv run stock-cache --help`.
 - For Python logic changes, prefer targeted pytest commands first, then broader coverage if the touched area is stable.
-- Some integration tests require a live PostgreSQL instance and can be unsuitable in restricted sandboxes. State clearly what you did and did not verify.
+- Before running integration tests or any command that depends on PostgreSQL, first check whether the local PostgreSQL instance is already running and healthy. Prefer checking the current `POSTGRES_DSN` with the project Python dependencies (for example, an `asyncpg` connection and a public-table listing) and, when relevant, inspect `docker ps --filter name=stock-cache-postgres`; do not start, recreate, or reset the repository PostgreSQL service unless the user explicitly asks.
+- Never run destructive integration tests against a live or user-populated `POSTGRES_DSN`. In particular, do not run `uv run pytest tests`, `tests/integration/test_postgres_smoke.py`, or any test/helper that can `DROP`, `TRUNCATE`, or bulk `DELETE` core tables (`daily_market`, `daily_indicators`, `daily_index`, `instruments`, `job_runs`) unless the database is a clearly isolated disposable test database and the user has approved that it may be destroyed.
+- Treat the local `stock_cache` database as potentially containing user data. Before any command that may alter schema or large amounts of data, state the exact target DSN/database, inspect existing tables and row counts, and get explicit confirmation if the command can remove or overwrite cached market data.
+- Some integration tests require a live PostgreSQL instance with the expected core tables and a clean enough schema. State clearly what you checked, what database state you found, and what you did and did not verify.
 
 ## Avoid
 
