@@ -99,17 +99,6 @@ class DailyIndexRow:
 
 
 @dataclass(slots=True)
-class DailyCyqChipRow:
-    ts_code: str
-    trade_date: date
-    price: float | None = None
-    percent: float | None = None
-    extra_chips_jsonb: dict[str, object] = field(default_factory=dict)
-    source_provider: str = "tushare"
-    source_interface: str = "cyq_chips"
-
-
-@dataclass(slots=True)
 class DailyCyqPerfRow:
     ts_code: str
     trade_date: date

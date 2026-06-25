@@ -154,7 +154,7 @@ uv run stock-cache --env-file /path/to/.env init-db
 ```json
 {
   "status": "ok",
-  "created_tables": ["daily_cyq_chips", "daily_cyq_perf", "daily_index", "daily_indicators", "daily_market", "instruments", "job_runs"],
+  "created_tables": ["daily_cyq_perf", "daily_index", "daily_indicators", "daily_market", "instruments", "job_runs"],
   "already_present": [],
   "missing": []
 }
@@ -166,7 +166,6 @@ uv run stock-cache --env-file /path/to/.env init-db
 - `daily_index`
 - `daily_market`
 - `daily_indicators`
-- `daily_cyq_chips`
 - `daily_cyq_perf`
 - `job_runs`
 
@@ -323,14 +322,6 @@ uv run stock-cache stats date-range
         ["2026-03-31"]
       ]
     },
-    "daily_cyq_chips": {
-      "min_trade_date": "2026-01-02",
-      "max_trade_date": "2026-03-31",
-      "continuous_ranges": [
-        ["2026-01-02", "2026-01-05", "2026-01-06"],
-        ["2026-03-31"]
-      ]
-    },
     "daily_cyq_perf": {
       "min_trade_date": "2026-01-02",
       "max_trade_date": "2026-03-31",
@@ -373,11 +364,10 @@ uv run stock-cache delete by-date \
     "daily_market_deleted": 12,
     "daily_indicators_deleted": 9,
     "daily_index_deleted": 3,
-    "daily_cyq_chips_deleted": 30,
     "daily_cyq_perf_deleted": 6
   },
   "meta": {
-    "total_deleted_rows": 60
+    "total_deleted_rows": 30
   }
 }
 ```
@@ -417,20 +407,18 @@ uv run stock-cache read raw \
     "market": [],
     "indicators": [],
     "indexes": [],
-    "cyq_chips": [],
     "cyq_perf": []
   },
   "meta": {
     "row_count_market": 0,
     "row_count_indicators": 0,
     "row_count_indexes": 0,
-    "row_count_cyq_chips": 0,
     "row_count_cyq_perf": 0
   }
 }
 ```
 
-`market`、`indicators`、`indexes`、`cyq_chips` 和 `cyq_perf` 都是从 PostgreSQL 缓存中序列化得到，日期值会以 ISO 字符串形式输出。
+`market`、`indicators`、`indexes` 和 `cyq_perf` 都是从 PostgreSQL 缓存中序列化得到，日期值会以 ISO 字符串形式输出。
 
 `init-db`、`write`、`read raw` 和 `read screen` 在继续执行前都会先检查 PostgreSQL 是否可达。如果配置的 `POSTGRES_DSN` 无法连接，CLI 会以类似如下的 JSON 退出：
 

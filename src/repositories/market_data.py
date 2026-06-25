@@ -5,7 +5,7 @@ from typing import Callable, TypeVar
 
 import asyncpg
 
-from domain.models import DailyCyqChipRow, DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 
 RowT = TypeVar("RowT")
 
@@ -60,11 +60,6 @@ class MarketDataRepository:
         if not rows:
             return
         await self._upsert_in_chunks(rows, build_daily_index_upsert)
-
-    async def upsert_daily_cyq_chips(self, rows: list[DailyCyqChipRow]) -> None:
-        if not rows:
-            return
-        await self._upsert_in_chunks(rows, build_daily_cyq_chips_upsert)
 
     async def upsert_daily_cyq_perf(self, rows: list[DailyCyqPerfRow]) -> None:
         if not rows:
@@ -124,18 +119,6 @@ class MarketDataRepository:
                 from daily_index
                 where ts_code = $1 and trade_date between $2 and $3
                 order by trade_date
-                """,
-                ts_code,
-                start,
-                end,
-            )
-            cyq_chip_rows = await connection.fetch(
-                """
-                select ts_code, trade_date, price, percent, extra_chips_jsonb,
-                       source_provider, source_interface
-                from daily_cyq_chips
-                where ts_code = $1 and trade_date between $2 and $3
-                order by trade_date, price
                 """,
                 ts_code,
                 start,
@@ -245,18 +228,6 @@ class MarketDataRepository:
                 )
                 for row in index_rows
             ],
-            "cyq_chips": [
-                DailyCyqChipRow(
-                    ts_code=row["ts_code"],
-                    trade_date=_coerce_date(row["trade_date"]),
-                    price=row["price"],
-                    percent=row["percent"],
-                    extra_chips_jsonb=_decode_jsonb(row["extra_chips_jsonb"]),
-                    source_provider=row["source_provider"],
-                    source_interface=row["source_interface"],
-                )
-                for row in cyq_chip_rows
-            ],
             "cyq_perf": [
                 DailyCyqPerfRow(
                     ts_code=row["ts_code"],
@@ -348,13 +319,6 @@ class MarketDataRepository:
                 order by trade_date
                 """
             )
-            cyq_chip_rows = await connection.fetch(
-                """
-                select distinct trade_date
-                from daily_cyq_chips
-                order by trade_date
-                """
-            )
             cyq_perf_rows = await connection.fetch(
                 """
                 select distinct trade_date
@@ -367,7 +331,6 @@ class MarketDataRepository:
             "daily_market": [_coerce_date(row["trade_date"]).isoformat() for row in market_rows],
             "daily_indicators": [_coerce_date(row["trade_date"]).isoformat() for row in indicator_rows],
             "daily_index": [_coerce_date(row["trade_date"]).isoformat() for row in index_rows],
-            "daily_cyq_chips": [_coerce_date(row["trade_date"]).isoformat() for row in cyq_chip_rows],
             "daily_cyq_perf": [_coerce_date(row["trade_date"]).isoformat() for row in cyq_perf_rows],
         }
 
@@ -399,14 +362,6 @@ class MarketDataRepository:
                 start,
                 end,
             )
-            cyq_chips_result = await connection.execute(
-                """
-                delete from daily_cyq_chips
-                where trade_date between $1 and $2
-                """,
-                start,
-                end,
-            )
             cyq_perf_result = await connection.execute(
                 """
                 delete from daily_cyq_perf
@@ -420,7 +375,6 @@ class MarketDataRepository:
             "daily_market_deleted": _affected_row_count(market_result),
             "daily_indicators_deleted": _affected_row_count(indicator_result),
             "daily_index_deleted": _affected_row_count(index_result),
-            "daily_cyq_chips_deleted": _affected_row_count(cyq_chips_result),
             "daily_cyq_perf_deleted": _affected_row_count(cyq_perf_result),
         }
 
@@ -690,39 +644,6 @@ def build_daily_index_upsert(rows: list[DailyIndexRow]) -> tuple[str, list[tuple
             row.source_provider,
             row.source_daily,
             row.source_basic,
-        )
-        for row in rows
-    ]
-
-
-def build_daily_cyq_chips_upsert(rows: list[DailyCyqChipRow]) -> tuple[str, list[tuple[object, ...]]]:
-    sql = """
-    INSERT INTO daily_cyq_chips (
-        ts_code,
-        trade_date,
-        price,
-        percent,
-        extra_chips_jsonb,
-        source_provider,
-        source_interface
-    )
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    ON CONFLICT (ts_code, trade_date, price) DO UPDATE
-    SET percent = EXCLUDED.percent,
-        extra_chips_jsonb = EXCLUDED.extra_chips_jsonb,
-        source_provider = EXCLUDED.source_provider,
-        source_interface = EXCLUDED.source_interface,
-        updated_at = NOW()
-    """
-    return sql, [
-        (
-            row.ts_code,
-            row.trade_date,
-            row.price,
-            row.percent,
-            json.dumps(_json_ready(row.extra_chips_jsonb), ensure_ascii=False),
-            row.source_provider,
-            row.source_interface,
         )
         for row in rows
     ]

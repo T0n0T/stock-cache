@@ -70,9 +70,6 @@ class FlakyProvider:
     async def fetch_indicators_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
         return [{"ts_code": "000001.SZ", "trade_date": trade_date, "macd": 0.1, "kdj_j": 70.0}]
 
-    async def fetch_cyq_chips_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
-        return [{"ts_code": "000001.SZ", "trade_date": trade_date, "price": 12.3, "percent": 0.4}]
-
     async def fetch_cyq_perf_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
         return [{"ts_code": "000001.SZ", "trade_date": trade_date, "cost_50pct": 11.8, "winner_rate": 0.6}]
 
@@ -113,7 +110,6 @@ class SingleSymbolProvider(FlakyProvider):
         self.daily_basic_requests: list[tuple[str, str, str]] = []
         self.moneyflow_requests: list[tuple[str, str, str]] = []
         self.indicator_requests: list[tuple[str, str, str]] = []
-        self.cyq_chips_requests: list[tuple[str, str, str]] = []
         self.cyq_perf_requests: list[tuple[str, str, str]] = []
 
     def fetch_daily(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
@@ -135,10 +131,6 @@ class SingleSymbolProvider(FlakyProvider):
         self.indicator_requests.append((ts_code, start_date, end_date))
         return [{"trade_date": "20260330", "macd": 0.1, "kdj_j": 70.0}]
 
-    def fetch_cyq_chips(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
-        self.cyq_chips_requests.append((ts_code, start_date, end_date))
-        return [{"trade_date": "20260330", "price": 12.3, "percent": 0.4}]
-
     def fetch_cyq_perf(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         self.cyq_perf_requests.append((ts_code, start_date, end_date))
         return [{"trade_date": "20260330", "cost_50pct": 11.8, "winner_rate": 0.6}]
@@ -148,7 +140,6 @@ class RecordingMarketRepository:
     def __init__(self) -> None:
         self.market_rows: list[object] = []
         self.indicator_rows: list[object] = []
-        self.cyq_chips_rows: list[object] = []
         self.cyq_perf_rows: list[object] = []
 
     async def upsert_daily_market(self, rows: list[object]) -> None:
@@ -156,9 +147,6 @@ class RecordingMarketRepository:
 
     async def upsert_daily_indicators(self, rows: list[object]) -> None:
         self.indicator_rows = rows
-
-    async def upsert_daily_cyq_chips(self, rows: list[object]) -> None:
-        self.cyq_chips_rows = rows
 
     async def upsert_daily_cyq_perf(self, rows: list[object]) -> None:
         self.cyq_perf_rows = rows
@@ -191,7 +179,6 @@ class SequencedPersistRepository:
         self.indicator_trade_dates_by_call: list[list[str]] = []
         self.index_trade_dates_by_call: list[list[str]] = []
         self.index_codes_by_call: list[list[str]] = []
-        self.cyq_chips_trade_dates_by_call: list[list[str]] = []
         self.cyq_perf_trade_dates_by_call: list[list[str]] = []
 
     async def upsert_daily_market(self, rows: list[object]) -> None:
@@ -203,9 +190,6 @@ class SequencedPersistRepository:
     async def upsert_daily_index(self, rows: list[object]) -> None:
         self.index_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
         self.index_codes_by_call.append([row.ts_code for row in rows])
-
-    async def upsert_daily_cyq_chips(self, rows: list[object]) -> None:
-        self.cyq_chips_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
 
     async def upsert_daily_cyq_perf(self, rows: list[object]) -> None:
         self.cyq_perf_trade_dates_by_call.append([row.trade_date.strftime("%Y%m%d") for row in rows])
@@ -429,11 +413,9 @@ async def test_write_use_case_single_mode_uses_symbol_range_endpoints(tmp_path: 
     assert provider.daily_basic_requests == [("000001.SZ", "20260327", "20260330")]
     assert provider.moneyflow_requests == [("000001.SZ", "20260327", "20260330")]
     assert provider.indicator_requests == [("000001.SZ", "20260327", "20260330")]
-    assert provider.cyq_chips_requests == [("000001.SZ", "20260327", "20260330")]
     assert provider.cyq_perf_requests == [("000001.SZ", "20260327", "20260330")]
     assert [row.ts_code for row in repository.market_rows] == ["000001.SZ", "000001.SZ"]
     assert [row.ts_code for row in repository.indicator_rows] == ["000001.SZ"]
-    assert [row.price for row in repository.cyq_chips_rows] == [12.3]
     assert [row.cost_50pct for row in repository.cyq_perf_rows] == [11.8]
 
 
@@ -468,13 +450,6 @@ async def test_full_mode_persists_each_trade_date_immediately(tmp_path: Path) ->
         ["20260324"],
     ]
     assert repository.indicator_trade_dates_by_call == [
-        ["20260330"],
-        ["20260327"],
-        ["20260326"],
-        ["20260325"],
-        ["20260324"],
-    ]
-    assert repository.cyq_chips_trade_dates_by_call == [
         ["20260330"],
         ["20260327"],
         ["20260326"],

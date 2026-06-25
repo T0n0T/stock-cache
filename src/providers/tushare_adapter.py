@@ -98,10 +98,6 @@ class TushareAdapter:
         frame = self._safe_query(self._pro.stk_factor, ts_code=ts_code, start_date=start_date, end_date=end_date)
         return frame.to_dict("records")
 
-    def fetch_cyq_chips(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
-        frame = self._safe_query(self._pro.cyq_chips, ts_code=ts_code, start_date=start_date, end_date=end_date)
-        return [{**row, "source_interface": "cyq_chips"} for row in frame.to_dict("records")]
-
     def fetch_cyq_perf(self, ts_code: str, start_date: str, end_date: str) -> list[dict[str, object]]:
         frame = self._safe_query(self._pro.cyq_perf, ts_code=ts_code, start_date=start_date, end_date=end_date)
         return [{**row, "source_interface": "cyq_perf"} for row in frame.to_dict("records")]
@@ -148,10 +144,6 @@ class TushareAdapter:
             frame = await self._safe_query_async(self._pro.stk_factor, trade_date=trade_date)
             source_interface = "stk_factor"
         return [{**row, "source_interface": source_interface} for row in frame.to_dict("records")]
-
-    async def fetch_cyq_chips_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
-        frame = await self._safe_query_async(self._pro.cyq_chips, trade_date=trade_date)
-        return [{**row, "source_interface": "cyq_chips"} for row in frame.to_dict("records")]
 
     async def fetch_cyq_perf_by_trade_date(self, trade_date: str) -> list[dict[str, object]]:
         frame = await self._safe_query_async(self._pro.cyq_perf, trade_date=trade_date)

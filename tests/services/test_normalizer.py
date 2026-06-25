@@ -151,7 +151,7 @@ def test_normalize_market_batches_merges_bulk_rows_by_symbol_and_trade_date() ->
     }
 
 
-def test_normalize_market_batches_builds_cyq_rows() -> None:
+def test_normalize_market_batches_builds_cyq_perf_rows() -> None:
     result = normalize_market_batches(
         daily_rows=[],
         daily_basic_rows=[],
@@ -160,16 +160,6 @@ def test_normalize_market_batches_builds_cyq_rows() -> None:
         limit_rows=[],
         suspend_rows=[],
         indicator_rows=[],
-        cyq_chips_rows=[
-            {
-                "ts_code": "000001.SZ",
-                "trade_date": "20260330",
-                "price": 12.34,
-                "percent": 0.56,
-                "source_interface": "cyq_chips",
-                "extra_bucket": "kept",
-            }
-        ],
         cyq_perf_rows=[
             {
                 "ts_code": "000001.SZ",
@@ -189,14 +179,6 @@ def test_normalize_market_batches_builds_cyq_rows() -> None:
         ],
     )
 
-    assert len(result.cyq_chips_rows) == 1
-    chip = result.cyq_chips_rows[0]
-    assert chip.ts_code == "000001.SZ"
-    assert chip.trade_date == date(2026, 3, 30)
-    assert chip.price == 12.34
-    assert chip.percent == 0.56
-    assert chip.source_interface == "cyq_chips"
-    assert chip.extra_chips_jsonb == {"extra_bucket": "kept"}
     assert len(result.cyq_perf_rows) == 1
     perf = result.cyq_perf_rows[0]
     assert perf.cost_50pct == 11.5

@@ -4,10 +4,9 @@ import json
 import pytest
 
 import repositories.market_data as market_data_module
-from domain.models import DailyCyqChipRow, DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
+from domain.models import DailyCyqPerfRow, DailyIndexRow, DailyIndicatorRow, DailyMarketRow
 from repositories.market_data import (
     MarketDataRepository,
-    build_daily_cyq_chips_upsert,
     build_daily_cyq_perf_upsert,
     build_daily_index_upsert,
     build_daily_indicator_upsert,
@@ -215,33 +214,6 @@ def test_build_daily_index_upsert_uses_composite_key() -> None:
     ]
 
 
-def test_build_daily_cyq_chips_upsert_uses_price_bucket_key() -> None:
-    row = DailyCyqChipRow(
-        ts_code="000001.SZ",
-        trade_date=date(2026, 3, 30),
-        price=12.34,
-        percent=0.56,
-        source_interface="cyq_chips",
-        extra_chips_jsonb={"bucket": "sample"},
-    )
-
-    sql, values = build_daily_cyq_chips_upsert([row])
-
-    assert "ON CONFLICT (ts_code, trade_date, price)" in sql
-    assert "extra_chips_jsonb" in sql
-    assert values == [
-        (
-            "000001.SZ",
-            date(2026, 3, 30),
-            12.34,
-            0.56,
-            json.dumps({"bucket": "sample"}, ensure_ascii=False),
-            "tushare",
-            "cyq_chips",
-        )
-    ]
-
-
 def test_build_daily_cyq_perf_upsert_uses_symbol_trade_date_key() -> None:
     row = DailyCyqPerfRow(
         ts_code="000001.SZ",
@@ -397,18 +369,6 @@ class _FakeConnection:
                     "source_basic": None,
                 }
             ]
-        if self.calls == 4:
-            return [
-                {
-                    "ts_code": "000001.SZ",
-                    "trade_date": date(2026, 3, 30),
-                    "price": 12.34,
-                    "percent": 0.56,
-                    "extra_chips_jsonb": '{"bucket": "sample"}',
-                    "source_provider": "tushare",
-                    "source_interface": "cyq_chips",
-                }
-            ]
         return [
             {
                 "ts_code": "000001.SZ",
@@ -446,8 +406,7 @@ async def test_fetch_raw_decodes_jsonb_strings_from_postgres() -> None:
     assert payload["indexes"][0].name == "国证2000"
     assert payload["indexes"][0].trade_date == date(2026, 4, 30)
     assert payload["indexes"][0].extra_index_jsonb == {"sample": 1}
-    assert payload["cyq_chips"][0].price == 12.34
-    assert payload["cyq_chips"][0].extra_chips_jsonb == {"bucket": "sample"}
+    assert "cyq_chips" not in payload
     assert payload["cyq_perf"][0].cost_50pct == 11.5
     assert payload["cyq_perf"][0].extra_perf_jsonb == {"sample": 1}
 
@@ -489,19 +448,6 @@ def _index_rows(count: int) -> list[DailyIndexRow]:
             trade_date=date(2026, 3, 30),
             group_name="major",
             extra_index_jsonb={"idx": i},
-        )
-        for i in range(count)
-    ]
-
-
-def _cyq_chip_rows(count: int) -> list[DailyCyqChipRow]:
-    return [
-        DailyCyqChipRow(
-            ts_code="000001.SZ",
-            trade_date=date(2026, 3, 30),
-            price=float(i),
-            percent=0.1,
-            extra_chips_jsonb={"idx": i},
         )
         for i in range(count)
     ]
@@ -632,28 +578,6 @@ async def test_upsert_daily_index_write_batches_splits_rows_by_batch_size(
     monkeypatch.setattr(market_data_module, "build_daily_index_upsert", _spy_builder)
 
     await repository.upsert_daily_index(rows)
-
-    assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
-    assert builder_call_sizes == [2, 2, 1]
-
-
-@pytest.mark.asyncio
-async def test_upsert_daily_cyq_chips_write_batches_splits_rows_by_batch_size(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    connection = _WriteRecordingConnection()
-    repository = MarketDataRepository(_FakePool(connection), write_batch_size=2)
-    rows = _cyq_chip_rows(5)
-    original_builder = market_data_module.build_daily_cyq_chips_upsert
-    builder_call_sizes: list[int] = []
-
-    def _spy_builder(chunk_rows: list[DailyCyqChipRow]) -> tuple[str, list[tuple[object, ...]]]:
-        builder_call_sizes.append(len(chunk_rows))
-        return original_builder(chunk_rows)
-
-    monkeypatch.setattr(market_data_module, "build_daily_cyq_chips_upsert", _spy_builder)
-
-    await repository.upsert_daily_cyq_chips(rows)
 
     assert [len(args) for _, args in connection.executemany_calls] == [2, 2, 1]
     assert builder_call_sizes == [2, 2, 1]
