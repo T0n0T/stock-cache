@@ -72,7 +72,9 @@ stock-cache write --mode full|cache|calc
 
 - `init-db` 已执行静态 `db/schema.sql` 初始化。
 - `config show` 已实现配置加载和脱敏输出。
-- `write` 已实现 CLI 参数校验和阶段边界提示；实际 `cache/calc/full` 执行流程尚未实现。
+- `write --mode cache` 已实现 Tushare Python worker 拉取、Rust 字段校验、事务写入和 9 张源表缓存写入。
+- `write --mode calc` 已实现纯本地计算，只读取 `stock_stk_factor_pro`，并写入 4 张计算表。
+- `write --mode full` 已实现 `cache` 成功后执行 `calc` 的编排；`cache` 失败不会进入 `calc`。
 
 不提供：
 
@@ -118,7 +120,8 @@ stock-cache write --mode full --lookback-trading-days 30
 
 - `--start-date` 和 `--end-date` 必须同时出现。
 - `--start-date/--end-date` 与 `--lookback-trading-days` 互斥。
-- 不传日期时，`full/cache/calc` 默认使用 `DEFAULT_LOOKBACK_TRADING_DAYS`。
+- `calc` 支持基于本地 `stock_stk_factor_pro` 已有交易日的 `--lookback-trading-days` 和默认 `DEFAULT_LOOKBACK_TRADING_DAYS`。
+- 当前 `cache/full` 的按日 Tushare 拉取仍要求显式 `--start-date/--end-date`；在没有交易日源之前，不按自然日伪装交易日窗口。
 - 例外：`write --mode cache --refresh-ths` 且未传任何日期参数时，只刷新同花顺分类，不拉取按日接口。
 
 ## Concurrency

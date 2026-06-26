@@ -80,22 +80,16 @@ fn write_cache_default_lookback_requires_explicit_dates_for_now() {
 }
 
 #[test]
-fn write_full_still_reports_not_implemented_boundary() {
+fn write_full_default_lookback_requires_explicit_cache_dates_for_now() {
     stock_cache()
-        .args([
-            "write",
-            "--mode",
-            "full",
-            "--start-date",
-            "20260601",
-            "--end-date",
-            "20260601",
-        ])
+        .args(["write", "--mode", "full"])
         .env("POSTGRES_DSN", "postgres://example")
         .env("TUSHARE_TOKEN", "token")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("not implemented in this phase"));
+        .stderr(predicate::str::contains(
+            "cache execution currently requires explicit --start-date/--end-date",
+        ));
 }
 
 #[test]

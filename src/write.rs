@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use anyhow::{anyhow, Result};
 use serde::Serialize;
 
@@ -19,18 +21,22 @@ pub enum DateWindow {
 }
 
 #[derive(Debug, Serialize)]
-struct WriteSummary<'a> {
-    status: &'a str,
-    mode: &'a str,
+struct FullSummary {
+    status: &'static str,
+    mode: &'static str,
     refresh_ths: bool,
     date_window: String,
-    message: &'a str,
+    source_row_counts: BTreeMap<String, usize>,
+    calc_source_row_count: usize,
+    target_trade_dates: Vec<String>,
+    calc_row_counts: BTreeMap<String, usize>,
+    usable_ranges: BTreeMap<String, Vec<Option<String>>>,
+    message: &'static str,
 }
 
 pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let window = resolve_date_window(&args, config)?;
     let _token_is_configured = !config.tushare_token.is_empty();
-    let mode = mode_name(args.mode);
     if args.mode == WriteMode::Cache {
         let summary = cache::run_cache(&window, args.refresh_ths, config).await?;
         println!("{}", cache::summary_json(&summary)?);
@@ -41,17 +47,11 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
         println!("{}", calc::summary_json(&summary)?);
         return Ok(());
     }
-    let summary = WriteSummary {
-        status: "not_implemented",
-        mode,
-        refresh_ths: args.refresh_ths,
-        date_window: format_window(&window),
-        message: "write full execution is not implemented in this phase",
-    };
+    let cache_summary = cache::run_cache(&window, args.refresh_ths, config).await?;
+    let calc_summary = calc::run_calc(&window, config).await?;
+    let summary = full_summary(&window, cache_summary, calc_summary, args.refresh_ths);
     println!("{}", serde_json::to_string_pretty(&summary)?);
-    Err(anyhow!(
-        "write full execution is not implemented in this phase"
-    ))
+    Ok(())
 }
 
 pub fn resolve_date_window(args: &WriteArgs, config: &Config) -> Result<DateWindow> {
@@ -111,11 +111,23 @@ fn validate_yyyymmdd(name: &str, value: &str) -> Result<()> {
     Ok(())
 }
 
-fn mode_name(mode: WriteMode) -> &'static str {
-    match mode {
-        WriteMode::Full => "full",
-        WriteMode::Cache => "cache",
-        WriteMode::Calc => "calc",
+fn full_summary(
+    window: &DateWindow,
+    cache_summary: cache::CacheSummary,
+    calc_summary: calc::CalcSummary,
+    refresh_ths: bool,
+) -> FullSummary {
+    FullSummary {
+        status: "success",
+        mode: "full",
+        refresh_ths,
+        date_window: format_window(window),
+        source_row_counts: cache_summary.source_row_counts,
+        calc_source_row_count: calc_summary.source_row_count,
+        target_trade_dates: calc_summary.target_trade_dates,
+        calc_row_counts: calc_summary.calc_row_counts,
+        usable_ranges: calc_summary.usable_ranges,
+        message: "source cache write and local calculation completed",
     }
 }
 
@@ -188,6 +200,58 @@ mod tests {
         assert_eq!(
             resolve_date_window(&args, &config()).unwrap(),
             DateWindow::RefreshThsOnly
+        );
+    }
+
+    #[test]
+    fn full_summary_combines_cache_and_calc_counts() {
+        let window = DateWindow::Explicit {
+            start_date: "20250625".to_string(),
+            end_date: "20250625".to_string(),
+        };
+        let cache_summary = cache::CacheSummary {
+            status: "success",
+            mode: "cache",
+            refresh_ths: true,
+            source_row_counts: BTreeMap::from([("stock_stk_factor_pro".to_string(), 5648)]),
+            message: "source cache write completed",
+        };
+        let calc_summary = calc::CalcSummary {
+            status: "success",
+            mode: "calc",
+            source_row_count: 5648,
+            target_trade_dates: vec!["2025-06-25".to_string()],
+            calc_row_counts: BTreeMap::from([("stock_daily_asof_indicators".to_string(), 5648)]),
+            usable_ranges: BTreeMap::from([(
+                "stock_daily_asof_indicators".to_string(),
+                vec![
+                    Some("2025-06-25".to_string()),
+                    Some("2025-06-25".to_string()),
+                ],
+            )]),
+            message: "local calculation completed",
+        };
+
+        let summary = full_summary(&window, cache_summary, calc_summary, true);
+
+        assert_eq!(summary.status, "success");
+        assert_eq!(summary.mode, "full");
+        assert_eq!(summary.refresh_ths, true);
+        assert_eq!(summary.date_window, "20250625..20250625");
+        assert_eq!(
+            summary.source_row_counts.get("stock_stk_factor_pro"),
+            Some(&5648)
+        );
+        assert_eq!(
+            summary.calc_row_counts.get("stock_daily_asof_indicators"),
+            Some(&5648)
+        );
+        assert_eq!(
+            summary.usable_ranges.get("stock_daily_asof_indicators"),
+            Some(&vec![
+                Some("2025-06-25".to_string()),
+                Some("2025-06-25".to_string())
+            ])
         );
     }
 }
