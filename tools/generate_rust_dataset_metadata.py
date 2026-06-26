@@ -75,6 +75,12 @@ def rust_str(value: str) -> str:
     return '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
 
 
+def rust_raw_str(value: str) -> str:
+    if '"#' in value:
+        return rust_str(value)
+    return 'r#"' + value + '"#'
+
+
 def rust_option_str(value: Any) -> str:
     if value is None:
         return "None"
@@ -90,6 +96,51 @@ def rust_str_slice(values: list[str]) -> str:
 def const_name(dataset_id: str, suffix: str) -> str:
     value = re.sub(r"[^a-zA-Z0-9]+", "_", dataset_id).upper().strip("_")
     return f"{value}_{suffix}"
+
+
+def quote_ident(value: str) -> str:
+    return '"' + value.replace('"', '""') + '"'
+
+
+def sql_column_list(fields: list[dict[str, Any]]) -> str:
+    return ", ".join(quote_ident(require_string(field.get("name"), "field.name")) for field in fields)
+
+
+def sql_placeholder_list(count: int) -> str:
+    return ", ".join(f"${index}" for index in range(1, count + 1))
+
+
+def sql_insert(dataset_id: str, dataset: dict[str, Any]) -> str:
+    fields = [require_mapping(field, f"datasets.{dataset_id}.fields[]") for field in dataset["fields"]]
+    return (
+        f"insert into {quote_ident(dataset_id)} ({sql_column_list(fields)}) "
+        f"values ({sql_placeholder_list(len(fields))})"
+    )
+
+
+def sql_upsert(dataset_id: str, dataset: dict[str, Any], key: list[str]) -> str:
+    fields = [require_mapping(field, f"datasets.{dataset_id}.fields[]") for field in dataset["fields"]]
+    conflict_columns = ", ".join(quote_ident(column) for column in key)
+    update_columns = []
+    for field in fields:
+        name = require_string(field.get("name"), f"datasets.{dataset_id}.fields[].name")
+        if name in key:
+            continue
+        update_columns.append(f"{quote_ident(name)} = excluded.{quote_ident(name)}")
+    if not update_columns:
+        raise SystemExit(f"{dataset_id} upsert must have at least one non-key field")
+    return (
+        f"{sql_insert(dataset_id, dataset)} on conflict ({conflict_columns}) "
+        f"do update set {', '.join(update_columns)}"
+    )
+
+
+def sql_delete_all(dataset_id: str) -> str:
+    return f"delete from {quote_ident(dataset_id)}"
+
+
+def sql_delete_by_date(dataset_id: str, date_field: str) -> str:
+    return f"delete from {quote_ident(dataset_id)} where {quote_ident(date_field)} = $1"
 
 
 def validate_dataset(dataset_id: str, dataset: dict[str, Any]) -> None:
@@ -131,6 +182,37 @@ def render_field_array(dataset_id: str, dataset: dict[str, Any]) -> str:
         )
     lines.append("];\n")
     return "\n".join(lines)
+
+
+def render_write_sql(dataset_id: str, dataset: dict[str, Any]) -> str:
+    strategy = require_mapping(dataset["write_strategy"], f"datasets.{dataset_id}.write_strategy")
+    strategy_type = require_string(strategy.get("type"), f"datasets.{dataset_id}.write_strategy.type")
+    insert = sql_insert(dataset_id, dataset)
+
+    if strategy_type == "upsert":
+        key = require_string_list(strategy.get("key"), f"datasets.{dataset_id}.write_strategy.key")
+        upsert = sql_upsert(dataset_id, dataset, key)
+        return "WriteSql::Upsert {\n            sql: " + rust_raw_str(upsert) + ",\n        }"
+    if strategy_type == "replace_all":
+        clear = sql_delete_all(dataset_id)
+        return (
+            "WriteSql::ReplaceAll {\n"
+            f"            clear_sql: {rust_raw_str(clear)},\n"
+            f"            insert_sql: {rust_raw_str(insert)},\n"
+            "        }"
+        )
+    if strategy_type == "delete_insert_by_date":
+        date_field = require_string(
+            strategy.get("date_field"), f"datasets.{dataset_id}.write_strategy.date_field"
+        )
+        delete = sql_delete_by_date(dataset_id, date_field)
+        return (
+            "WriteSql::DeleteInsertByDate {\n"
+            f"            delete_sql: {rust_raw_str(delete)},\n"
+            f"            insert_sql: {rust_raw_str(insert)},\n"
+            "        }"
+        )
+    raise SystemExit(f"unsupported write strategy for {dataset_id}: {strategy_type}")
 
 
 def render_write_strategy(dataset_id: str, raw_strategy: Any) -> str:
@@ -184,6 +266,7 @@ def render_fetch_plan(dataset_id: str, raw_fetch_plan: Any) -> str:
 def render_dataset(dataset_id: str, dataset: dict[str, Any]) -> str:
     fields_const = const_name(dataset_id, "FIELDS")
     write_strategy = render_write_strategy(dataset_id, dataset["write_strategy"])
+    write_sql = render_write_sql(dataset_id, dataset)
     fetch_plan = render_fetch_plan(dataset_id, dataset["fetch_plan"])
     return "\n".join(
         [
@@ -193,6 +276,7 @@ def render_dataset(dataset_id: str, dataset: dict[str, Any]) -> str:
             f"        api: {rust_str(dataset['api'])},",
             f"        fields: {fields_const},",
             f"        write_strategy: {write_strategy},",
+            f"        write_sql: {write_sql},",
             f"        fetch_plan: {fetch_plan},",
             "    },",
         ]
@@ -216,6 +300,7 @@ def render(schema: dict[str, Any]) -> str:
         "    pub api: &'static str,",
         "    pub fields: &'static [FieldMetadata],",
         "    pub write_strategy: WriteStrategy,",
+        "    pub write_sql: WriteSql,",
         "    pub fetch_plan: FetchPlan,",
         "}",
         "",
@@ -239,6 +324,21 @@ def render(schema: dict[str, Any]) -> str:
         "    DeleteInsertByDate {",
         "        date_field: &'static str,",
         "        natural_key_candidate: &'static [&'static str],",
+        "    },",
+        "}",
+        "",
+        "#[derive(Debug, Clone, Copy, Eq, PartialEq)]",
+        "pub enum WriteSql {",
+        "    Upsert {",
+        "        sql: &'static str,",
+        "    },",
+        "    ReplaceAll {",
+        "        clear_sql: &'static str,",
+        "        insert_sql: &'static str,",
+        "    },",
+        "    DeleteInsertByDate {",
+        "        delete_sql: &'static str,",
+        "        insert_sql: &'static str,",
         "    },",
         "}",
         "",

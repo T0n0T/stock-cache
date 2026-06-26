@@ -3,6 +3,7 @@ mod config;
 mod db;
 mod generated;
 mod write;
+mod write_sql;
 
 use anyhow::Result;
 use clap::Parser;

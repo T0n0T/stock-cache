@@ -2,7 +2,7 @@ pub mod tushare_fields;
 
 #[cfg(test)]
 mod tests {
-    use super::tushare_fields::{dataset, WriteStrategy, DATASETS};
+    use super::tushare_fields::{dataset, WriteSql, WriteStrategy, DATASETS};
 
     fn field_names(dataset_id: &str) -> Vec<&'static str> {
         dataset(dataset_id)
@@ -111,6 +111,28 @@ mod tests {
                     field.name
                 );
             }
+        }
+    }
+
+    #[test]
+    fn generated_write_sql_kind_matches_write_strategy() {
+        for dataset in DATASETS {
+            assert!(
+                matches!(
+                    (dataset.write_strategy, dataset.write_sql),
+                    (WriteStrategy::Upsert { .. }, WriteSql::Upsert { .. })
+                        | (
+                            WriteStrategy::ReplaceAll { .. },
+                            WriteSql::ReplaceAll { .. }
+                        )
+                        | (
+                            WriteStrategy::DeleteInsertByDate { .. },
+                            WriteSql::DeleteInsertByDate { .. }
+                        )
+                ),
+                "{} has mismatched write strategy and SQL kind",
+                dataset.id
+            );
         }
     }
 }
