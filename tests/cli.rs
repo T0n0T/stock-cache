@@ -80,12 +80,12 @@ fn write_cache_default_lookback_requires_explicit_dates_for_now() {
 }
 
 #[test]
-fn write_calc_still_reports_not_implemented_boundary() {
+fn write_full_still_reports_not_implemented_boundary() {
     stock_cache()
         .args([
             "write",
             "--mode",
-            "calc",
+            "full",
             "--start-date",
             "20260601",
             "--end-date",
@@ -96,4 +96,17 @@ fn write_calc_still_reports_not_implemented_boundary() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("not implemented in this phase"));
+}
+
+#[test]
+fn write_calc_rejects_unpaired_dates_before_connecting() {
+    stock_cache()
+        .args(["write", "--mode", "calc", "--start-date", "20260601"])
+        .env("POSTGRES_DSN", "postgres://example")
+        .env("TUSHARE_TOKEN", "token")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "--start-date and --end-date must be provided together",
+        ));
 }

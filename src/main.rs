@@ -1,4 +1,5 @@
 mod cache;
+mod calc;
 mod cli;
 mod config;
 mod db;

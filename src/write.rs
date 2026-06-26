@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::Serialize;
 
 use crate::{
-    cache,
+    cache, calc,
     cli::{WriteArgs, WriteMode},
     config::Config,
 };
@@ -36,16 +36,21 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
         println!("{}", cache::summary_json(&summary)?);
         return Ok(());
     }
+    if args.mode == WriteMode::Calc {
+        let summary = calc::run_calc(&window, config).await?;
+        println!("{}", calc::summary_json(&summary)?);
+        return Ok(());
+    }
     let summary = WriteSummary {
         status: "not_implemented",
         mode,
         refresh_ths: args.refresh_ths,
         date_window: format_window(&window),
-        message: "write cache/calc execution is not implemented in this phase",
+        message: "write full execution is not implemented in this phase",
     };
     println!("{}", serde_json::to_string_pretty(&summary)?);
     Err(anyhow!(
-        "write cache/calc execution is not implemented in this phase"
+        "write full execution is not implemented in this phase"
     ))
 }
 
