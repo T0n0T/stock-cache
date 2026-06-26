@@ -256,11 +256,37 @@ fn parse_integer(value: Option<&Value>) -> Result<Option<i32>> {
             if let Some(value) = number.as_u64() {
                 return i32::try_from(value).map(Some).map_err(Into::into);
             }
+            if let Some(value) = number.as_f64() {
+                return integral_f64_to_i32(value).map(Some);
+            }
             Err(anyhow!("number is not an integer"))
         }
-        Some(Value::String(text)) => text.trim().parse::<i32>().map(Some).map_err(Into::into),
+        Some(Value::String(text)) => parse_integer_text(text.trim()).map(Some),
         Some(other) => Err(anyhow!("expected integer or string, got {other}")),
     }
+}
+
+fn parse_integer_text(text: &str) -> Result<i32> {
+    match text.parse::<i32>() {
+        Ok(value) => Ok(value),
+        Err(integer_error) => {
+            let float_value = text.parse::<f64>().map_err(|_| integer_error)?;
+            integral_f64_to_i32(float_value)
+        }
+    }
+}
+
+fn integral_f64_to_i32(value: f64) -> Result<i32> {
+    if !value.is_finite() {
+        return Err(anyhow!("number is not finite"));
+    }
+    if value.fract() != 0.0 {
+        return Err(anyhow!("number is not an integer"));
+    }
+    if value < i32::MIN as f64 || value > i32::MAX as f64 {
+        return Err(anyhow!("number is outside i32 range"));
+    }
+    Ok(value as i32)
 }
 
 fn parse_date(value: Option<&Value>) -> Result<Option<NaiveDate>> {
@@ -334,5 +360,12 @@ mod tests {
             SqlValue::Date(Some(parse_date_text("20260625").unwrap()))
         );
         assert_eq!(values[8], SqlValue::Integer(Some(4)));
+    }
+
+    #[test]
+    fn parses_integral_float_numbers_for_integer_fields() {
+        assert_eq!(parse_integer(Some(&json!(3.0))).unwrap(), Some(3));
+        assert_eq!(parse_integer(Some(&json!("4.0"))).unwrap(), Some(4));
+        assert!(parse_integer(Some(&json!(3.5))).is_err());
     }
 }

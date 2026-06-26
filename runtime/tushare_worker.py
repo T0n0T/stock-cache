@@ -97,6 +97,7 @@ def main() -> int:
         import tushare as ts  # type: ignore
     except Exception as exc:
         log(f"failed to import tushare: {exc}")
+        log("run: uv sync --project runtime/python")
         return 2
 
     ts.set_token(token)

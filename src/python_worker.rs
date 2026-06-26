@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::BTreeMap, process::Stdio};
+use std::{collections::BTreeMap, path::Path, process::Stdio};
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -14,6 +14,7 @@ use tokio::{
 use crate::generated::tushare_fields::DatasetMetadata;
 
 const DEFAULT_WORKER_PATH: &str = "runtime/tushare_worker.py";
+const DEFAULT_UV_PYTHON: &str = "runtime/python/.venv/bin/python";
 
 #[derive(Debug, Serialize)]
 struct WorkerRequest<'a> {
@@ -48,7 +49,14 @@ pub struct PythonWorker {
 
 impl PythonWorker {
     pub fn command_from_env() -> Command {
-        let mut command = Command::new("python3");
+        let python = std::env::var("STOCK_CACHE_PYTHON").unwrap_or_else(|_| {
+            if Path::new(DEFAULT_UV_PYTHON).exists() {
+                DEFAULT_UV_PYTHON.to_string()
+            } else {
+                "python3".to_string()
+            }
+        });
+        let mut command = Command::new(python);
         let script = std::env::var("STOCK_CACHE_TUSHARE_WORKER")
             .unwrap_or_else(|_| DEFAULT_WORKER_PATH.to_string());
         command.arg(script);
