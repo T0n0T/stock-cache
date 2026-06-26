@@ -67,15 +67,33 @@ fn write_rejects_unpaired_dates() {
 }
 
 #[test]
-fn write_refresh_ths_only_reports_not_implemented_boundary() {
+fn write_cache_default_lookback_requires_explicit_dates_for_now() {
     stock_cache()
-        .args(["write", "--mode", "cache", "--refresh-ths"])
+        .args(["write", "--mode", "cache"])
         .env("POSTGRES_DSN", "postgres://example")
         .env("TUSHARE_TOKEN", "token")
         .assert()
         .failure()
-        .stdout(predicate::str::contains(
-            "\"date_window\": \"refresh_ths_only\"",
-        ))
+        .stderr(predicate::str::contains(
+            "cache execution currently requires explicit --start-date/--end-date",
+        ));
+}
+
+#[test]
+fn write_calc_still_reports_not_implemented_boundary() {
+    stock_cache()
+        .args([
+            "write",
+            "--mode",
+            "calc",
+            "--start-date",
+            "20260601",
+            "--end-date",
+            "20260601",
+        ])
+        .env("POSTGRES_DSN", "postgres://example")
+        .env("TUSHARE_TOKEN", "token")
+        .assert()
+        .failure()
         .stderr(predicate::str::contains("not implemented in this phase"));
 }

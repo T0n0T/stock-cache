@@ -1,7 +1,10 @@
+mod cache;
 mod cli;
 mod config;
 mod db;
 mod generated;
+mod python_worker;
+mod source_writer;
 mod write;
 mod write_sql;
 

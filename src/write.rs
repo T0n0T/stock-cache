@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::Serialize;
 
 use crate::{
+    cache,
     cli::{WriteArgs, WriteMode},
     config::Config,
 };
@@ -30,6 +31,11 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let window = resolve_date_window(&args, config)?;
     let _token_is_configured = !config.tushare_token.is_empty();
     let mode = mode_name(args.mode);
+    if args.mode == WriteMode::Cache {
+        let summary = cache::run_cache(&window, args.refresh_ths, config).await?;
+        println!("{}", cache::summary_json(&summary)?);
+        return Ok(());
+    }
     let summary = WriteSummary {
         status: "not_implemented",
         mode,
