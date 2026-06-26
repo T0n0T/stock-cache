@@ -1,9 +1,14 @@
-use std::{collections::BTreeMap, fs};
+use std::{
+    collections::BTreeMap,
+    fs,
+    time::{Duration as StdDuration, Instant},
+};
 
 use anyhow::{anyhow, Context, Result};
-use chrono::{Datelike, Duration, NaiveDate};
+use chrono::{Datelike, Duration as ChronoDuration, NaiveDate};
 use serde::Serialize;
 use serde_json::json;
+use tokio::time::sleep;
 use tokio_postgres::NoTls;
 
 use crate::{
@@ -20,6 +25,7 @@ const DAILY_CACHE_DATASETS: &[&str] = &[
     "limit_list_ths",
     "limit_cpt_list",
 ];
+const THS_MEMBER_REQUEST_DELAY_MS: u64 = 150;
 
 #[derive(Debug, Serialize)]
 pub struct CacheSummary {
@@ -55,8 +61,11 @@ pub async fn run_cache_for_trade_dates(
     command.env("TUSHARE_TOKEN", &config.tushare_token);
     let mut worker = PythonWorker::spawn(command).await?;
     let mut row_counts = BTreeMap::new();
+    let total_dates = dates.len();
 
     if refresh_ths {
+        let started = Instant::now();
+        eprintln!("[cache] refresh-ths start");
         let ths_index = required_dataset("ths_index")?;
         let ths_member = required_dataset("ths_member")?;
         let ths_index_rows = fetch(
@@ -67,10 +76,19 @@ pub async fn run_cache_for_trade_dates(
         )
         .await?;
         let mut ths_member_rows = Vec::new();
-        for row in &ths_index_rows {
+        let total_ths_index_rows = ths_index_rows.len();
+        for (member_index, row) in ths_index_rows.iter().enumerate() {
             let Some(ts_code) = row.get("ts_code").and_then(|value| value.as_str()) else {
                 continue;
             };
+            if member_index == 0 || (member_index + 1) % 25 == 0 {
+                eprintln!(
+                    "[cache] refresh-ths member {}/{} {}",
+                    member_index + 1,
+                    total_ths_index_rows,
+                    ts_code
+                );
+            }
             let params = worker_params(&[("ts_code", string_param(ts_code))]);
             let mut rows = fetch(
                 &mut worker,
@@ -80,6 +98,7 @@ pub async fn run_cache_for_trade_dates(
             )
             .await?;
             ths_member_rows.append(&mut rows);
+            sleep(StdDuration::from_millis(THS_MEMBER_REQUEST_DELAY_MS)).await;
         }
         replace_classification_group(
             &mut client,
@@ -91,6 +110,12 @@ pub async fn run_cache_for_trade_dates(
         .await?;
         row_counts.insert(ths_index.id.to_string(), ths_index_rows.len());
         row_counts.insert(ths_member.id.to_string(), ths_member_rows.len());
+        eprintln!(
+            "[cache] refresh-ths done ths_index={} ths_member={} elapsed={:.1}s",
+            ths_index_rows.len(),
+            ths_member_rows.len(),
+            started.elapsed().as_secs_f64()
+        );
     }
 
     let index_codes = if dates.is_empty() {
@@ -110,8 +135,15 @@ pub async fn run_cache_for_trade_dates(
         codes
     };
 
-    for trade_date in dates {
+    for (date_index, trade_date) in dates.iter().enumerate() {
+        let day_started = Instant::now();
         let trade_date_text = trade_date.format("%Y%m%d").to_string();
+        eprintln!(
+            "[cache] day {}/{} {} start",
+            date_index + 1,
+            total_dates,
+            trade_date_text
+        );
         for dataset_id in DAILY_CACHE_DATASETS {
             let dataset = required_dataset(dataset_id)?;
             let params = worker_params(&[("trade_date", string_param(&trade_date_text))]);
@@ -178,6 +210,13 @@ pub async fn run_cache_for_trade_dates(
         .await?;
         write_dataset(&mut client, moneyflow_cnt, &rows, None).await?;
         *row_counts.entry(moneyflow_cnt.id.to_string()).or_insert(0) += rows.len();
+        eprintln!(
+            "[cache] day {}/{} {} done elapsed={:.1}s",
+            date_index + 1,
+            total_dates,
+            trade_date_text,
+            day_started.elapsed().as_secs_f64()
+        );
     }
 
     connection_task.abort();
@@ -206,9 +245,17 @@ pub async fn run_calc_source_cache_for_trade_dates(
     let mut worker = PythonWorker::spawn(command).await?;
     let mut row_counts = BTreeMap::new();
     let dataset = required_dataset("stock_stk_factor_pro")?;
+    let total_dates = dates.len();
 
-    for trade_date in dates {
+    for (date_index, trade_date) in dates.iter().enumerate() {
+        let day_started = Instant::now();
         let trade_date_text = trade_date.format("%Y%m%d").to_string();
+        eprintln!(
+            "[warmup] day {}/{} {} start",
+            date_index + 1,
+            total_dates,
+            trade_date_text
+        );
         let params = worker_params(&[("trade_date", string_param(&trade_date_text))]);
         let rows = fetch(
             &mut worker,
@@ -219,6 +266,14 @@ pub async fn run_calc_source_cache_for_trade_dates(
         .await?;
         write_dataset(&mut client, dataset, &rows, None).await?;
         *row_counts.entry(dataset.id.to_string()).or_insert(0) += rows.len();
+        eprintln!(
+            "[warmup] day {}/{} {} done rows={} elapsed={:.1}s",
+            date_index + 1,
+            total_dates,
+            trade_date_text,
+            rows.len(),
+            day_started.elapsed().as_secs_f64()
+        );
     }
 
     connection_task.abort();
@@ -352,7 +407,7 @@ fn resolve_cache_dates(window: &DateWindow) -> Result<Vec<NaiveDate>> {
                 if current.weekday().number_from_monday() <= 5 {
                     dates.push(current);
                 }
-                current += Duration::days(1);
+                current += ChronoDuration::days(1);
             }
             Ok(dates)
         }

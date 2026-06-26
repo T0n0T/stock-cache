@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, time::Instant};
 
 use anyhow::{anyhow, Result};
 use chrono::{Months, NaiveDate};
@@ -59,28 +59,61 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
         println!("{}", calc::summary_json(&summary)?);
         return Ok(());
     }
+    let full_started = Instant::now();
     let refresh_cache_summary = if args.refresh_ths {
-        Some(cache::run_cache(&DateWindow::RefreshThsOnly, true, config).await?)
+        eprintln!("[full] refresh-ths stage start");
+        let started = Instant::now();
+        let summary = cache::run_cache(&DateWindow::RefreshThsOnly, true, config).await?;
+        eprintln!(
+            "[full] refresh-ths stage done elapsed={:.1}s",
+            started.elapsed().as_secs_f64()
+        );
+        Some(summary)
     } else {
         None
     };
+    eprintln!("[full] trade calendar planning start");
+    let started = Instant::now();
     let trade_date_plan = full_trade_date_plan(&window, config).await?;
+    eprintln!(
+        "[full] trade calendar planning done target_days={} warmup_days={} elapsed={:.1}s",
+        trade_date_plan.target_trade_dates.len(),
+        trade_date_plan.warmup_trade_dates.len(),
+        started.elapsed().as_secs_f64()
+    );
+    eprintln!("[full] target cache stage start");
+    let started = Instant::now();
     let target_cache_summary =
         cache::run_cache_for_trade_dates(&trade_date_plan.target_trade_dates, false, config)
             .await?;
+    eprintln!(
+        "[full] target cache stage done elapsed={:.1}s",
+        started.elapsed().as_secs_f64()
+    );
     let warmup_cache_summary = if trade_date_plan.warmup_trade_dates.is_empty() {
         None
     } else {
-        Some(
-            cache::run_calc_source_cache_for_trade_dates(
-                &trade_date_plan.warmup_trade_dates,
-                config,
-            )
-            .await?,
+        eprintln!("[full] calc source warmup stage start");
+        let started = Instant::now();
+        let summary = cache::run_calc_source_cache_for_trade_dates(
+            &trade_date_plan.warmup_trade_dates,
+            config,
         )
+        .await?;
+        eprintln!(
+            "[full] calc source warmup stage done elapsed={:.1}s",
+            started.elapsed().as_secs_f64()
+        );
+        Some(summary)
     };
     let warmup_window = warmup_window_from_dates(&trade_date_plan.warmup_trade_dates);
+    eprintln!("[full] calc stage start");
+    let started = Instant::now();
     let calc_summary = calc::run_calc(&window, config).await?;
+    eprintln!(
+        "[full] calc stage done elapsed={:.1}s",
+        started.elapsed().as_secs_f64()
+    );
     let summary = full_summary(
         &window,
         warmup_window.as_ref(),
@@ -89,6 +122,10 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
         warmup_cache_summary,
         calc_summary,
         args.refresh_ths,
+    );
+    eprintln!(
+        "[full] done elapsed={:.1}s",
+        full_started.elapsed().as_secs_f64()
     );
     println!("{}", serde_json::to_string_pretty(&summary)?);
     Ok(())
