@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use anyhow::{anyhow, Result};
-use chrono::{Duration, NaiveDate};
+use chrono::{Months, NaiveDate};
 use serde::Serialize;
 
 use crate::{
@@ -11,8 +11,7 @@ use crate::{
     source_writer::parse_date_text,
 };
 
-const CALC_WARMUP_TRADING_DAYS: usize = 360;
-const TRADE_CAL_LOOKBACK_CALENDAR_DAYS: i64 = 900;
+const MONTHLY_MACD_WARMUP_MONTHS: u32 = 36;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum DateWindow {
@@ -107,7 +106,9 @@ async fn full_trade_date_plan(window: &DateWindow, config: &Config) -> Result<Fu
     };
     let start = parse_date_text(start_date)?;
     let end = parse_date_text(end_date)?;
-    let query_start = start - Duration::days(TRADE_CAL_LOOKBACK_CALENDAR_DAYS);
+    let query_start = start
+        .checked_sub_months(Months::new(MONTHLY_MACD_WARMUP_MONTHS))
+        .ok_or_else(|| anyhow!("failed to calculate monthly MACD warmup start date"))?;
     let open_dates = cache::trade_cal_open_dates(config, query_start, end).await?;
     full_trade_date_plan_from_open_dates(start, end, &open_dates)
 }
@@ -128,20 +129,21 @@ fn full_trade_date_plan_from_open_dates(
             warmup_trade_dates: Vec::new(),
         });
     };
-    let prior_dates = open_dates
+    let warmup_start = first_target_date
+        .checked_sub_months(Months::new(MONTHLY_MACD_WARMUP_MONTHS))
+        .ok_or_else(|| anyhow!("failed to calculate monthly MACD warmup start date"))?;
+    let warmup_trade_dates = open_dates
         .iter()
         .copied()
-        .filter(|date| *date < first_target_date)
+        .filter(|date| *date >= warmup_start && *date < first_target_date)
         .collect::<Vec<_>>();
-    let required_prior_days = CALC_WARMUP_TRADING_DAYS.saturating_sub(1);
-    if prior_dates.len() < required_prior_days {
+    if warmup_trade_dates.is_empty() {
         return Err(anyhow!(
-            "trade_cal returned only {} prior open days before {}; need {required_prior_days} for calc warmup",
-            prior_dates.len(),
+            "trade_cal returned no open days in monthly MACD warmup range {}..{}",
+            warmup_start.format("%Y%m%d"),
             first_target_date.format("%Y%m%d")
         ));
     }
-    let warmup_trade_dates = prior_dates[prior_dates.len() - required_prior_days..].to_vec();
     Ok(FullTradeDatePlan {
         target_trade_dates,
         warmup_trade_dates,
@@ -329,6 +331,65 @@ mod tests {
         assert_eq!(
             resolve_date_window(&args, &config()).unwrap(),
             DateWindow::RefreshThsOnly
+        );
+    }
+
+    #[test]
+    fn full_trade_date_plan_uses_three_calendar_year_monthly_macd_warmup() {
+        let start = parse_date_text("20260601").unwrap();
+        let end = parse_date_text("20260626").unwrap();
+        let open_dates = [
+            "20230531", "20230601", "20230602", "20260529", "20260601", "20260602", "20260626",
+        ]
+        .into_iter()
+        .map(|date| parse_date_text(date).unwrap())
+        .collect::<Vec<_>>();
+
+        let plan = full_trade_date_plan_from_open_dates(start, end, &open_dates).unwrap();
+
+        assert_eq!(
+            plan.warmup_trade_dates,
+            vec![
+                parse_date_text("20230601").unwrap(),
+                parse_date_text("20230602").unwrap(),
+                parse_date_text("20260529").unwrap(),
+            ]
+        );
+        assert_eq!(
+            plan.target_trade_dates,
+            vec![
+                parse_date_text("20260601").unwrap(),
+                parse_date_text("20260602").unwrap(),
+                parse_date_text("20260626").unwrap(),
+            ]
+        );
+    }
+
+    #[test]
+    fn full_trade_date_plan_handles_leap_day_three_calendar_year_warmup() {
+        let start = parse_date_text("20240229").unwrap();
+        let end = parse_date_text("20240301").unwrap();
+        let open_dates = ["20210228", "20210301", "20240228", "20240229", "20240301"]
+            .into_iter()
+            .map(|date| parse_date_text(date).unwrap())
+            .collect::<Vec<_>>();
+
+        let plan = full_trade_date_plan_from_open_dates(start, end, &open_dates).unwrap();
+
+        assert_eq!(
+            plan.warmup_trade_dates,
+            vec![
+                parse_date_text("20210228").unwrap(),
+                parse_date_text("20210301").unwrap(),
+                parse_date_text("20240228").unwrap(),
+            ]
+        );
+        assert_eq!(
+            plan.target_trade_dates,
+            vec![
+                parse_date_text("20240229").unwrap(),
+                parse_date_text("20240301").unwrap(),
+            ]
         );
     }
 
