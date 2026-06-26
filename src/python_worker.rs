@@ -88,11 +88,28 @@ impl PythonWorker {
         dataset: &DatasetMetadata,
         params: &BTreeMap<String, Value>,
     ) -> Result<Vec<BTreeMap<String, Value>>> {
+        let fields = dataset
+            .fields
+            .iter()
+            .map(|field| field.name)
+            .collect::<Vec<_>>();
+        self.fetch_api(id, dataset.id, dataset.api, &fields, params)
+            .await
+    }
+
+    pub async fn fetch_api(
+        &mut self,
+        id: &str,
+        dataset: &str,
+        api: &str,
+        fields: &[&str],
+        params: &BTreeMap<String, Value>,
+    ) -> Result<Vec<BTreeMap<String, Value>>> {
         let request = WorkerRequest {
             id,
-            dataset: dataset.id,
-            api: dataset.api,
-            fields: dataset.fields.iter().map(|field| field.name).collect(),
+            dataset,
+            api,
+            fields: fields.to_vec(),
             params,
         };
         let mut line = serde_json::to_vec(&request)?;

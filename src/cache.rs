@@ -36,6 +36,14 @@ pub async fn run_cache(
     config: &Config,
 ) -> Result<CacheSummary> {
     let dates = resolve_cache_dates(window)?;
+    run_cache_for_trade_dates(&dates, refresh_ths, config).await
+}
+
+pub async fn run_cache_for_trade_dates(
+    dates: &[NaiveDate],
+    refresh_ths: bool,
+    config: &Config,
+) -> Result<CacheSummary> {
     let (mut client, connection) = tokio_postgres::connect(&config.postgres_dsn, NoTls).await?;
     let connection_task = tokio::spawn(async move {
         if let Err(error) = connection.await {
@@ -115,7 +123,7 @@ pub async fn run_cache(
             )
             .await?;
             let delete_date = if *dataset_id == "limit_cpt_list" {
-                Some(trade_date)
+                Some(*trade_date)
             } else {
                 None
             };
@@ -180,6 +188,109 @@ pub async fn run_cache(
         source_row_counts: row_counts,
         message: "source cache write completed",
     })
+}
+
+pub async fn run_calc_source_cache_for_trade_dates(
+    dates: &[NaiveDate],
+    config: &Config,
+) -> Result<CacheSummary> {
+    let (mut client, connection) = tokio_postgres::connect(&config.postgres_dsn, NoTls).await?;
+    let connection_task = tokio::spawn(async move {
+        if let Err(error) = connection.await {
+            eprintln!("postgres connection error: {error}");
+        }
+    });
+
+    let mut command = PythonWorker::command_from_env();
+    command.env("TUSHARE_TOKEN", &config.tushare_token);
+    let mut worker = PythonWorker::spawn(command).await?;
+    let mut row_counts = BTreeMap::new();
+    let dataset = required_dataset("stock_stk_factor_pro")?;
+
+    for trade_date in dates {
+        let trade_date_text = trade_date.format("%Y%m%d").to_string();
+        let params = worker_params(&[("trade_date", string_param(&trade_date_text))]);
+        let rows = fetch(
+            &mut worker,
+            &format!("stock_stk_factor_pro-warmup-{trade_date_text}"),
+            dataset,
+            &params,
+        )
+        .await?;
+        write_dataset(&mut client, dataset, &rows, None).await?;
+        *row_counts.entry(dataset.id.to_string()).or_insert(0) += rows.len();
+    }
+
+    connection_task.abort();
+    Ok(CacheSummary {
+        status: "success",
+        mode: "cache",
+        refresh_ths: false,
+        source_row_counts: row_counts,
+        message: "calc source cache warmup completed",
+    })
+}
+
+pub async fn trade_cal_open_dates(
+    config: &Config,
+    start_date: NaiveDate,
+    end_date: NaiveDate,
+) -> Result<Vec<NaiveDate>> {
+    let mut command = PythonWorker::command_from_env();
+    command.env("TUSHARE_TOKEN", &config.tushare_token);
+    let mut worker = PythonWorker::spawn(command).await?;
+    let params = worker_params(&[
+        ("exchange", string_param("SSE")),
+        (
+            "start_date",
+            string_param(start_date.format("%Y%m%d").to_string()),
+        ),
+        (
+            "end_date",
+            string_param(end_date.format("%Y%m%d").to_string()),
+        ),
+    ]);
+    let rows = worker
+        .fetch_api(
+            "trade-cal",
+            "trade_cal",
+            "trade_cal",
+            &["cal_date", "is_open"],
+            &params,
+        )
+        .await?;
+    open_dates_from_trade_cal_rows(&rows)
+}
+
+fn open_dates_from_trade_cal_rows(rows: &[SourceRow]) -> Result<Vec<NaiveDate>> {
+    let mut dates = Vec::new();
+    for row in rows {
+        if !is_open_trade_cal_row(row) {
+            continue;
+        }
+        let Some(cal_date) = row.get("cal_date").and_then(scalar_text) else {
+            return Err(anyhow!("trade_cal returned open row without cal_date"));
+        };
+        dates.push(parse_date_text(&cal_date)?);
+    }
+    dates.sort_unstable();
+    dates.dedup();
+    Ok(dates)
+}
+
+fn is_open_trade_cal_row(row: &SourceRow) -> bool {
+    row.get("is_open")
+        .and_then(scalar_text)
+        .is_some_and(|value| value == "1")
+}
+
+fn scalar_text(value: &serde_json::Value) -> Option<String> {
+    match value {
+        serde_json::Value::String(text) => Some(text.trim().to_string()),
+        serde_json::Value::Number(number) => Some(number.to_string()),
+        serde_json::Value::Bool(value) => Some(if *value { "1" } else { "0" }.to_string()),
+        _ => None,
+    }
 }
 
 fn enabled_index_codes(path: &str) -> Result<Vec<String>> {
@@ -294,6 +405,32 @@ mod tests {
         assert_eq!(
             enabled_index_codes(file.path().to_str().unwrap()).unwrap(),
             vec!["000001.SH".to_string(), "399006.SZ".to_string()]
+        );
+    }
+
+    #[test]
+    fn parses_trade_cal_open_dates() {
+        let rows = vec![
+            BTreeMap::from([
+                ("cal_date".to_string(), json!("20250101")),
+                ("is_open".to_string(), json!(0)),
+            ]),
+            BTreeMap::from([
+                ("cal_date".to_string(), json!("20250102")),
+                ("is_open".to_string(), json!(1)),
+            ]),
+            BTreeMap::from([
+                ("cal_date".to_string(), json!("20250103")),
+                ("is_open".to_string(), json!("1")),
+            ]),
+        ];
+
+        assert_eq!(
+            open_dates_from_trade_cal_rows(&rows).unwrap(),
+            vec![
+                parse_date_text("20250102").unwrap(),
+                parse_date_text("20250103").unwrap()
+            ]
         );
     }
 }

@@ -1,13 +1,18 @@
 use std::collections::BTreeMap;
 
 use anyhow::{anyhow, Result};
+use chrono::{Duration, NaiveDate};
 use serde::Serialize;
 
 use crate::{
     cache, calc,
     cli::{WriteArgs, WriteMode},
     config::Config,
+    source_writer::parse_date_text,
 };
+
+const CALC_WARMUP_TRADING_DAYS: usize = 360;
+const TRADE_CAL_LOOKBACK_CALENDAR_DAYS: i64 = 900;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum DateWindow {
@@ -25,13 +30,21 @@ struct FullSummary {
     status: &'static str,
     mode: &'static str,
     refresh_ths: bool,
-    date_window: String,
+    calc_date_window: String,
+    cache_date_window: String,
+    calc_source_warmup_date_window: Option<String>,
     source_row_counts: BTreeMap<String, usize>,
+    warmup_source_row_counts: BTreeMap<String, usize>,
     calc_source_row_count: usize,
     target_trade_dates: Vec<String>,
     calc_row_counts: BTreeMap<String, usize>,
     usable_ranges: BTreeMap<String, Vec<Option<String>>>,
     message: &'static str,
+}
+
+struct FullTradeDatePlan {
+    target_trade_dates: Vec<NaiveDate>,
+    warmup_trade_dates: Vec<NaiveDate>,
 }
 
 pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
@@ -47,11 +60,92 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
         println!("{}", calc::summary_json(&summary)?);
         return Ok(());
     }
-    let cache_summary = cache::run_cache(&window, args.refresh_ths, config).await?;
+    let refresh_cache_summary = if args.refresh_ths {
+        Some(cache::run_cache(&DateWindow::RefreshThsOnly, true, config).await?)
+    } else {
+        None
+    };
+    let trade_date_plan = full_trade_date_plan(&window, config).await?;
+    let target_cache_summary =
+        cache::run_cache_for_trade_dates(&trade_date_plan.target_trade_dates, false, config)
+            .await?;
+    let warmup_cache_summary = if trade_date_plan.warmup_trade_dates.is_empty() {
+        None
+    } else {
+        Some(
+            cache::run_calc_source_cache_for_trade_dates(
+                &trade_date_plan.warmup_trade_dates,
+                config,
+            )
+            .await?,
+        )
+    };
+    let warmup_window = warmup_window_from_dates(&trade_date_plan.warmup_trade_dates);
     let calc_summary = calc::run_calc(&window, config).await?;
-    let summary = full_summary(&window, cache_summary, calc_summary, args.refresh_ths);
+    let summary = full_summary(
+        &window,
+        warmup_window.as_ref(),
+        refresh_cache_summary,
+        target_cache_summary,
+        warmup_cache_summary,
+        calc_summary,
+        args.refresh_ths,
+    );
     println!("{}", serde_json::to_string_pretty(&summary)?);
     Ok(())
+}
+
+async fn full_trade_date_plan(window: &DateWindow, config: &Config) -> Result<FullTradeDatePlan> {
+    let DateWindow::Explicit {
+        start_date,
+        end_date,
+    } = window
+    else {
+        return Err(anyhow!(
+            "cache execution currently requires explicit --start-date/--end-date or --refresh-ths-only"
+        ));
+    };
+    let start = parse_date_text(start_date)?;
+    let end = parse_date_text(end_date)?;
+    let query_start = start - Duration::days(TRADE_CAL_LOOKBACK_CALENDAR_DAYS);
+    let open_dates = cache::trade_cal_open_dates(config, query_start, end).await?;
+    full_trade_date_plan_from_open_dates(start, end, &open_dates)
+}
+
+fn full_trade_date_plan_from_open_dates(
+    start: NaiveDate,
+    end: NaiveDate,
+    open_dates: &[NaiveDate],
+) -> Result<FullTradeDatePlan> {
+    let target_trade_dates = open_dates
+        .iter()
+        .copied()
+        .filter(|date| *date >= start && *date <= end)
+        .collect::<Vec<_>>();
+    let Some(first_target_date) = target_trade_dates.first().copied() else {
+        return Ok(FullTradeDatePlan {
+            target_trade_dates,
+            warmup_trade_dates: Vec::new(),
+        });
+    };
+    let prior_dates = open_dates
+        .iter()
+        .copied()
+        .filter(|date| *date < first_target_date)
+        .collect::<Vec<_>>();
+    let required_prior_days = CALC_WARMUP_TRADING_DAYS.saturating_sub(1);
+    if prior_dates.len() < required_prior_days {
+        return Err(anyhow!(
+            "trade_cal returned only {} prior open days before {}; need {required_prior_days} for calc warmup",
+            prior_dates.len(),
+            first_target_date.format("%Y%m%d")
+        ));
+    }
+    let warmup_trade_dates = prior_dates[prior_dates.len() - required_prior_days..].to_vec();
+    Ok(FullTradeDatePlan {
+        target_trade_dates,
+        warmup_trade_dates,
+    })
 }
 
 pub fn resolve_date_window(args: &WriteArgs, config: &Config) -> Result<DateWindow> {
@@ -113,21 +207,45 @@ fn validate_yyyymmdd(name: &str, value: &str) -> Result<()> {
 
 fn full_summary(
     window: &DateWindow,
-    cache_summary: cache::CacheSummary,
+    warmup_window: Option<&DateWindow>,
+    refresh_cache_summary: Option<cache::CacheSummary>,
+    target_cache_summary: cache::CacheSummary,
+    warmup_cache_summary: Option<cache::CacheSummary>,
     calc_summary: calc::CalcSummary,
     refresh_ths: bool,
 ) -> FullSummary {
+    let warmup_source_row_counts = warmup_cache_summary
+        .as_ref()
+        .map(|summary| summary.source_row_counts.clone())
+        .unwrap_or_default();
+    let mut source_row_counts = refresh_cache_summary
+        .map(|summary| summary.source_row_counts)
+        .unwrap_or_default();
+    merge_counts(
+        &mut source_row_counts,
+        &target_cache_summary.source_row_counts,
+    );
+    merge_counts(&mut source_row_counts, &warmup_source_row_counts);
     FullSummary {
         status: "success",
         mode: "full",
         refresh_ths,
-        date_window: format_window(window),
-        source_row_counts: cache_summary.source_row_counts,
+        calc_date_window: format_window(window),
+        cache_date_window: format_window(window),
+        calc_source_warmup_date_window: warmup_window.map(format_window),
+        source_row_counts,
+        warmup_source_row_counts,
         calc_source_row_count: calc_summary.source_row_count,
         target_trade_dates: calc_summary.target_trade_dates,
         calc_row_counts: calc_summary.calc_row_counts,
         usable_ranges: calc_summary.usable_ranges,
         message: "source cache write and local calculation completed",
+    }
+}
+
+fn merge_counts(target: &mut BTreeMap<String, usize>, source: &BTreeMap<String, usize>) {
+    for (table, count) in source {
+        *target.entry(table.clone()).or_insert(0) += count;
     }
 }
 
@@ -143,6 +261,17 @@ fn format_window(window: &DateWindow) -> String {
         }
         DateWindow::RefreshThsOnly => "refresh_ths_only".to_string(),
     }
+}
+
+fn yyyymmdd(date: NaiveDate) -> String {
+    date.format("%Y%m%d").to_string()
+}
+
+fn warmup_window_from_dates(dates: &[NaiveDate]) -> Option<DateWindow> {
+    Some(DateWindow::Explicit {
+        start_date: yyyymmdd(*dates.first()?),
+        end_date: yyyymmdd(*dates.last()?),
+    })
 }
 
 #[cfg(test)]
@@ -209,17 +338,28 @@ mod tests {
             start_date: "20250625".to_string(),
             end_date: "20250625".to_string(),
         };
-        let cache_summary = cache::CacheSummary {
+        let target_cache_summary = cache::CacheSummary {
             status: "success",
             mode: "cache",
             refresh_ths: true,
             source_row_counts: BTreeMap::from([("stock_stk_factor_pro".to_string(), 5648)]),
             message: "source cache write completed",
         };
+        let warmup_window = DateWindow::Explicit {
+            start_date: "20240102".to_string(),
+            end_date: "20250624".to_string(),
+        };
+        let warmup_cache_summary = cache::CacheSummary {
+            status: "success",
+            mode: "cache",
+            refresh_ths: false,
+            source_row_counts: BTreeMap::from([("stock_stk_factor_pro".to_string(), 1000)]),
+            message: "calc source cache warmup completed",
+        };
         let calc_summary = calc::CalcSummary {
             status: "success",
             mode: "calc",
-            source_row_count: 5648,
+            source_row_count: 6648,
             target_trade_dates: vec!["2025-06-25".to_string()],
             calc_row_counts: BTreeMap::from([("stock_daily_asof_indicators".to_string(), 5648)]),
             usable_ranges: BTreeMap::from([(
@@ -232,15 +372,32 @@ mod tests {
             message: "local calculation completed",
         };
 
-        let summary = full_summary(&window, cache_summary, calc_summary, true);
+        let summary = full_summary(
+            &window,
+            Some(&warmup_window),
+            None,
+            target_cache_summary,
+            Some(warmup_cache_summary),
+            calc_summary,
+            true,
+        );
 
         assert_eq!(summary.status, "success");
         assert_eq!(summary.mode, "full");
         assert_eq!(summary.refresh_ths, true);
-        assert_eq!(summary.date_window, "20250625..20250625");
+        assert_eq!(summary.calc_date_window, "20250625..20250625");
+        assert_eq!(summary.cache_date_window, "20250625..20250625");
+        assert_eq!(
+            summary.calc_source_warmup_date_window,
+            Some("20240102..20250624".to_string())
+        );
         assert_eq!(
             summary.source_row_counts.get("stock_stk_factor_pro"),
-            Some(&5648)
+            Some(&6648)
+        );
+        assert_eq!(
+            summary.warmup_source_row_counts.get("stock_stk_factor_pro"),
+            Some(&1000)
         );
         assert_eq!(
             summary.calc_row_counts.get("stock_daily_asof_indicators"),
