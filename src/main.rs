@@ -1,6 +1,7 @@
 mod cli;
 mod config;
 mod db;
+mod generated;
 mod write;
 
 use anyhow::Result;
