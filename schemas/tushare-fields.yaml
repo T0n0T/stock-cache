@@ -1,0 +1,1957 @@
+version: 1
+datasets:
+  stock_stk_factor_pro:
+    api: stk_factor_pro
+    doc_url: https://tushare.pro/wctapi/documents/328.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - trade_date
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date
+      params:
+      - trade_date
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Official document id 328 was checked; SDK sample used 000001.SZ over 20260529-20260626.
+    doc_mismatch: []
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 股票代码
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: open
+      pg_type: double precision
+      nullable: true
+      description: 开盘价
+    - name: open_hfq
+      pg_type: double precision
+      nullable: true
+      description: 开盘价（后复权）
+    - name: open_qfq
+      pg_type: double precision
+      nullable: true
+      description: 开盘价（前复权）
+    - name: high
+      pg_type: double precision
+      nullable: true
+      description: 最高价
+    - name: high_hfq
+      pg_type: double precision
+      nullable: true
+      description: 最高价（后复权）
+    - name: high_qfq
+      pg_type: double precision
+      nullable: true
+      description: 最高价（前复权）
+    - name: low
+      pg_type: double precision
+      nullable: true
+      description: 最低价
+    - name: low_hfq
+      pg_type: double precision
+      nullable: true
+      description: 最低价（后复权）
+    - name: low_qfq
+      pg_type: double precision
+      nullable: true
+      description: 最低价（前复权）
+    - name: close
+      pg_type: double precision
+      nullable: true
+      description: 收盘价
+    - name: close_hfq
+      pg_type: double precision
+      nullable: true
+      description: 收盘价（后复权）
+    - name: close_qfq
+      pg_type: double precision
+      nullable: true
+      description: 收盘价（前复权）
+    - name: pre_close
+      pg_type: double precision
+      nullable: true
+      description: 昨收价(前复权)--为daily接口的pre_close,以当时复权因子计算值跟前一日close_qfq对不上，可不用
+    - name: change
+      pg_type: double precision
+      nullable: true
+      description: 涨跌额
+    - name: pct_chg
+      pg_type: double precision
+      nullable: true
+      description: 涨跌幅 （除权后的涨跌幅）
+    - name: vol
+      pg_type: double precision
+      nullable: true
+      description: 成交量 （手）
+    - name: amount
+      pg_type: double precision
+      nullable: true
+      description: 成交额 （千元）
+    - name: turnover_rate
+      pg_type: double precision
+      nullable: true
+      description: 换手率（%）
+    - name: turnover_rate_f
+      pg_type: double precision
+      nullable: true
+      description: 换手率（自由流通股）
+    - name: volume_ratio
+      pg_type: double precision
+      nullable: true
+      description: 量比
+    - name: pe
+      pg_type: double precision
+      nullable: true
+      description: 市盈率（总市值/净利润， 亏损的PE为空）
+    - name: pe_ttm
+      pg_type: double precision
+      nullable: true
+      description: 市盈率（TTM，亏损的PE为空）
+    - name: pb
+      pg_type: double precision
+      nullable: true
+      description: 市净率（总市值/净资产）
+    - name: ps
+      pg_type: double precision
+      nullable: true
+      description: 市销率
+    - name: ps_ttm
+      pg_type: double precision
+      nullable: true
+      description: 市销率（TTM）
+    - name: dv_ratio
+      pg_type: double precision
+      nullable: true
+      description: 股息率 （%）
+    - name: dv_ttm
+      pg_type: double precision
+      nullable: true
+      description: 股息率（TTM）（%）
+    - name: total_share
+      pg_type: double precision
+      nullable: true
+      description: 总股本 （万股）
+    - name: float_share
+      pg_type: double precision
+      nullable: true
+      description: 流通股本 （万股）
+    - name: free_share
+      pg_type: double precision
+      nullable: true
+      description: 自由流通股本 （万）
+    - name: total_mv
+      pg_type: double precision
+      nullable: true
+      description: 总市值 （万元）
+    - name: circ_mv
+      pg_type: double precision
+      nullable: true
+      description: 流通市值（万元）
+    - name: adj_factor
+      pg_type: double precision
+      nullable: true
+      description: 复权因子
+    - name: asi_bfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: asi_hfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: asi_qfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: asit_bfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: asit_hfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: asit_qfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: atr_bfq
+      pg_type: double precision
+      nullable: true
+      description: 真实波动N日平均值-CLOSE, HIGH, LOW, N=20
+    - name: atr_hfq
+      pg_type: double precision
+      nullable: true
+      description: 真实波动N日平均值-CLOSE, HIGH, LOW, N=20
+    - name: atr_qfq
+      pg_type: double precision
+      nullable: true
+      description: 真实波动N日平均值-CLOSE, HIGH, LOW, N=20
+    - name: bbi_bfq
+      pg_type: double precision
+      nullable: true
+      description: BBI多空指标-CLOSE, M1=3, M2=6, M3=12, M4=20
+    - name: bbi_hfq
+      pg_type: double precision
+      nullable: true
+      description: BBI多空指标-CLOSE, M1=3, M2=6, M3=12, M4=21
+    - name: bbi_qfq
+      pg_type: double precision
+      nullable: true
+      description: BBI多空指标-CLOSE, M1=3, M2=6, M3=12, M4=22
+    - name: bias1_bfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias1_hfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias1_qfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias2_bfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias2_hfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias2_qfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias3_bfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias3_hfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias3_qfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: boll_lower_bfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_lower_hfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_lower_qfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_mid_bfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_mid_hfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_mid_qfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_upper_bfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_upper_hfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_upper_qfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: brar_ar_bfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: brar_ar_hfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: brar_ar_qfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: brar_br_bfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: brar_br_hfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: brar_br_qfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: cci_bfq
+      pg_type: double precision
+      nullable: true
+      description: 顺势指标又叫CCI指标-CLOSE, HIGH, LOW, N=14
+    - name: cci_hfq
+      pg_type: double precision
+      nullable: true
+      description: 顺势指标又叫CCI指标-CLOSE, HIGH, LOW, N=14
+    - name: cci_qfq
+      pg_type: double precision
+      nullable: true
+      description: 顺势指标又叫CCI指标-CLOSE, HIGH, LOW, N=14
+    - name: cr_bfq
+      pg_type: double precision
+      nullable: true
+      description: CR价格动量指标-CLOSE, HIGH, LOW, N=20
+    - name: cr_hfq
+      pg_type: double precision
+      nullable: true
+      description: CR价格动量指标-CLOSE, HIGH, LOW, N=20
+    - name: cr_qfq
+      pg_type: double precision
+      nullable: true
+      description: CR价格动量指标-CLOSE, HIGH, LOW, N=20
+    - name: dfma_dif_bfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dfma_dif_hfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dfma_dif_qfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dfma_difma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dfma_difma_hfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dfma_difma_qfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dmi_adx_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_adx_hfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_adx_qfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_adxr_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_adxr_hfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_adxr_qfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_mdi_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_mdi_hfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_mdi_qfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_pdi_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_pdi_hfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_pdi_qfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: downdays
+      pg_type: double precision
+      nullable: true
+      description: 连跌天数
+    - name: updays
+      pg_type: double precision
+      nullable: true
+      description: 连涨天数
+    - name: dpo_bfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: dpo_hfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: dpo_qfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: madpo_bfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: madpo_hfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: madpo_qfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: ema_bfq_10
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=10
+    - name: ema_bfq_20
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=20
+    - name: ema_bfq_250
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=250
+    - name: ema_bfq_30
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=30
+    - name: ema_bfq_5
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=5
+    - name: ema_bfq_60
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=60
+    - name: ema_bfq_90
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=90
+    - name: ema_hfq_10
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=10
+    - name: ema_hfq_20
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=20
+    - name: ema_hfq_250
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=250
+    - name: ema_hfq_30
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=30
+    - name: ema_hfq_5
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=5
+    - name: ema_hfq_60
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=60
+    - name: ema_hfq_90
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=90
+    - name: ema_qfq_10
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=10
+    - name: ema_qfq_20
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=20
+    - name: ema_qfq_250
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=250
+    - name: ema_qfq_30
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=30
+    - name: ema_qfq_5
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=5
+    - name: ema_qfq_60
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=60
+    - name: ema_qfq_90
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=90
+    - name: emv_bfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: emv_hfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: emv_qfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: maemv_bfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: maemv_hfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: maemv_qfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: expma_12_bfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: expma_12_hfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: expma_12_qfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: expma_50_bfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: expma_50_hfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: expma_50_qfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: kdj_bfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_hfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_qfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_d_bfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_d_hfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_d_qfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_k_bfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_k_hfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_k_qfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: ktn_down_bfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_down_hfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_down_qfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_mid_bfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_mid_hfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_mid_qfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_upper_bfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_upper_hfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_upper_qfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: lowdays
+      pg_type: double precision
+      nullable: true
+      description: LOWRANGE(LOW)表示当前最低价是近多少周期内最低价的最小值
+    - name: topdays
+      pg_type: double precision
+      nullable: true
+      description: TOPRANGE(HIGH)表示当前最高价是近多少周期内最高价的最大值
+    - name: ma_bfq_10
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=10
+    - name: ma_bfq_20
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=20
+    - name: ma_bfq_250
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=250
+    - name: ma_bfq_30
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=30
+    - name: ma_bfq_5
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=5
+    - name: ma_bfq_60
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=60
+    - name: ma_bfq_90
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=90
+    - name: ma_hfq_10
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=10
+    - name: ma_hfq_20
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=20
+    - name: ma_hfq_250
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=250
+    - name: ma_hfq_30
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=30
+    - name: ma_hfq_5
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=5
+    - name: ma_hfq_60
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=60
+    - name: ma_hfq_90
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=90
+    - name: ma_qfq_10
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=10
+    - name: ma_qfq_20
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=20
+    - name: ma_qfq_250
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=250
+    - name: ma_qfq_30
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=30
+    - name: ma_qfq_5
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=5
+    - name: ma_qfq_60
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=60
+    - name: ma_qfq_90
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=90
+    - name: macd_bfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_hfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_qfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dea_bfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dea_hfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dea_qfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dif_bfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dif_hfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dif_qfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: mass_bfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: mass_hfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: mass_qfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: ma_mass_bfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: ma_mass_hfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: ma_mass_qfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: mfi_bfq
+      pg_type: double precision
+      nullable: true
+      description: MFI指标是成交量的RSI指标-CLOSE, HIGH, LOW, VOL, N=14
+    - name: mfi_hfq
+      pg_type: double precision
+      nullable: true
+      description: MFI指标是成交量的RSI指标-CLOSE, HIGH, LOW, VOL, N=14
+    - name: mfi_qfq
+      pg_type: double precision
+      nullable: true
+      description: MFI指标是成交量的RSI指标-CLOSE, HIGH, LOW, VOL, N=14
+    - name: mtm_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: mtm_hfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: mtm_qfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: mtmma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: mtmma_hfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: mtmma_qfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: obv_bfq
+      pg_type: double precision
+      nullable: true
+      description: 能量潮指标-CLOSE, VOL
+    - name: obv_hfq
+      pg_type: double precision
+      nullable: true
+      description: 能量潮指标-CLOSE, VOL
+    - name: obv_qfq
+      pg_type: double precision
+      nullable: true
+      description: 能量潮指标-CLOSE, VOL
+    - name: psy_bfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: psy_hfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: psy_qfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: psyma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: psyma_hfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: psyma_qfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: roc_bfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: roc_hfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: roc_qfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: maroc_bfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: maroc_hfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: maroc_qfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: rsi_bfq_12
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=12
+    - name: rsi_bfq_24
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=24
+    - name: rsi_bfq_6
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=6
+    - name: rsi_hfq_12
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=12
+    - name: rsi_hfq_24
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=24
+    - name: rsi_hfq_6
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=6
+    - name: rsi_qfq_12
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=12
+    - name: rsi_qfq_24
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=24
+    - name: rsi_qfq_6
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=6
+    - name: taq_down_bfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_down_hfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_down_qfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_mid_bfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_mid_hfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_mid_qfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_up_bfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_up_hfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_up_qfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: trix_bfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: trix_hfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: trix_qfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: trma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: trma_hfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: trma_qfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: vr_bfq
+      pg_type: double precision
+      nullable: true
+      description: VR容量比率-CLOSE, VOL, M1=26
+    - name: vr_hfq
+      pg_type: double precision
+      nullable: true
+      description: VR容量比率-CLOSE, VOL, M1=26
+    - name: vr_qfq
+      pg_type: double precision
+      nullable: true
+      description: VR容量比率-CLOSE, VOL, M1=26
+    - name: wr_bfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: wr_hfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: wr_qfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: wr1_bfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: wr1_hfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: wr1_qfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: xsii_td1_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td1_hfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td1_qfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td2_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td2_hfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td2_qfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td3_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td3_hfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td3_qfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td4_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td4_hfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td4_qfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+  stock_moneyflow_ths:
+    api: moneyflow_ths
+    doc_url: https://tushare.pro/wctapi/documents/348.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - trade_date
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date
+      params:
+      - trade_date
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    doc_mismatch: []
+    fields:
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 股票代码
+    - name: name
+      pg_type: text
+      nullable: true
+      description: 股票名称
+    - name: pct_change
+      pg_type: double precision
+      nullable: true
+      description: 涨跌幅
+    - name: latest
+      pg_type: double precision
+      nullable: true
+      description: 最新价
+    - name: net_amount
+      pg_type: double precision
+      nullable: true
+      description: 资金净流入(万元)
+    - name: net_d5_amount
+      pg_type: double precision
+      nullable: true
+      description: 5日主力净额(万元)
+    - name: buy_lg_amount
+      pg_type: double precision
+      nullable: true
+      description: 今日大单净流入额(万元)
+    - name: buy_lg_amount_rate
+      pg_type: double precision
+      nullable: true
+      description: 今日大单净流入占比(%)
+    - name: buy_md_amount
+      pg_type: double precision
+      nullable: true
+      description: 今日中单净流入额(万元)
+    - name: buy_md_amount_rate
+      pg_type: double precision
+      nullable: true
+      description: 今日中单净流入占比(%)
+    - name: buy_sm_amount
+      pg_type: double precision
+      nullable: true
+      description: 今日小单净流入额(万元)
+    - name: buy_sm_amount_rate
+      pg_type: double precision
+      nullable: true
+      description: 今日小单净流入占比(%)
+  index_idx_factor_pro:
+    api: idx_factor_pro
+    doc_url: https://tushare.pro/wctapi/documents/358.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - trade_date
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date_and_code_list
+      params:
+      - ts_code
+      - start_date
+      - end_date
+      code_source: INDEX_LIST_PATH enabled rows
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - SDK sample used 000001.SH over 20260529-20260626.
+    doc_mismatch: []
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 指数代码
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: open
+      pg_type: double precision
+      nullable: true
+      description: 开盘价
+    - name: high
+      pg_type: double precision
+      nullable: true
+      description: 最高价
+    - name: low
+      pg_type: double precision
+      nullable: true
+      description: 最低价
+    - name: close
+      pg_type: double precision
+      nullable: true
+      description: 收盘价
+    - name: pre_close
+      pg_type: double precision
+      nullable: true
+      description: 昨收价
+    - name: change
+      pg_type: double precision
+      nullable: true
+      description: 涨跌额
+    - name: pct_change
+      pg_type: double precision
+      nullable: true
+      description: 涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+    - name: vol
+      pg_type: double precision
+      nullable: true
+      description: 成交量 （手）
+    - name: amount
+      pg_type: double precision
+      nullable: true
+      description: 成交额 （千元）
+    - name: asi_bfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: asit_bfq
+      pg_type: double precision
+      nullable: true
+      description: 振动升降指标-OPEN, CLOSE, HIGH, LOW, M1=26, M2=10
+    - name: atr_bfq
+      pg_type: double precision
+      nullable: true
+      description: 真实波动N日平均值-CLOSE, HIGH, LOW, N=20
+    - name: bbi_bfq
+      pg_type: double precision
+      nullable: true
+      description: BBI多空指标-CLOSE, M1=3, M2=6, M3=12, M4=20
+    - name: bias1_bfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias2_bfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: bias3_bfq
+      pg_type: double precision
+      nullable: true
+      description: BIAS乖离率-CLOSE, L1=6, L2=12, L3=24
+    - name: boll_lower_bfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_mid_bfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: boll_upper_bfq
+      pg_type: double precision
+      nullable: true
+      description: BOLL指标，布林带-CLOSE, N=20, P=2
+    - name: brar_ar_bfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: brar_br_bfq
+      pg_type: double precision
+      nullable: true
+      description: BRAR情绪指标-OPEN, CLOSE, HIGH, LOW, M1=26
+    - name: cci_bfq
+      pg_type: double precision
+      nullable: true
+      description: 顺势指标又叫CCI指标-CLOSE, HIGH, LOW, N=14
+    - name: cr_bfq
+      pg_type: double precision
+      nullable: true
+      description: CR价格动量指标-CLOSE, HIGH, LOW, N=20
+    - name: dfma_dif_bfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dfma_difma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 平行线差指标-CLOSE, N1=10, N2=50, M=10
+    - name: dmi_adx_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_adxr_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_mdi_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: dmi_pdi_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动向指标-CLOSE, HIGH, LOW, M1=14, M2=6
+    - name: downdays
+      pg_type: double precision
+      nullable: true
+      description: 连跌天数
+    - name: updays
+      pg_type: double precision
+      nullable: true
+      description: 连涨天数
+    - name: dpo_bfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: madpo_bfq
+      pg_type: double precision
+      nullable: true
+      description: 区间震荡线-CLOSE, M1=20, M2=10, M3=6
+    - name: ema_bfq_10
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=10
+    - name: ema_bfq_20
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=20
+    - name: ema_bfq_250
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=250
+    - name: ema_bfq_30
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=30
+    - name: ema_bfq_5
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=5
+    - name: ema_bfq_60
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=60
+    - name: ema_bfq_90
+      pg_type: double precision
+      nullable: true
+      description: 指数移动平均-N=90
+    - name: emv_bfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: maemv_bfq
+      pg_type: double precision
+      nullable: true
+      description: 简易波动指标-HIGH, LOW, VOL, N=14, M=9
+    - name: expma_12_bfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: expma_50_bfq
+      pg_type: double precision
+      nullable: true
+      description: EMA指数平均数指标-CLOSE, N1=12, N2=50
+    - name: kdj_bfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_d_bfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: kdj_k_bfq
+      pg_type: double precision
+      nullable: true
+      description: KDJ指标-CLOSE, HIGH, LOW, N=9, M1=3, M2=3
+    - name: ktn_down_bfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_mid_bfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: ktn_upper_bfq
+      pg_type: double precision
+      nullable: true
+      description: 肯特纳交易通道, N选20日，ATR选10日-CLOSE, HIGH, LOW, N=20, M=10
+    - name: lowdays
+      pg_type: double precision
+      nullable: true
+      description: LOWRANGE(LOW)表示当前最低价是近多少周期内最低价的最小值
+    - name: topdays
+      pg_type: double precision
+      nullable: true
+      description: TOPRANGE(HIGH)表示当前最高价是近多少周期内最高价的最大值
+    - name: ma_bfq_10
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=10
+    - name: ma_bfq_20
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=20
+    - name: ma_bfq_250
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=250
+    - name: ma_bfq_30
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=30
+    - name: ma_bfq_5
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=5
+    - name: ma_bfq_60
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=60
+    - name: ma_bfq_90
+      pg_type: double precision
+      nullable: true
+      description: 简单移动平均-N=90
+    - name: macd_bfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dea_bfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: macd_dif_bfq
+      pg_type: double precision
+      nullable: true
+      description: MACD指标-CLOSE, SHORT=12, LONG=26, M=9
+    - name: mass_bfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: ma_mass_bfq
+      pg_type: double precision
+      nullable: true
+      description: 梅斯线-HIGH, LOW, N1=9, N2=25, M=6
+    - name: mfi_bfq
+      pg_type: double precision
+      nullable: true
+      description: MFI指标是成交量的RSI指标-CLOSE, HIGH, LOW, VOL, N=14
+    - name: mtm_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: mtmma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 动量指标-CLOSE, N=12, M=6
+    - name: obv_bfq
+      pg_type: double precision
+      nullable: true
+      description: 能量潮指标-CLOSE, VOL
+    - name: psy_bfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: psyma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 投资者对股市涨跌产生心理波动的情绪指标-CLOSE, N=12, M=6
+    - name: roc_bfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: maroc_bfq
+      pg_type: double precision
+      nullable: true
+      description: 变动率指标-CLOSE, N=12, M=6
+    - name: rsi_bfq_12
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=12
+    - name: rsi_bfq_24
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=24
+    - name: rsi_bfq_6
+      pg_type: double precision
+      nullable: true
+      description: RSI指标-CLOSE, N=6
+    - name: taq_down_bfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_mid_bfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: taq_up_bfq
+      pg_type: double precision
+      nullable: true
+      description: 唐安奇通道(海龟)交易指标-HIGH, LOW, 20
+    - name: trix_bfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: trma_bfq
+      pg_type: double precision
+      nullable: true
+      description: 三重指数平滑平均线-CLOSE, M1=12, M2=20
+    - name: vr_bfq
+      pg_type: double precision
+      nullable: true
+      description: VR容量比率-CLOSE, VOL, M1=26
+    - name: wr_bfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: wr1_bfq
+      pg_type: double precision
+      nullable: true
+      description: W&R 威廉指标-CLOSE, HIGH, LOW, N=10, N1=6
+    - name: xsii_td1_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td2_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td3_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+    - name: xsii_td4_bfq
+      pg_type: double precision
+      nullable: true
+      description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
+  ths_index:
+    api: ths_index
+    doc_url: https://tushare.pro/wctapi/documents/259.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: replace_all
+      key:
+      - ts_code
+      transaction_group: ths_classification
+    fetch_plan:
+      kind: refresh_current
+      params: []
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Current classification list only; no historical snapshot columns are added.
+    doc_mismatch: []
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 代码
+    - name: name
+      pg_type: text
+      nullable: true
+      description: 名称
+    - name: count
+      pg_type: integer
+      nullable: true
+      description: 成分个数
+    - name: exchange
+      pg_type: text
+      nullable: true
+      description: 交易所
+    - name: list_date
+      pg_type: date
+      nullable: true
+      description: 上市日期
+      source_format: YYYYMMDD
+    - name: type
+      pg_type: text
+      nullable: true
+      description: N概念指数S特色指数
+  ths_daily:
+    api: ths_daily
+    doc_url: https://tushare.pro/wctapi/documents/260.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - trade_date
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date_and_current_ths_index
+      params:
+      - ts_code
+      - start_date
+      - end_date
+      code_source: ths_index
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Optional total_mv and float_mv were confirmed with an explicit fields request in SDK 1.4.29.
+    doc_mismatch: []
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: TS指数代码
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日
+      source_format: YYYYMMDD
+    - name: open
+      pg_type: double precision
+      nullable: true
+      description: 开盘点位
+    - name: high
+      pg_type: double precision
+      nullable: true
+      description: 最高点位
+    - name: low
+      pg_type: double precision
+      nullable: true
+      description: 最低点位
+    - name: close
+      pg_type: double precision
+      nullable: true
+      description: 收盘点位
+    - name: pre_close
+      pg_type: double precision
+      nullable: true
+      description: 昨日收盘点
+    - name: avg_price
+      pg_type: double precision
+      nullable: true
+      description: 平均价
+    - name: change
+      pg_type: double precision
+      nullable: true
+      description: 涨跌点位
+    - name: pct_change
+      pg_type: double precision
+      nullable: true
+      description: 涨跌幅
+    - name: vol
+      pg_type: double precision
+      nullable: true
+      description: 成交量（手）
+    - name: turnover_rate
+      pg_type: double precision
+      nullable: true
+      description: 换手率（%）
+    - name: total_mv
+      pg_type: double precision
+      nullable: true
+      description: 总市值（元）
+    - name: float_mv
+      pg_type: double precision
+      nullable: true
+      description: 流通市值（元）
+  moneyflow_cnt_ths:
+    api: moneyflow_cnt_ths
+    doc_url: https://tushare.pro/wctapi/documents/371.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - trade_date
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date
+      params:
+      - trade_date
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    doc_mismatch: []
+    fields:
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 板块代码
+    - name: name
+      pg_type: text
+      nullable: true
+      description: 板块名称
+    - name: lead_stock
+      pg_type: text
+      nullable: true
+      description: 领涨股票名称
+    - name: close_price
+      pg_type: double precision
+      nullable: true
+      description: 最新价
+    - name: pct_change
+      pg_type: double precision
+      nullable: true
+      description: 行业涨跌幅
+    - name: industry_index
+      pg_type: double precision
+      nullable: true
+      description: 板块指数点位
+    - name: company_num
+      pg_type: integer
+      nullable: true
+      description: 公司数量
+    - name: pct_change_stock
+      pg_type: double precision
+      nullable: true
+      description: 领涨股涨跌幅
+    - name: net_buy_amount
+      pg_type: double precision
+      nullable: true
+      description: 流入资金(亿元)
+    - name: net_sell_amount
+      pg_type: double precision
+      nullable: true
+      description: 流出资金(亿元)
+    - name: net_amount
+      pg_type: double precision
+      nullable: true
+      description: 净额(亿元)
+  ths_member:
+    api: ths_member
+    doc_url: https://tushare.pro/wctapi/documents/261.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: replace_all
+      key:
+      - ts_code
+      - con_code
+      transaction_group: ths_classification
+    fetch_plan:
+      kind: refresh_current_by_ths_code
+      params:
+      - ts_code
+      code_source: ths_index
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Current membership relation only; no daily membership snapshot is stored.
+    - Optional weight, in_date, out_date, and is_new are included. SDK 1.4.29 explicit fields sample returned is_new and
+      returned weight/in_date/out_date as all NULL for the sampled THS index.
+    doc_mismatch: []
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 指数代码
+    - name: con_code
+      pg_type: text
+      nullable: false
+      description: 股票代码
+    - name: con_name
+      pg_type: text
+      nullable: true
+      description: 股票名称
+    - name: weight
+      pg_type: double precision
+      nullable: true
+      description: 权重(暂无)
+    - name: in_date
+      pg_type: date
+      nullable: true
+      description: 纳入日期(暂无)
+      source_format: YYYYMMDD
+    - name: out_date
+      pg_type: date
+      nullable: true
+      description: 剔除日期(暂无)
+      source_format: YYYYMMDD
+    - name: is_new
+      pg_type: text
+      nullable: true
+      description: 是否最新Y是N否
+  limit_cpt_list:
+    api: limit_cpt_list
+    doc_url: https://tushare.pro/wctapi/documents/357.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: delete_insert_by_date
+      date_field: trade_date
+      natural_key_candidate:
+      - trade_date
+      - rank
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date
+      params:
+      - trade_date
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - No stable unique key is guaranteed by the docs; v1 uses date-slice delete then insert.
+    doc_mismatch:
+    - Official docs describe cons_nums as int, but SDK 1.4.29 sample returned string values; v1 stores cons_nums as text.
+    - Official docs describe rank as str, but SDK 1.4.29 sample returned integer values; v1 stores rank as integer.
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 板块代码
+    - name: name
+      pg_type: text
+      nullable: true
+      description: 板块名称
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: days
+      pg_type: integer
+      nullable: true
+      description: 上榜天数
+    - name: up_stat
+      pg_type: text
+      nullable: true
+      description: 连板高度
+    - name: cons_nums
+      pg_type: text
+      nullable: true
+      description: 连板家数
+    - name: up_nums
+      pg_type: integer
+      nullable: true
+      description: 涨停家数
+    - name: pct_chg
+      pg_type: double precision
+      nullable: true
+      description: 涨跌幅%
+    - name: rank
+      pg_type: integer
+      nullable: true
+      description: 板块热点排名
+  limit_list_ths:
+    api: limit_list_ths
+    doc_url: https://tushare.pro/wctapi/documents/355.md
+    checked_at: '2026-06-26'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - trade_date
+      - ts_code
+    fetch_plan:
+      kind: by_trade_date
+      params:
+      - trade_date
+    notes:
+    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
+      are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
+      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Optional first_lu_time, last_lu_time, first_ld_time, last_ld_time, rise_rate, and sum_float are included. SDK 1.4.29
+      explicit fields sample returned first_ld_time, last_ld_time, lu_limit_order, and sum_float as all NULL for the sampled date.
+    doc_mismatch: []
+    fields:
+    - name: trade_date
+      pg_type: date
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: 股票代码
+    - name: name
+      pg_type: text
+      nullable: true
+      description: 股票名称
+    - name: price
+      pg_type: double precision
+      nullable: true
+      description: 收盘价(元)
+    - name: pct_chg
+      pg_type: double precision
+      nullable: true
+      description: 涨跌幅%
+    - name: open_num
+      pg_type: integer
+      nullable: true
+      description: 打开次数
+    - name: lu_desc
+      pg_type: text
+      nullable: true
+      description: 涨停原因
+    - name: limit_type
+      pg_type: text
+      nullable: true
+      description: 板单类别
+    - name: tag
+      pg_type: text
+      nullable: true
+      description: 涨停标签
+    - name: status
+      pg_type: text
+      nullable: true
+      description: 涨停状态（N连板、一字板）
+    - name: first_lu_time
+      pg_type: timestamp without time zone
+      nullable: true
+      description: 首次涨停时间
+      source_format: YYYY-MM-DD HH:MM:SS
+    - name: last_lu_time
+      pg_type: timestamp without time zone
+      nullable: true
+      description: 最后涨停时间
+      source_format: YYYY-MM-DD HH:MM:SS
+    - name: first_ld_time
+      pg_type: timestamp without time zone
+      nullable: true
+      description: 首次跌停时间
+      source_format: YYYY-MM-DD HH:MM:SS
+    - name: last_ld_time
+      pg_type: timestamp without time zone
+      nullable: true
+      description: 最后跌停时间
+      source_format: YYYY-MM-DD HH:MM:SS
+    - name: limit_order
+      pg_type: double precision
+      nullable: true
+      description: 封单量(元或个)
+    - name: limit_amount
+      pg_type: double precision
+      nullable: true
+      description: 封单额(元或个)
+    - name: turnover_rate
+      pg_type: double precision
+      nullable: true
+      description: 换手率%
+    - name: free_float
+      pg_type: double precision
+      nullable: true
+      description: 实际流通(元或个)
+    - name: lu_limit_order
+      pg_type: double precision
+      nullable: true
+      description: 最大封单(元或个)
+    - name: limit_up_suc_rate
+      pg_type: double precision
+      nullable: true
+      description: 近一年涨停封板率
+    - name: turnover
+      pg_type: double precision
+      nullable: true
+      description: 成交额
+    - name: rise_rate
+      pg_type: double precision
+      nullable: true
+      description: 涨速
+    - name: sum_float
+      pg_type: double precision
+      nullable: true
+      description: 总市值（亿元）
+    - name: market_type
+      pg_type: text
+      nullable: true
+      description: 股票类型：HS沪深主板、GEM创业板、STAR科创板
