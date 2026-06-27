@@ -10,7 +10,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "tushare-fields.yaml"
-DEFAULT_OUTPUT = REPO_ROOT / "db" / "schema.sql"
+DEFAULT_OUTPUT = REPO_ROOT / "deploy" / "postgres" / "schema.sql"
 
 
 CALC_TABLES_SQL = """
@@ -35,6 +35,28 @@ create index "stock_period_indicator_state_lookup_idx"
     on "stock_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
 
 create table "stock_daily_asof_indicators" (
+    "ts_code" text not null,
+    "trade_date" date not null,
+    "daily_dif_asof" double precision,
+    "daily_dea_asof" double precision,
+    "daily_hist_x2_asof" double precision,
+    "daily_dea_pctile_asof" double precision,
+    "daily_period_count" integer,
+    "weekly_dif_asof" double precision,
+    "weekly_dea_asof" double precision,
+    "weekly_hist_x2_asof" double precision,
+    "weekly_dea_pctile_asof" double precision,
+    "weekly_period_count" integer,
+    "monthly_dif_asof" double precision,
+    "monthly_dea_asof" double precision,
+    "monthly_hist_x2_asof" double precision,
+    "monthly_dea_pctile_asof" double precision,
+    "monthly_period_count" integer,
+    "calc_version" text not null,
+    primary key ("ts_code", "trade_date", "calc_version")
+);
+
+create table "index_daily_asof_indicators" (
     "ts_code" text not null,
     "trade_date" date not null,
     "daily_dif_asof" double precision,
@@ -172,11 +194,11 @@ def render_source_table(dataset_id: str, dataset: dict[str, Any]) -> str:
     lines.append(");")
 
     index_lines: list[str] = []
-    if dataset_id == "ths_member":
+    if dataset_id == "index_ths_member":
         index_lines.extend(
             [
-                'create index "ths_member_con_code_idx" on "ths_member" ("con_code");',
-                'create index "ths_member_ts_code_idx" on "ths_member" ("ts_code");',
+                'create index "index_ths_member_con_code_idx" on "index_ths_member" ("con_code");',
+                'create index "index_ths_member_ts_code_idx" on "index_ths_member" ("ts_code");',
             ]
         )
     if dataset.get("write_strategy", {}).get("type") == "delete_insert_by_date":

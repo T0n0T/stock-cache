@@ -16,6 +16,7 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     InitDb,
+    Status,
     Config {
         #[command(subcommand)]
         command: ConfigCommand,

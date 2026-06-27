@@ -10,7 +10,7 @@ use serde::Serialize;
 use serde_json::json;
 use tokio_postgres::NoTls;
 
-use crate::{config::Config, source_writer::parse_date_text, write::DateWindow};
+use crate::{config::Config, db::source_writer::parse_date_text, write::DateWindow};
 
 const MACD_CALC_VERSION: &str = "macd_qfq_12_26_9_v1";
 const ROLLING_CALC_VERSION: &str = "rolling_qfq_v1";
@@ -43,6 +43,32 @@ on conflict ("ts_code", "period_type", "period_end_date", "calc_version") do upd
 
 const INSERT_ASOF_SQL: &str = r#"
 insert into "stock_daily_asof_indicators" (
+    "ts_code", "trade_date",
+    "daily_dif_asof", "daily_dea_asof", "daily_hist_x2_asof", "daily_dea_pctile_asof", "daily_period_count",
+    "weekly_dif_asof", "weekly_dea_asof", "weekly_hist_x2_asof", "weekly_dea_pctile_asof", "weekly_period_count",
+    "monthly_dif_asof", "monthly_dea_asof", "monthly_hist_x2_asof", "monthly_dea_pctile_asof", "monthly_period_count",
+    "calc_version"
+) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+on conflict ("ts_code", "trade_date", "calc_version") do update set
+    "daily_dif_asof" = excluded."daily_dif_asof",
+    "daily_dea_asof" = excluded."daily_dea_asof",
+    "daily_hist_x2_asof" = excluded."daily_hist_x2_asof",
+    "daily_dea_pctile_asof" = excluded."daily_dea_pctile_asof",
+    "daily_period_count" = excluded."daily_period_count",
+    "weekly_dif_asof" = excluded."weekly_dif_asof",
+    "weekly_dea_asof" = excluded."weekly_dea_asof",
+    "weekly_hist_x2_asof" = excluded."weekly_hist_x2_asof",
+    "weekly_dea_pctile_asof" = excluded."weekly_dea_pctile_asof",
+    "weekly_period_count" = excluded."weekly_period_count",
+    "monthly_dif_asof" = excluded."monthly_dif_asof",
+    "monthly_dea_asof" = excluded."monthly_dea_asof",
+    "monthly_hist_x2_asof" = excluded."monthly_hist_x2_asof",
+    "monthly_dea_pctile_asof" = excluded."monthly_dea_pctile_asof",
+    "monthly_period_count" = excluded."monthly_period_count"
+"#;
+
+const INSERT_INDEX_ASOF_SQL: &str = r#"
+insert into "index_daily_asof_indicators" (
     "ts_code", "trade_date",
     "daily_dif_asof", "daily_dea_asof", "daily_hist_x2_asof", "daily_dea_pctile_asof", "daily_period_count",
     "weekly_dif_asof", "weekly_dea_asof", "weekly_hist_x2_asof", "weekly_dea_pctile_asof", "weekly_period_count",
@@ -189,16 +215,22 @@ pub async fn run_calc(
         if target_dates_to_compute.is_empty() {
             eprintln!("[calc] all target trade dates already complete; skip load/compute/write");
             let source_row_count = load_source_row_count(&client, max_target_date).await?;
+            let index_source_row_count =
+                load_index_source_row_count(&client, max_target_date).await?;
             let distinct_dates = load_distinct_source_trade_dates(&client, max_target_date).await?;
+            let distinct_index_dates =
+                load_distinct_index_source_trade_dates(&client, max_target_date).await?;
             Ok(summary(
-                source_row_count,
+                source_row_count + index_source_row_count,
                 &target_dates,
                 &distinct_dates,
+                &distinct_index_dates,
                 BTreeMap::from([
                     ("stock_period_indicator_state".to_string(), 0),
                     ("stock_daily_asof_indicators".to_string(), 0),
                     ("stock_daily_rolling_factors".to_string(), 0),
                     ("stock_daily_left_peak".to_string(), 0),
+                    ("index_daily_asof_indicators".to_string(), 0),
                 ]),
             ))
         } else {
@@ -208,26 +240,34 @@ pub async fn run_calc(
             );
             let started = Instant::now();
             let source_rows = load_source_rows(&client, max_target_date).await?;
+            let index_source_rows = load_index_source_rows(&client, max_target_date).await?;
             eprintln!(
-                "[calc] load source rows done rows={} elapsed={:.1}s",
+                "[calc] load source rows done stock_rows={} index_rows={} elapsed={:.1}s",
                 source_rows.len(),
+                index_source_rows.len(),
                 started.elapsed().as_secs_f64()
             );
             let distinct_dates = distinct_trade_dates(&source_rows);
+            let distinct_index_dates = distinct_trade_dates(&index_source_rows);
             eprintln!(
                 "[calc] compute rows start max_concurrency={} pending_target_days={}",
                 max_concurrency.max(1),
                 target_dates_to_compute.len()
             );
             let started = Instant::now();
-            let computed =
-                compute_calc_rows(&source_rows, &target_dates_to_compute, max_concurrency);
+            let computed = compute_calc_rows(
+                &source_rows,
+                &index_source_rows,
+                &target_dates_to_compute,
+                max_concurrency,
+            );
             eprintln!(
-            "[calc] compute rows done period_states={} asof={} rolling={} left_peak={} elapsed={:.1}s",
+            "[calc] compute rows done period_states={} asof={} rolling={} left_peak={} index_asof={} elapsed={:.1}s",
             computed.period_states.len(),
             computed.asof_rows.len(),
             computed.rolling_rows.len(),
             computed.left_peak_rows.len(),
+            computed.index_asof_rows.len(),
             started.elapsed().as_secs_f64()
             );
             eprintln!("[calc] write rows start");
@@ -244,9 +284,10 @@ pub async fn run_calc(
                 started.elapsed().as_secs_f64()
             );
             Ok(summary(
-                source_rows.len(),
+                source_rows.len() + index_source_rows.len(),
                 &target_dates,
                 &distinct_dates,
+                &distinct_index_dates,
                 row_counts,
             ))
         }
@@ -341,6 +382,36 @@ async fn load_source_rows(
         .collect())
 }
 
+async fn load_index_source_rows(
+    client: &tokio_postgres::Client,
+    max_trade_date: NaiveDate,
+) -> Result<Vec<SourceBar>> {
+    let rows = client
+        .query(
+            r#"
+            select "ts_code", "trade_date", "open", "high", "low", "close", "vol", "turnover_rate"
+            from "index_ths_daily"
+            where "trade_date" <= $1
+            order by "ts_code", "trade_date"
+            "#,
+            &[&max_trade_date],
+        )
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| SourceBar {
+            ts_code: row.get("ts_code"),
+            trade_date: row.get("trade_date"),
+            open_qfq: row.get("open"),
+            high_qfq: row.get("high"),
+            low_qfq: row.get("low"),
+            close_qfq: row.get("close"),
+            vol: row.get("vol"),
+            turnover_rate: row.get("turnover_rate"),
+        })
+        .collect())
+}
+
 async fn load_source_row_count(
     client: &tokio_postgres::Client,
     max_trade_date: NaiveDate,
@@ -350,6 +421,24 @@ async fn load_source_row_count(
             r#"
             select count(*)::bigint
             from "stock_stk_factor_pro"
+            where "trade_date" <= $1
+            "#,
+            &[&max_trade_date],
+        )
+        .await?;
+    let count: i64 = row.get(0);
+    Ok(count as usize)
+}
+
+async fn load_index_source_row_count(
+    client: &tokio_postgres::Client,
+    max_trade_date: NaiveDate,
+) -> Result<usize> {
+    let row = client
+        .query_one(
+            r#"
+            select count(*)::bigint
+            from "index_ths_daily"
             where "trade_date" <= $1
             "#,
             &[&max_trade_date],
@@ -377,12 +466,32 @@ async fn load_distinct_source_trade_dates(
     Ok(rows.into_iter().map(|row| row.get(0)).collect())
 }
 
+async fn load_distinct_index_source_trade_dates(
+    client: &tokio_postgres::Client,
+    max_trade_date: NaiveDate,
+) -> Result<Vec<NaiveDate>> {
+    let rows = client
+        .query(
+            r#"
+            select distinct "trade_date"
+            from "index_ths_daily"
+            where "trade_date" <= $1
+            order by "trade_date"
+            "#,
+            &[&max_trade_date],
+        )
+        .await?;
+    Ok(rows.into_iter().map(|row| row.get(0)).collect())
+}
+
 #[derive(Debug, Default)]
 struct ExistingCalcCoverage {
     source_counts_by_date: BTreeMap<NaiveDate, i64>,
+    index_source_counts_by_date: BTreeMap<NaiveDate, i64>,
     asof_counts_by_date: BTreeMap<NaiveDate, i64>,
     rolling_counts_by_date: BTreeMap<NaiveDate, i64>,
     left_peak_counts_by_date: BTreeMap<NaiveDate, i64>,
+    index_asof_counts_by_date: BTreeMap<NaiveDate, i64>,
 }
 
 impl ExistingCalcCoverage {
@@ -390,7 +499,7 @@ impl ExistingCalcCoverage {
         let Some(source_count) = self.source_counts_by_date.get(&trade_date).copied() else {
             return false;
         };
-        source_count > 0
+        let stock_complete = source_count > 0
             && self
                 .asof_counts_by_date
                 .get(&trade_date)
@@ -408,7 +517,18 @@ impl ExistingCalcCoverage {
                 .get(&trade_date)
                 .copied()
                 .unwrap_or(0)
-                >= source_count
+                >= source_count;
+        let index_complete = match self.index_source_counts_by_date.get(&trade_date).copied() {
+            Some(index_source_count) if index_source_count > 0 => {
+                self.index_asof_counts_by_date
+                    .get(&trade_date)
+                    .copied()
+                    .unwrap_or(0)
+                    >= index_source_count
+            }
+            _ => true,
+        };
+        stock_complete && index_complete
     }
 }
 
@@ -427,6 +547,18 @@ async fn load_existing_calc_coverage(
         r#"
         select "trade_date", count(*)::bigint
         from "stock_stk_factor_pro"
+        where "trade_date" between $1 and $2
+        group by "trade_date"
+        "#,
+        first_target_date,
+        last_target_date,
+    )
+    .await?;
+    let index_source_counts_by_date = load_date_counts(
+        client,
+        r#"
+        select "trade_date", count(*)::bigint
+        from "index_ths_daily"
         where "trade_date" between $1 and $2
         group by "trade_date"
         "#,
@@ -473,11 +605,26 @@ async fn load_existing_calc_coverage(
         LEFT_PEAK_CALC_VERSION,
     )
     .await?;
+    let index_asof_counts_by_date = load_versioned_date_counts(
+        client,
+        r#"
+        select "trade_date", count(*)::bigint
+        from "index_daily_asof_indicators"
+        where "trade_date" between $1 and $2 and "calc_version" = $3
+        group by "trade_date"
+        "#,
+        first_target_date,
+        last_target_date,
+        MACD_CALC_VERSION,
+    )
+    .await?;
     Ok(ExistingCalcCoverage {
         source_counts_by_date,
+        index_source_counts_by_date,
         asof_counts_by_date,
         rolling_counts_by_date,
         left_peak_counts_by_date,
+        index_asof_counts_by_date,
     })
 }
 
@@ -571,36 +718,61 @@ fn distinct_trade_dates(source_rows: &[SourceBar]) -> Vec<NaiveDate> {
 
 fn compute_calc_rows(
     source_rows: &[SourceBar],
+    index_source_rows: &[SourceBar],
     target_dates: &[NaiveDate],
     max_concurrency: u32,
 ) -> ComputedRows {
-    let stock_ranges = stock_ranges(source_rows);
-    let concurrency = (max_concurrency.max(1) as usize).min(stock_ranges.len().max(1));
-    if concurrency <= 1 || stock_ranges.len() <= 1 {
-        return compute_calc_rows_for_ranges(source_rows, &stock_ranges, target_dates);
-    }
-
-    let chunk_size = stock_ranges.len().div_ceil(concurrency);
-    let chunks = stock_ranges.chunks(chunk_size).collect::<Vec<_>>();
-    eprintln!(
-        "[calc] compute rows parallel stocks={} workers={}",
-        stock_ranges.len(),
-        chunks.len()
-    );
-
-    thread::scope(|scope| {
-        let handles = chunks
-            .into_iter()
-            .map(|chunk| {
-                scope.spawn(move || compute_calc_rows_for_ranges(source_rows, chunk, target_dates))
-            })
+    let stock_ranges_for_source = stock_ranges(source_rows);
+    let index_ranges = stock_ranges(index_source_rows);
+    let concurrency = (max_concurrency.max(1) as usize).min(stock_ranges_for_source.len().max(1));
+    let mut computed = if concurrency <= 1 || stock_ranges_for_source.len() <= 1 {
+        compute_calc_rows_for_ranges(source_rows, &stock_ranges_for_source, target_dates)
+    } else {
+        let chunk_size = stock_ranges_for_source.len().div_ceil(concurrency);
+        let chunks = stock_ranges_for_source
+            .chunks(chunk_size)
             .collect::<Vec<_>>();
-        let mut merged = ComputedRows::default();
-        for handle in handles {
-            merged.append(handle.join().expect("calc worker thread panicked"));
-        }
-        merged
-    })
+        eprintln!(
+            "[calc] compute rows parallel stocks={} workers={}",
+            stock_ranges_for_source.len(),
+            chunks.len()
+        );
+
+        thread::scope(|scope| {
+            let handles = chunks
+                .into_iter()
+                .map(|chunk| {
+                    scope.spawn(move || {
+                        compute_calc_rows_for_ranges(source_rows, chunk, target_dates)
+                    })
+                })
+                .collect::<Vec<_>>();
+            let mut merged = ComputedRows::default();
+            for handle in handles {
+                merged.append(handle.join().expect("calc worker thread panicked"));
+            }
+            merged
+        })
+    };
+    compute_index_asof_rows(
+        index_source_rows,
+        &index_ranges,
+        target_dates,
+        &mut computed,
+    );
+    computed
+}
+
+fn compute_index_asof_rows(
+    source_rows: &[SourceBar],
+    ranges: &[(usize, usize)],
+    target_dates: &[NaiveDate],
+    computed: &mut ComputedRows,
+) {
+    let target_dates = target_dates.iter().copied().collect::<HashSet<_>>();
+    for (start, end) in ranges {
+        compute_index_rows(&source_rows[*start..*end], &target_dates, computed);
+    }
 }
 
 fn compute_calc_rows_for_ranges(
@@ -701,6 +873,61 @@ fn compute_stock_rows(
                 .left_peak_rows
                 .push(compute_left_peak_row(bars, idx));
         }
+    }
+}
+
+fn compute_index_rows(
+    bars: &[SourceBar],
+    target_dates: &HashSet<NaiveDate>,
+    computed: &mut ComputedRows,
+) {
+    let Some(first) = bars.first() else {
+        return;
+    };
+    let mut daily_macd = MacdAccumulator::default();
+    let mut weekly_macd = MacdAccumulator::default();
+    let mut monthly_macd = MacdAccumulator::default();
+    let mut current_week = PeriodBuilder::new(PeriodKind::Weekly, first.trade_date);
+    let mut current_month = PeriodBuilder::new(PeriodKind::Monthly, first.trade_date);
+    let mut daily_deas = Vec::new();
+    let mut weekly_deas = Vec::new();
+    let mut monthly_deas = Vec::new();
+
+    for bar in bars {
+        if !current_week.contains(bar.trade_date) {
+            finalize_asof_period(&current_week, &mut weekly_macd, &mut weekly_deas);
+            current_week = PeriodBuilder::new(PeriodKind::Weekly, bar.trade_date);
+        }
+        if !current_month.contains(bar.trade_date) {
+            finalize_asof_period(&current_month, &mut monthly_macd, &mut monthly_deas);
+            current_month = PeriodBuilder::new(PeriodKind::Monthly, bar.trade_date);
+        }
+
+        let daily_state = bar.close_qfq.map(|close| daily_macd.push(close));
+        if let Some(state) = daily_state {
+            daily_deas.push(state.dea);
+        }
+        current_week.observe(bar);
+        current_month.observe(bar);
+
+        if target_dates.contains(&bar.trade_date) {
+            computed.index_asof_rows.push(compute_asof_row(
+                bar,
+                daily_state,
+                &daily_deas,
+                &weekly_macd,
+                &weekly_deas,
+                &monthly_macd,
+                &monthly_deas,
+            ));
+        }
+    }
+}
+
+fn finalize_asof_period(period: &PeriodBuilder, macd: &mut MacdAccumulator, deas: &mut Vec<f64>) {
+    if let Some(close) = period.close_qfq {
+        let state = macd.push(close);
+        deas.push(state.dea);
     }
 }
 
@@ -954,6 +1181,7 @@ async fn write_calc_rows(
     let transaction = client.transaction().await?;
     let period_statement = transaction.prepare(INSERT_PERIOD_STATE_SQL).await?;
     let asof_statement = transaction.prepare(INSERT_ASOF_SQL).await?;
+    let index_asof_statement = transaction.prepare(INSERT_INDEX_ASOF_SQL).await?;
     let rolling_statement = transaction.prepare(INSERT_ROLLING_SQL).await?;
     let left_peak_statement = transaction.prepare(INSERT_LEFT_PEAK_SQL).await?;
 
@@ -1086,6 +1314,74 @@ async fn write_calc_rows(
     eprintln!(
         "[calc] write stock_daily_asof_indicators done rows={} elapsed={:.1}s",
         asof_rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+
+    let mut index_asof_rows = computed.index_asof_rows.iter().collect::<Vec<_>>();
+    index_asof_rows.sort_by(|left, right| {
+        left.trade_date
+            .cmp(&right.trade_date)
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let index_asof_groups = count_trade_date_groups(&index_asof_rows, |row| row.trade_date);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write index_daily_asof_indicators start rows={} trade_date_groups={}",
+        index_asof_rows.len(),
+        index_asof_groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in index_asof_rows.iter().enumerate() {
+        transaction
+            .execute(
+                &index_asof_statement,
+                &[
+                    &row.ts_code,
+                    &row.trade_date,
+                    &row.daily_dif_asof,
+                    &row.daily_dea_asof,
+                    &row.daily_hist_x2_asof,
+                    &row.daily_dea_pctile_asof,
+                    &row.daily_period_count,
+                    &row.weekly_dif_asof,
+                    &row.weekly_dea_asof,
+                    &row.weekly_hist_x2_asof,
+                    &row.weekly_dea_pctile_asof,
+                    &row.weekly_period_count,
+                    &row.monthly_dif_asof,
+                    &row.monthly_dea_asof,
+                    &row.monthly_hist_x2_asof,
+                    &row.monthly_dea_pctile_asof,
+                    &row.monthly_period_count,
+                    &MACD_CALC_VERSION,
+                ],
+            )
+            .await?;
+        group_rows += 1;
+        let is_group_done = index_asof_rows
+            .get(index + 1)
+            .is_none_or(|next| next.trade_date != row.trade_date);
+        if is_group_done {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "index_daily_asof_indicators",
+                date_label: "trade_date",
+                date: row.trade_date,
+                period_type: None,
+                group_rows,
+                completed_groups,
+                total_groups: index_asof_groups,
+                written_rows: index + 1,
+                total_rows: index_asof_rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
+    }
+    eprintln!(
+        "[calc] write index_daily_asof_indicators done rows={} elapsed={:.1}s",
+        index_asof_rows.len(),
         started.elapsed().as_secs_f64()
     );
 
@@ -1247,6 +1543,10 @@ async fn write_calc_rows(
             computed.asof_rows.len(),
         ),
         (
+            "index_daily_asof_indicators".to_string(),
+            computed.index_asof_rows.len(),
+        ),
+        (
             "stock_daily_rolling_factors".to_string(),
             computed.rolling_rows.len(),
         ),
@@ -1331,6 +1631,7 @@ fn summary(
     source_row_count: usize,
     target_dates: &[NaiveDate],
     distinct_dates: &[NaiveDate],
+    distinct_index_dates: &[NaiveDate],
     calc_row_counts: BTreeMap<String, usize>,
 ) -> CalcSummary {
     let target_start = target_dates.first().copied();
@@ -1339,6 +1640,10 @@ fn summary(
     usable_ranges.insert(
         "stock_daily_asof_indicators".to_string(),
         date_range(target_start, target_end),
+    );
+    usable_ranges.insert(
+        "index_daily_asof_indicators".to_string(),
+        date_range(usable_start(distinct_index_dates, 1), target_end),
     );
     usable_ranges.insert(
         "stock_daily_rolling_factors".to_string(),
@@ -1360,7 +1665,7 @@ fn summary(
 }
 
 fn empty_summary() -> CalcSummary {
-    summary(0, &[], &[], BTreeMap::new())
+    summary(0, &[], &[], &[], BTreeMap::new())
 }
 
 fn usable_start(distinct_dates: &[NaiveDate], window: usize) -> Option<NaiveDate> {
@@ -1390,6 +1695,7 @@ struct SourceBar {
 struct ComputedRows {
     period_states: Vec<PeriodStateRow>,
     asof_rows: Vec<AsofRow>,
+    index_asof_rows: Vec<AsofRow>,
     rolling_rows: Vec<RollingRow>,
     left_peak_rows: Vec<LeftPeakRow>,
 }
@@ -1398,6 +1704,7 @@ impl ComputedRows {
     fn append(&mut self, mut other: ComputedRows) {
         self.period_states.append(&mut other.period_states);
         self.asof_rows.append(&mut other.asof_rows);
+        self.index_asof_rows.append(&mut other.index_asof_rows);
         self.rolling_rows.append(&mut other.rolling_rows);
         self.left_peak_rows.append(&mut other.left_peak_rows);
     }
@@ -1891,6 +2198,25 @@ mod tests {
             period_start_date(PeriodKind::Monthly, date),
             NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
         );
+    }
+
+    #[test]
+    fn computes_index_asof_rows_for_target_dates() {
+        let bars = vec![
+            bar("885001.TI", 2025, 1, 2, 10.0),
+            bar("885001.TI", 2025, 1, 3, 11.0),
+        ];
+        let target_dates = vec![NaiveDate::from_ymd_opt(2025, 1, 3).unwrap()];
+
+        let computed = compute_calc_rows(&[], &bars, &target_dates, 1);
+
+        assert_eq!(computed.index_asof_rows.len(), 1);
+        let row = &computed.index_asof_rows[0];
+        assert_eq!(row.ts_code, "885001.TI");
+        assert_eq!(row.trade_date, target_dates[0]);
+        assert_eq!(row.daily_period_count, Some(2));
+        assert_eq!(row.weekly_period_count, Some(1));
+        assert_eq!(row.monthly_period_count, Some(1));
     }
 
     #[test]

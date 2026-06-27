@@ -86,12 +86,12 @@ DATASETS: dict[str, DatasetSpec] = {
     "stock_stk_factor_pro": DatasetSpec("stk_factor_pro", _stock_window_params),
     "stock_moneyflow_ths": DatasetSpec("moneyflow_ths", _stock_window_params),
     "index_idx_factor_pro": DatasetSpec("idx_factor_pro", _index_window_params),
-    "ths_index": DatasetSpec("ths_index", _ths_index_params),
-    "ths_daily": DatasetSpec("ths_daily", _ths_window_params),
-    "moneyflow_cnt_ths": DatasetSpec("moneyflow_cnt_ths", _date_params),
-    "ths_member": DatasetSpec("ths_member", _ths_member_params),
-    "limit_cpt_list": DatasetSpec("limit_cpt_list", _date_params),
-    "limit_list_ths": DatasetSpec("limit_list_ths", _date_params),
+    "index_ths": DatasetSpec("ths_index", _ths_index_params),
+    "index_ths_daily": DatasetSpec("ths_daily", _ths_window_params),
+    "index_moneyflow_cnt_ths": DatasetSpec("moneyflow_cnt_ths", _date_params),
+    "index_ths_member": DatasetSpec("ths_member", _ths_member_params),
+    "index_limit_cpt_list": DatasetSpec("limit_cpt_list", _date_params),
+    "stock_limit_list_ths": DatasetSpec("limit_list_ths", _date_params),
 }
 
 
@@ -110,7 +110,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--end-date", help="YYYYMMDD end date for code-window APIs.")
     parser.add_argument("--stock-code", default=DEFAULT_STOCK_CODE, help="Stock ts_code sample.")
     parser.add_argument("--index-code", default=DEFAULT_INDEX_CODE, help="Index ts_code sample.")
-    parser.add_argument("--ths-code", help="THS index code sample. Defaults to first ths_index row.")
+    parser.add_argument("--ths-code", help="THS index code sample. Defaults to first index_ths row.")
     parser.add_argument("--max-samples", type=int, default=3, help="Sample values per field.")
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
     parser.add_argument(

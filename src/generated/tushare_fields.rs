@@ -2255,7 +2255,7 @@ const INDEX_IDX_FACTOR_PRO_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const THS_INDEX_FIELDS: &[FieldMetadata] = &[
+const INDEX_THS_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
         pg_type: "text",
@@ -2294,7 +2294,7 @@ const THS_INDEX_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const THS_DAILY_FIELDS: &[FieldMetadata] = &[
+const INDEX_THS_DAILY_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
         pg_type: "text",
@@ -2381,7 +2381,7 @@ const THS_DAILY_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const MONEYFLOW_CNT_THS_FIELDS: &[FieldMetadata] = &[
+const INDEX_MONEYFLOW_CNT_THS_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "trade_date",
         pg_type: "date",
@@ -2456,7 +2456,7 @@ const MONEYFLOW_CNT_THS_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const THS_MEMBER_FIELDS: &[FieldMetadata] = &[
+const INDEX_THS_MEMBER_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
         pg_type: "text",
@@ -2501,7 +2501,7 @@ const THS_MEMBER_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const LIMIT_CPT_LIST_FIELDS: &[FieldMetadata] = &[
+const INDEX_LIMIT_CPT_LIST_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
         pg_type: "text",
@@ -2558,7 +2558,7 @@ const LIMIT_CPT_LIST_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const LIMIT_LIST_THS_FIELDS: &[FieldMetadata] = &[
+const STOCK_LIMIT_LIST_THS_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "trade_date",
         pg_type: "date",
@@ -2758,17 +2758,17 @@ pub const DATASETS: &[DatasetMetadata] = &[
         },
     },
     DatasetMetadata {
-        id: "ths_index",
-        table: "ths_index",
+        id: "index_ths",
+        table: "index_ths",
         api: "ths_index",
-        fields: THS_INDEX_FIELDS,
+        fields: INDEX_THS_FIELDS,
         write_strategy: WriteStrategy::ReplaceAll {
             key: &["ts_code"],
             transaction_group: Some("ths_classification"),
         },
         write_sql: WriteSql::ReplaceAll {
-            clear_sql: r#"delete from "ths_index""#,
-            insert_sql: r#"insert into "ths_index" ("ts_code", "name", "count", "exchange", "list_date", "type") values ($1, $2, $3, $4, $5, $6)"#,
+            clear_sql: r#"delete from "index_ths""#,
+            insert_sql: r#"insert into "index_ths" ("ts_code", "name", "count", "exchange", "list_date", "type") values ($1, $2, $3, $4, $5, $6)"#,
         },
         fetch_plan: FetchPlan {
             kind: "refresh_current",
@@ -2777,32 +2777,15 @@ pub const DATASETS: &[DatasetMetadata] = &[
         },
     },
     DatasetMetadata {
-        id: "ths_daily",
-        table: "ths_daily",
+        id: "index_ths_daily",
+        table: "index_ths_daily",
         api: "ths_daily",
-        fields: THS_DAILY_FIELDS,
+        fields: INDEX_THS_DAILY_FIELDS,
         write_strategy: WriteStrategy::Upsert {
             key: &["trade_date", "ts_code"],
         },
         write_sql: WriteSql::Upsert {
-            sql: r#"insert into "ths_daily" ("ts_code", "trade_date", "open", "high", "low", "close", "pre_close", "avg_price", "change", "pct_change", "vol", "turnover_rate", "total_mv", "float_mv") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) on conflict ("trade_date", "ts_code") do update set "open" = excluded."open", "high" = excluded."high", "low" = excluded."low", "close" = excluded."close", "pre_close" = excluded."pre_close", "avg_price" = excluded."avg_price", "change" = excluded."change", "pct_change" = excluded."pct_change", "vol" = excluded."vol", "turnover_rate" = excluded."turnover_rate", "total_mv" = excluded."total_mv", "float_mv" = excluded."float_mv""#,
-        },
-        fetch_plan: FetchPlan {
-            kind: "by_trade_date_and_current_ths_index",
-            params: &["ts_code", "start_date", "end_date"],
-            code_source: Some("ths_index"),
-        },
-    },
-    DatasetMetadata {
-        id: "moneyflow_cnt_ths",
-        table: "moneyflow_cnt_ths",
-        api: "moneyflow_cnt_ths",
-        fields: MONEYFLOW_CNT_THS_FIELDS,
-        write_strategy: WriteStrategy::Upsert {
-            key: &["trade_date", "ts_code"],
-        },
-        write_sql: WriteSql::Upsert {
-            sql: r#"insert into "moneyflow_cnt_ths" ("trade_date", "ts_code", "name", "lead_stock", "close_price", "pct_change", "industry_index", "company_num", "pct_change_stock", "net_buy_amount", "net_sell_amount", "net_amount") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) on conflict ("trade_date", "ts_code") do update set "name" = excluded."name", "lead_stock" = excluded."lead_stock", "close_price" = excluded."close_price", "pct_change" = excluded."pct_change", "industry_index" = excluded."industry_index", "company_num" = excluded."company_num", "pct_change_stock" = excluded."pct_change_stock", "net_buy_amount" = excluded."net_buy_amount", "net_sell_amount" = excluded."net_sell_amount", "net_amount" = excluded."net_amount""#,
+            sql: r#"insert into "index_ths_daily" ("ts_code", "trade_date", "open", "high", "low", "close", "pre_close", "avg_price", "change", "pct_change", "vol", "turnover_rate", "total_mv", "float_mv") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) on conflict ("trade_date", "ts_code") do update set "open" = excluded."open", "high" = excluded."high", "low" = excluded."low", "close" = excluded."close", "pre_close" = excluded."pre_close", "avg_price" = excluded."avg_price", "change" = excluded."change", "pct_change" = excluded."pct_change", "vol" = excluded."vol", "turnover_rate" = excluded."turnover_rate", "total_mv" = excluded."total_mv", "float_mv" = excluded."float_mv""#,
         },
         fetch_plan: FetchPlan {
             kind: "by_trade_date",
@@ -2811,36 +2794,53 @@ pub const DATASETS: &[DatasetMetadata] = &[
         },
     },
     DatasetMetadata {
-        id: "ths_member",
-        table: "ths_member",
+        id: "index_moneyflow_cnt_ths",
+        table: "index_moneyflow_cnt_ths",
+        api: "moneyflow_cnt_ths",
+        fields: INDEX_MONEYFLOW_CNT_THS_FIELDS,
+        write_strategy: WriteStrategy::Upsert {
+            key: &["trade_date", "ts_code"],
+        },
+        write_sql: WriteSql::Upsert {
+            sql: r#"insert into "index_moneyflow_cnt_ths" ("trade_date", "ts_code", "name", "lead_stock", "close_price", "pct_change", "industry_index", "company_num", "pct_change_stock", "net_buy_amount", "net_sell_amount", "net_amount") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) on conflict ("trade_date", "ts_code") do update set "name" = excluded."name", "lead_stock" = excluded."lead_stock", "close_price" = excluded."close_price", "pct_change" = excluded."pct_change", "industry_index" = excluded."industry_index", "company_num" = excluded."company_num", "pct_change_stock" = excluded."pct_change_stock", "net_buy_amount" = excluded."net_buy_amount", "net_sell_amount" = excluded."net_sell_amount", "net_amount" = excluded."net_amount""#,
+        },
+        fetch_plan: FetchPlan {
+            kind: "by_trade_date",
+            params: &["trade_date"],
+            code_source: None,
+        },
+    },
+    DatasetMetadata {
+        id: "index_ths_member",
+        table: "index_ths_member",
         api: "ths_member",
-        fields: THS_MEMBER_FIELDS,
+        fields: INDEX_THS_MEMBER_FIELDS,
         write_strategy: WriteStrategy::ReplaceAll {
             key: &["ts_code", "con_code"],
             transaction_group: Some("ths_classification"),
         },
         write_sql: WriteSql::ReplaceAll {
-            clear_sql: r#"delete from "ths_member""#,
-            insert_sql: r#"insert into "ths_member" ("ts_code", "con_code", "con_name", "weight", "in_date", "out_date", "is_new") values ($1, $2, $3, $4, $5, $6, $7)"#,
+            clear_sql: r#"delete from "index_ths_member""#,
+            insert_sql: r#"insert into "index_ths_member" ("ts_code", "con_code", "con_name", "weight", "in_date", "out_date", "is_new") values ($1, $2, $3, $4, $5, $6, $7)"#,
         },
         fetch_plan: FetchPlan {
             kind: "refresh_current_by_ths_code",
             params: &["ts_code"],
-            code_source: Some("ths_index"),
+            code_source: Some("index_ths"),
         },
     },
     DatasetMetadata {
-        id: "limit_cpt_list",
-        table: "limit_cpt_list",
+        id: "index_limit_cpt_list",
+        table: "index_limit_cpt_list",
         api: "limit_cpt_list",
-        fields: LIMIT_CPT_LIST_FIELDS,
+        fields: INDEX_LIMIT_CPT_LIST_FIELDS,
         write_strategy: WriteStrategy::DeleteInsertByDate {
             date_field: "trade_date",
             natural_key_candidate: &["trade_date", "rank", "ts_code"],
         },
         write_sql: WriteSql::DeleteInsertByDate {
-            delete_sql: r#"delete from "limit_cpt_list" where "trade_date" = $1"#,
-            insert_sql: r#"insert into "limit_cpt_list" ("ts_code", "name", "trade_date", "days", "up_stat", "cons_nums", "up_nums", "pct_chg", "rank") values ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
+            delete_sql: r#"delete from "index_limit_cpt_list" where "trade_date" = $1"#,
+            insert_sql: r#"insert into "index_limit_cpt_list" ("ts_code", "name", "trade_date", "days", "up_stat", "cons_nums", "up_nums", "pct_chg", "rank") values ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#,
         },
         fetch_plan: FetchPlan {
             kind: "by_trade_date",
@@ -2849,15 +2849,15 @@ pub const DATASETS: &[DatasetMetadata] = &[
         },
     },
     DatasetMetadata {
-        id: "limit_list_ths",
-        table: "limit_list_ths",
+        id: "stock_limit_list_ths",
+        table: "stock_limit_list_ths",
         api: "limit_list_ths",
-        fields: LIMIT_LIST_THS_FIELDS,
+        fields: STOCK_LIMIT_LIST_THS_FIELDS,
         write_strategy: WriteStrategy::Upsert {
             key: &["trade_date", "ts_code"],
         },
         write_sql: WriteSql::Upsert {
-            sql: r#"insert into "limit_list_ths" ("trade_date", "ts_code", "name", "price", "pct_chg", "open_num", "lu_desc", "limit_type", "tag", "status", "first_lu_time", "last_lu_time", "first_ld_time", "last_ld_time", "limit_order", "limit_amount", "turnover_rate", "free_float", "lu_limit_order", "limit_up_suc_rate", "turnover", "rise_rate", "sum_float", "market_type") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24) on conflict ("trade_date", "ts_code") do update set "name" = excluded."name", "price" = excluded."price", "pct_chg" = excluded."pct_chg", "open_num" = excluded."open_num", "lu_desc" = excluded."lu_desc", "limit_type" = excluded."limit_type", "tag" = excluded."tag", "status" = excluded."status", "first_lu_time" = excluded."first_lu_time", "last_lu_time" = excluded."last_lu_time", "first_ld_time" = excluded."first_ld_time", "last_ld_time" = excluded."last_ld_time", "limit_order" = excluded."limit_order", "limit_amount" = excluded."limit_amount", "turnover_rate" = excluded."turnover_rate", "free_float" = excluded."free_float", "lu_limit_order" = excluded."lu_limit_order", "limit_up_suc_rate" = excluded."limit_up_suc_rate", "turnover" = excluded."turnover", "rise_rate" = excluded."rise_rate", "sum_float" = excluded."sum_float", "market_type" = excluded."market_type""#,
+            sql: r#"insert into "stock_limit_list_ths" ("trade_date", "ts_code", "name", "price", "pct_chg", "open_num", "lu_desc", "limit_type", "tag", "status", "first_lu_time", "last_lu_time", "first_ld_time", "last_ld_time", "limit_order", "limit_amount", "turnover_rate", "free_float", "lu_limit_order", "limit_up_suc_rate", "turnover", "rise_rate", "sum_float", "market_type") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24) on conflict ("trade_date", "ts_code") do update set "name" = excluded."name", "price" = excluded."price", "pct_chg" = excluded."pct_chg", "open_num" = excluded."open_num", "lu_desc" = excluded."lu_desc", "limit_type" = excluded."limit_type", "tag" = excluded."tag", "status" = excluded."status", "first_lu_time" = excluded."first_lu_time", "last_lu_time" = excluded."last_lu_time", "first_ld_time" = excluded."first_ld_time", "last_ld_time" = excluded."last_ld_time", "limit_order" = excluded."limit_order", "limit_amount" = excluded."limit_amount", "turnover_rate" = excluded."turnover_rate", "free_float" = excluded."free_float", "lu_limit_order" = excluded."lu_limit_order", "limit_up_suc_rate" = excluded."limit_up_suc_rate", "turnover" = excluded."turnover", "rise_rate" = excluded."rise_rate", "sum_float" = excluded."sum_float", "market_type" = excluded."market_type""#,
         },
         fetch_plan: FetchPlan {
             kind: "by_trade_date",

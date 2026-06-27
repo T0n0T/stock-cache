@@ -407,7 +407,7 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `xsii_td3_bfq` | `double precision` | yes |  | 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7 |
 | `xsii_td4_bfq` | `double precision` | yes |  | 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7 |
 
-## ths_index
+## index_ths
 
 - API: `ths_index`
 - Official doc: https://tushare.pro/wctapi/documents/259.md
@@ -427,15 +427,16 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `list_date` | `date` | yes | YYYYMMDD | 上市日期 |
 | `type` | `text` | yes |  | N概念指数S特色指数 |
 
-## ths_daily
+## index_ths_daily
 
 - API: `ths_daily`
 - Official doc: https://tushare.pro/wctapi/documents/260.md
 - Checked at: `2026-06-26`
 - SDK version: `1.4.29`
-- Fetch plan: `kind`=`by_trade_date_and_current_ths_index`; `params`=`ts_code`, `start_date`, `end_date`; `code_source`=`ths_index`
+- Fetch plan: `kind`=`by_trade_date`; `params`=`trade_date`
 - Write strategy: `type`=`upsert`; `key`=`trade_date`, `ts_code`
 - Note: Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from official docs plus source semantics, not inferred mechanically from pandas dtype.
+- Note: Cache fetches use pro.ths_daily(trade_date=YYYYMMDD) without ts_code so the Rust side matches the Python function's whole-market daily shape.
 - Note: Optional total_mv and float_mv were confirmed with an explicit fields request in SDK 1.4.29.
 
 | Field | PostgreSQL type | Nullable | Source format | Description |
@@ -455,7 +456,7 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `total_mv` | `double precision` | yes |  | 总市值（元） |
 | `float_mv` | `double precision` | yes |  | 流通市值（元） |
 
-## moneyflow_cnt_ths
+## index_moneyflow_cnt_ths
 
 - API: `moneyflow_cnt_ths`
 - Official doc: https://tushare.pro/wctapi/documents/371.md
@@ -480,13 +481,13 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `net_sell_amount` | `double precision` | yes |  | 流出资金(亿元) |
 | `net_amount` | `double precision` | yes |  | 净额(亿元) |
 
-## ths_member
+## index_ths_member
 
 - API: `ths_member`
 - Official doc: https://tushare.pro/wctapi/documents/261.md
 - Checked at: `2026-06-26`
 - SDK version: `1.4.29`
-- Fetch plan: `kind`=`refresh_current_by_ths_code`; `params`=`ts_code`; `code_source`=`ths_index`
+- Fetch plan: `kind`=`refresh_current_by_ths_code`; `params`=`ts_code`; `code_source`=`index_ths`
 - Write strategy: `type`=`replace_all`; `key`=`ts_code`, `con_code`; `transaction_group`=`ths_classification`
 - Note: Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from official docs plus source semantics, not inferred mechanically from pandas dtype.
 - Note: Current membership relation only; no daily membership snapshot is stored.
@@ -502,7 +503,7 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `out_date` | `date` | yes | YYYYMMDD | 剔除日期(暂无) |
 | `is_new` | `text` | yes |  | 是否最新Y是N否 |
 
-## limit_cpt_list
+## index_limit_cpt_list
 
 - API: `limit_cpt_list`
 - Official doc: https://tushare.pro/wctapi/documents/357.md
@@ -527,7 +528,7 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `pct_chg` | `double precision` | yes |  | 涨跌幅% |
 | `rank` | `integer` | yes |  | 板块热点排名 |
 
-## limit_list_ths
+## stock_limit_list_ths
 
 - API: `limit_list_ths`
 - Official doc: https://tushare.pro/wctapi/documents/355.md

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{collections::BTreeMap, path::Path, process::Stdio};
+use std::{collections::BTreeMap, process::Stdio};
 
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -13,8 +13,8 @@ use tokio::{
 
 use crate::generated::tushare_fields::DatasetMetadata;
 
-const DEFAULT_WORKER_PATH: &str = "runtime/tushare_worker.py";
-const DEFAULT_UV_PYTHON: &str = "runtime/python/.venv/bin/python";
+const DEFAULT_WORKER_PATH: &str = "python/tushare_worker.py";
+const DEFAULT_UV_PYTHON: &str = "python/.venv/bin/python";
 
 #[derive(Debug, Serialize)]
 struct WorkerRequest<'a> {
@@ -49,13 +49,8 @@ pub struct PythonWorker {
 
 impl PythonWorker {
     pub fn command_from_env() -> Command {
-        let python = std::env::var("STOCK_CACHE_PYTHON").unwrap_or_else(|_| {
-            if Path::new(DEFAULT_UV_PYTHON).exists() {
-                DEFAULT_UV_PYTHON.to_string()
-            } else {
-                "python3".to_string()
-            }
-        });
+        let python =
+            std::env::var("STOCK_CACHE_PYTHON").unwrap_or_else(|_| DEFAULT_UV_PYTHON.to_string());
         let mut command = Command::new(python);
         let script = std::env::var("STOCK_CACHE_TUSHARE_WORKER")
             .unwrap_or_else(|_| DEFAULT_WORKER_PATH.to_string());
@@ -219,7 +214,7 @@ mod tests {
         let rows = worker
             .fetch_dataset(
                 "req-1",
-                dataset("limit_cpt_list").unwrap(),
+                dataset("index_limit_cpt_list").unwrap(),
                 &worker_params(&[("trade_date", string_param("20260625"))]),
             )
             .await
@@ -236,7 +231,7 @@ mod tests {
         let error = worker
             .fetch_dataset(
                 "req-1",
-                dataset("limit_cpt_list").unwrap(),
+                dataset("index_limit_cpt_list").unwrap(),
                 &worker_params(&[("trade_date", string_param("20260625"))]),
             )
             .await

@@ -1,6 +1,6 @@
 # Database Schema Design
 
-本文记录第一版 PostgreSQL schema 设计。数据库只保存 Tushare 源事实、当前同花顺分类关系和股票级本地基础计算结果。不保存运行审计、分析聚合或消费者视图。
+本文记录第一版 PostgreSQL schema 设计。数据库只保存 Tushare 源事实、当前同花顺分类关系、股票级本地基础计算结果和同花顺板块指数长周期指标。不保存运行审计、分析聚合或消费者视图。
 
 ## Initialization
 
@@ -27,7 +27,7 @@
 1. 实现前先查官方 Tushare 文档，确认接口名、参数、返回字段和含义。
 2. 用 Tushare SDK 对每个接口拉样本，确认实际返回字段。
 3. 将字段名、PostgreSQL 类型、主键、写入策略和拉取计划记录到 `schemas/tushare-fields.yaml`。
-4. 从 YAML 生成 `docs/tushare-fields.md`、`schema.sql`、Rust row struct 和静态 insert/upsert SQL 草稿。
+4. 从 YAML 生成 `docs/tushare-fields.md`、`deploy/postgres/schema.sql`、Rust row struct 和静态 insert/upsert SQL 草稿。
 5. 人工审查生成结果后提交为静态代码。
 6. 运行时如果遇到 schema 未声明的未知字段，直接报错，不静默忽略。
 
@@ -46,10 +46,10 @@ docs/tushare-fields.md
 已生成的静态初始化 SQL：
 
 ```text
-db/schema.sql
+deploy/postgres/schema.sql
 ```
 
-`db/schema.sql` 由 `schemas/tushare-fields.yaml` 生成并提交为静态文件。Rust `init-db` 运行时只执行该固定 SQL，不读取 YAML、不动态建列。
+`deploy/postgres/schema.sql` 由 `schemas/tushare-fields.yaml` 生成并提交为静态文件。Rust `init-db` 运行时只执行该固定 SQL，不读取 YAML、不动态建列。
 
 第一版 `schemas/tushare-fields.yaml` 固化官方输出参数中的默认字段和可选字段。SDK 默认样本未返回但官方文档列出的可选字段也应入库，并在拉取时通过 Tushare `fields` 参数显式请求；如果显式请求仍不可用，再写入对应 dataset 的 `doc_mismatch`。
 
@@ -139,12 +139,12 @@ broker_recommend 相关表
 stock_stk_factor_pro
 stock_moneyflow_ths
 index_idx_factor_pro
-ths_index
-ths_daily
-moneyflow_cnt_ths
-ths_member
-limit_cpt_list
-limit_list_ths
+index_ths
+index_ths_daily
+index_moneyflow_cnt_ths
+index_ths_member
+index_limit_cpt_list
+stock_limit_list_ths
 ```
 
 源表字段需要在实现时用实际 Tushare 返回字段确认。下面只记录主键和写入语义。
@@ -202,7 +202,7 @@ primary key (trade_date, ts_code)
 primary key (trade_date, ts_code)
 ```
 
-### ths_index
+### index_ths
 
 用途：同花顺板块/指数基础列表。
 
@@ -210,12 +210,12 @@ primary key (trade_date, ts_code)
 
 - 由 `write --mode cache --refresh-ths` 或 `full --refresh-ths` 触发。
 - 只保存当前列表。
-- 与 `ths_member` 在同一事务内整表替换。
+- 与 `index_ths_member` 在同一事务内整表替换。
 - 失败保留旧数据。
 
 主键以实际接口字段为准，通常为同花顺板块/指数代码字段。
 
-### ths_member
+### index_ths_member
 
 用途：当前同花顺板块成分关系。
 
@@ -236,17 +236,16 @@ primary key (ts_code, con_code)
 推荐索引：
 
 ```sql
-create index on ths_member (con_code);
-create index on ths_member (ths_code);
+create index on index_ths_member (con_code);
+create index on index_ths_member (ths_code);
 ```
 
-### ths_daily
+### index_ths_daily
 
 用途：同花顺板块/指数日行情源表。
 
-标的来源：当前 `ths_index` 全部记录。
-
-如果 `ths_index` 为空，`cache/full` 应失败并提示先执行 `--refresh-ths`。
+数据来源：Tushare `index_ths_daily` 日级全量返回。缓存请求只传 `trade_date`，不枚举
+`index_ths.ts_code`。
 
 推荐主键：
 
@@ -256,11 +255,11 @@ primary key (trade_date, ts_code)
 
 如果实际接口代码字段不是 `ts_code`，按实际字段调整。
 
-### moneyflow_cnt_ths
+### index_moneyflow_cnt_ths
 
 用途：同花顺概念/板块资金流源表。
 
-标的来源：当前 `ths_index` 全部记录。
+数据来源：Tushare `index_moneyflow_cnt_ths` 日级全量返回。缓存请求只传 `trade_date`。
 
 推荐主键以实际接口字段为准，优先使用：
 
@@ -270,7 +269,7 @@ primary key (trade_date, ts_code)
 
 只落源字段，不做资金强度派生。
 
-### limit_cpt_list
+### index_limit_cpt_list
 
 用途：同花顺最强板块/概念榜源表。
 
@@ -279,9 +278,9 @@ primary key (trade_date, ts_code)
 - 如果实现时确认存在稳定唯一键，使用业务主键 upsert。
 - 否则按 `trade_date` delete + insert。
 
-不在缓存层与 `ths_index` 建外键或关系表。消费者可按 Tushare 返回代码或名称自行关联。
+不在缓存层与 `index_ths` 建外键或关系表。消费者可按 Tushare 返回代码或名称自行关联。
 
-### limit_list_ths
+### stock_limit_list_ths
 
 用途：同花顺涨跌停榜源表。
 
@@ -299,7 +298,7 @@ primary key (trade_date, ts_code)
 
 - 有稳定业务主键的源表使用 upsert。
 - 没有稳定业务主键的源表按日期切片 delete + insert。
-- `ths_index + ths_member` 使用事务化整表替换。
+- `index_ths + index_ths_member` 使用事务化整表替换。
 
 ## Calculation Tables
 
@@ -378,6 +377,45 @@ calc_version
 ```
 
 不保存 `hist`。如消费者需要 `hist = dif - dea`，可用 `hist_x2 / 2`。
+
+主键：
+
+```sql
+primary key (ts_code, trade_date, calc_version)
+```
+
+### index_daily_asof_indicators
+
+用途：保存同花顺板块/指数每个交易日的 daily/weekly/monthly MACD as-of 快照和 DEA 自身历史分位。
+
+数据来源：`index_ths_daily` 的 `open/high/low/close` 日行情。当前版本只保存 as-of 长周期指标，不保存板块指数 rolling/left-peak 股票专用结构。
+
+字段与 `stock_daily_asof_indicators` 相同：
+
+```text
+ts_code
+trade_date
+
+daily_dif_asof
+daily_dea_asof
+daily_hist_x2_asof
+daily_dea_pctile_asof
+daily_period_count
+
+weekly_dif_asof
+weekly_dea_asof
+weekly_hist_x2_asof
+weekly_dea_pctile_asof
+weekly_period_count
+
+monthly_dif_asof
+monthly_dea_asof
+monthly_hist_x2_asof
+monthly_dea_pctile_asof
+monthly_period_count
+
+calc_version
+```
 
 主键：
 

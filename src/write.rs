@@ -8,7 +8,7 @@ use crate::{
     cache, calc,
     cli::{WriteArgs, WriteMode},
     config::Config,
-    source_writer::parse_date_text,
+    db::source_writer::parse_date_text,
 };
 
 const MONTHLY_MACD_WARMUP_MONTHS: u32 = 36;
@@ -324,7 +324,7 @@ mod tests {
             tushare_token: "token".to_string(),
             postgres_dsn_set: true,
             tushare_token_set: true,
-            index_list_path: "runtime/default-indexes.csv".to_string(),
+            index_list_path: "config/default-indexes.csv".to_string(),
             default_lookback_trading_days: 90,
             max_concurrency: 4,
             request_timeout_seconds: 30,
@@ -461,7 +461,10 @@ mod tests {
             mode: "calc",
             source_row_count: 6648,
             target_trade_dates: vec!["2025-06-25".to_string()],
-            calc_row_counts: BTreeMap::from([("stock_daily_asof_indicators".to_string(), 5648)]),
+            calc_row_counts: BTreeMap::from([
+                ("stock_daily_asof_indicators".to_string(), 5648),
+                ("index_daily_asof_indicators".to_string(), 100),
+            ]),
             usable_ranges: BTreeMap::from([(
                 "stock_daily_asof_indicators".to_string(),
                 vec![
@@ -502,6 +505,10 @@ mod tests {
         assert_eq!(
             summary.calc_row_counts.get("stock_daily_asof_indicators"),
             Some(&5648)
+        );
+        assert_eq!(
+            summary.calc_row_counts.get("index_daily_asof_indicators"),
+            Some(&100)
         );
         assert_eq!(
             summary.usable_ranges.get("stock_daily_asof_indicators"),

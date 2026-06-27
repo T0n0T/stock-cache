@@ -113,3 +113,14 @@ fn write_help_mentions_force_recalc() {
         .success()
         .stdout(predicate::str::contains("--force-recalc"));
 }
+
+#[test]
+fn status_does_not_require_tushare_token() {
+    stock_cache()
+        .arg("status")
+        .env("POSTGRES_DSN", "not-a-postgres-dsn")
+        .env_remove("TUSHARE_TOKEN")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("TUSHARE_TOKEN").not());
+}

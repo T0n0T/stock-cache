@@ -3,7 +3,7 @@
 Run the local development database with Docker:
 
 ```bash
-docker compose up -d postgres
+docker compose -f deploy/docker-compose.yml up -d postgres
 ```
 
 The container uses `postgres:alpine` and stores data under:
@@ -22,14 +22,13 @@ Initialize the schema:
 
 ```bash
 POSTGRES_DSN='postgres://stock_cache:stock_cache@localhost:5432/stock_cache' \
-TUSHARE_TOKEN='dummy' \
 cargo run -- init-db
 ```
 
-For real Tushare cache writes, install the Python runtime dependencies in the environment that runs the CLI:
+For real Tushare cache writes, install the Python worker dependencies:
 
 ```bash
-python3 -m pip install tushare pandas
+uv sync --project python
 ```
 
-The worker reads `TUSHARE_TOKEN` from the environment. Do not print or commit the token.
+By default the Rust CLI runs `python/.venv/bin/python python/tushare_worker.py`. The worker reads `TUSHARE_TOKEN` from the environment. Do not print or commit the token.

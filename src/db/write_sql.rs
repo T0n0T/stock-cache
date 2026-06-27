@@ -59,13 +59,14 @@ mod tests {
     use crate::generated::tushare_fields::{dataset, DATASETS};
 
     #[test]
-    fn ths_daily_upsert_sql_is_quoted_and_contiguous() {
-        let ths_daily = dataset("ths_daily").expect("dataset exists");
-        let WriteSqlPlan::Upsert { sql } = static_write_sql(ths_daily) else {
+    fn index_ths_daily_upsert_sql_is_quoted_and_contiguous() {
+        let index_ths_daily = dataset("index_ths_daily").expect("dataset exists");
+        let WriteSqlPlan::Upsert { sql } = static_write_sql(index_ths_daily) else {
             panic!("expected upsert plan");
         };
 
-        assert!(sql.starts_with("insert into \"ths_daily\" (\"ts_code\", \"trade_date\", \"open\""));
+        assert!(sql
+            .starts_with("insert into \"index_ths_daily\" (\"ts_code\", \"trade_date\", \"open\""));
         assert!(
             sql.contains("values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)")
         );
@@ -76,35 +77,35 @@ mod tests {
     }
 
     #[test]
-    fn ths_index_replace_all_sql_quotes_reserved_columns() {
-        let ths_index = dataset("ths_index").expect("dataset exists");
+    fn index_ths_replace_all_sql_quotes_reserved_columns() {
+        let index_ths = dataset("index_ths").expect("dataset exists");
         let WriteSqlPlan::ReplaceAll {
             clear_sql,
             insert_sql,
             transaction_group,
-        } = static_write_sql(ths_index)
+        } = static_write_sql(index_ths)
         else {
             panic!("expected replace_all plan");
         };
 
-        assert_eq!(clear_sql, "delete from \"ths_index\"");
+        assert_eq!(clear_sql, "delete from \"index_ths\"");
         assert_eq!(transaction_group, Some("ths_classification"));
         assert_eq!(
             insert_sql,
-            "insert into \"ths_index\" (\"ts_code\", \"name\", \"count\", \"exchange\", \"list_date\", \"type\") values ($1, $2, $3, $4, $5, $6)"
+            "insert into \"index_ths\" (\"ts_code\", \"name\", \"count\", \"exchange\", \"list_date\", \"type\") values ($1, $2, $3, $4, $5, $6)"
         );
         assert!(insert_sql.contains("\"count\""));
         assert!(insert_sql.contains("\"type\""));
     }
 
     #[test]
-    fn ths_member_replace_all_sql_keeps_optional_fields() {
-        let ths_member = dataset("ths_member").expect("dataset exists");
+    fn index_ths_member_replace_all_sql_keeps_optional_fields() {
+        let index_ths_member = dataset("index_ths_member").expect("dataset exists");
         let WriteSqlPlan::ReplaceAll {
             insert_sql,
             transaction_group,
             ..
-        } = static_write_sql(ths_member)
+        } = static_write_sql(index_ths_member)
         else {
             panic!("expected replace_all plan");
         };
@@ -117,8 +118,8 @@ mod tests {
     }
 
     #[test]
-    fn limit_cpt_list_delete_sql_uses_exact_trade_date_boundary() {
-        let limit_cpt = dataset("limit_cpt_list").expect("dataset exists");
+    fn index_limit_cpt_list_delete_sql_uses_exact_trade_date_boundary() {
+        let limit_cpt = dataset("index_limit_cpt_list").expect("dataset exists");
         let WriteSqlPlan::DeleteInsertByDate {
             delete_sql,
             date_field,
@@ -131,7 +132,7 @@ mod tests {
         assert_eq!(date_field, "trade_date");
         assert_eq!(
             delete_sql,
-            "delete from \"limit_cpt_list\" where \"trade_date\" = $1"
+            "delete from \"index_limit_cpt_list\" where \"trade_date\" = $1"
         );
         assert!(!delete_sql.contains(">="));
         assert!(!delete_sql.contains("<="));
@@ -141,8 +142,8 @@ mod tests {
     }
 
     #[test]
-    fn limit_cpt_list_insert_sql_uses_all_declared_fields() {
-        let limit_cpt = dataset("limit_cpt_list").expect("dataset exists");
+    fn index_limit_cpt_list_insert_sql_uses_all_declared_fields() {
+        let limit_cpt = dataset("index_limit_cpt_list").expect("dataset exists");
         let WriteSqlPlan::DeleteInsertByDate { insert_sql, .. } = static_write_sql(limit_cpt)
         else {
             panic!("expected delete_insert_by_date plan");
@@ -150,13 +151,13 @@ mod tests {
 
         assert_eq!(
             insert_sql,
-            "insert into \"limit_cpt_list\" (\"ts_code\", \"name\", \"trade_date\", \"days\", \"up_stat\", \"cons_nums\", \"up_nums\", \"pct_chg\", \"rank\") values ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+            "insert into \"index_limit_cpt_list\" (\"ts_code\", \"name\", \"trade_date\", \"days\", \"up_stat\", \"cons_nums\", \"up_nums\", \"pct_chg\", \"rank\") values ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
         );
     }
 
     #[test]
-    fn limit_list_ths_upsert_sql_includes_timestamp_fields() {
-        let limit_list = dataset("limit_list_ths").expect("dataset exists");
+    fn stock_limit_list_ths_upsert_sql_includes_timestamp_fields() {
+        let limit_list = dataset("stock_limit_list_ths").expect("dataset exists");
         let WriteSqlPlan::Upsert { sql } = static_write_sql(limit_list) else {
             panic!("expected upsert plan");
         };

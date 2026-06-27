@@ -1520,7 +1520,7 @@ datasets:
       pg_type: double precision
       nullable: true
       description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
-  ths_index:
+  index_ths:
     api: ths_index
     doc_url: https://tushare.pro/wctapi/documents/259.md
     checked_at: '2026-06-26'
@@ -1565,7 +1565,7 @@ datasets:
       pg_type: text
       nullable: true
       description: N概念指数S特色指数
-  ths_daily:
+  index_ths_daily:
     api: ths_daily
     doc_url: https://tushare.pro/wctapi/documents/260.md
     checked_at: '2026-06-26'
@@ -1576,16 +1576,15 @@ datasets:
       - trade_date
       - ts_code
     fetch_plan:
-      kind: by_trade_date_and_current_ths_index
+      kind: by_trade_date
       params:
-      - ts_code
-      - start_date
-      - end_date
-      code_source: ths_index
+      - trade_date
     notes:
     - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
       are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
       official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Cache fetches use pro.ths_daily(trade_date=YYYYMMDD) without ts_code so the Rust side matches the Python function's
+      whole-market daily shape.
     - Optional total_mv and float_mv were confirmed with an explicit fields request in SDK 1.4.29.
     doc_mismatch: []
     fields:
@@ -1646,7 +1645,7 @@ datasets:
       pg_type: double precision
       nullable: true
       description: 流通市值（元）
-  moneyflow_cnt_ths:
+  index_moneyflow_cnt_ths:
     api: moneyflow_cnt_ths
     doc_url: https://tushare.pro/wctapi/documents/371.md
     checked_at: '2026-06-26'
@@ -1715,7 +1714,7 @@ datasets:
       pg_type: double precision
       nullable: true
       description: 净额(亿元)
-  ths_member:
+  index_ths_member:
     api: ths_member
     doc_url: https://tushare.pro/wctapi/documents/261.md
     checked_at: '2026-06-26'
@@ -1730,7 +1729,7 @@ datasets:
       kind: refresh_current_by_ths_code
       params:
       - ts_code
-      code_source: ths_index
+      code_source: index_ths
     notes:
     - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
       are included and should be requested explicitly with the Tushare fields parameter. pg_type is chosen explicitly from
@@ -1770,7 +1769,7 @@ datasets:
       pg_type: text
       nullable: true
       description: 是否最新Y是N否
-  limit_cpt_list:
+  index_limit_cpt_list:
     api: limit_cpt_list
     doc_url: https://tushare.pro/wctapi/documents/357.md
     checked_at: '2026-06-26'
@@ -1832,7 +1831,7 @@ datasets:
       pg_type: integer
       nullable: true
       description: 板块热点排名
-  limit_list_ths:
+  stock_limit_list_ths:
     api: limit_list_ths
     doc_url: https://tushare.pro/wctapi/documents/355.md
     checked_at: '2026-06-26'

@@ -7,10 +7,9 @@ use chrono::{NaiveDate, NaiveDateTime};
 use serde_json::Value;
 use tokio_postgres::{types::ToSql, Client, Transaction};
 
-use crate::{
-    generated::tushare_fields::{DatasetMetadata, FieldMetadata},
-    write_sql::{static_write_sql, WriteSqlPlan},
-};
+use crate::generated::tushare_fields::{DatasetMetadata, FieldMetadata};
+
+use super::write_sql::{static_write_sql, WriteSqlPlan};
 
 pub type SourceRow = BTreeMap<String, Value>;
 
@@ -45,26 +44,26 @@ pub async fn write_dataset(
 
 pub async fn replace_classification_group(
     client: &mut Client,
-    ths_index: &DatasetMetadata,
-    ths_index_rows: &[SourceRow],
-    ths_member: &DatasetMetadata,
-    ths_member_rows: &[SourceRow],
+    index_ths: &DatasetMetadata,
+    index_ths_rows: &[SourceRow],
+    index_ths_member: &DatasetMetadata,
+    index_ths_member_rows: &[SourceRow],
 ) -> Result<usize> {
     let WriteSqlPlan::ReplaceAll {
-        clear_sql: ths_index_clear,
-        insert_sql: ths_index_insert,
+        clear_sql: index_ths_clear,
+        insert_sql: index_ths_insert,
         transaction_group: index_group,
-    } = static_write_sql(ths_index)
+    } = static_write_sql(index_ths)
     else {
-        return Err(anyhow!("{} is not replace_all", ths_index.id));
+        return Err(anyhow!("{} is not replace_all", index_ths.id));
     };
     let WriteSqlPlan::ReplaceAll {
-        clear_sql: ths_member_clear,
-        insert_sql: ths_member_insert,
+        clear_sql: index_ths_member_clear,
+        insert_sql: index_ths_member_insert,
         transaction_group: member_group,
-    } = static_write_sql(ths_member)
+    } = static_write_sql(index_ths_member)
     else {
-        return Err(anyhow!("{} is not replace_all", ths_member.id));
+        return Err(anyhow!("{} is not replace_all", index_ths_member.id));
     };
     if index_group != Some("ths_classification") || member_group != Some("ths_classification") {
         return Err(anyhow!(
@@ -73,13 +72,18 @@ pub async fn replace_classification_group(
     }
 
     let transaction = client.transaction().await?;
-    transaction.execute(ths_member_clear, &[]).await?;
-    transaction.execute(ths_index_clear, &[]).await?;
-    insert_rows_in_transaction(&transaction, ths_index, ths_index_insert, ths_index_rows).await?;
-    insert_rows_in_transaction(&transaction, ths_member, ths_member_insert, ths_member_rows)
-        .await?;
+    transaction.execute(index_ths_member_clear, &[]).await?;
+    transaction.execute(index_ths_clear, &[]).await?;
+    insert_rows_in_transaction(&transaction, index_ths, index_ths_insert, index_ths_rows).await?;
+    insert_rows_in_transaction(
+        &transaction,
+        index_ths_member,
+        index_ths_member_insert,
+        index_ths_member_rows,
+    )
+    .await?;
     transaction.commit().await?;
-    Ok(ths_index_rows.len() + ths_member_rows.len())
+    Ok(index_ths_rows.len() + index_ths_member_rows.len())
 }
 
 async fn upsert_rows(
@@ -329,7 +333,7 @@ mod tests {
 
     #[test]
     fn rejects_unknown_fields() {
-        let dataset = dataset("limit_cpt_list").unwrap();
+        let dataset = dataset("index_limit_cpt_list").unwrap();
         let row = BTreeMap::from([("unknown".to_string(), json!(1))]);
         assert!(bind_values(dataset, &row)
             .unwrap_err()
@@ -339,7 +343,7 @@ mod tests {
 
     #[test]
     fn parses_limit_cpt_values_in_metadata_order() {
-        let dataset = dataset("limit_cpt_list").unwrap();
+        let dataset = dataset("index_limit_cpt_list").unwrap();
         let row = BTreeMap::from([
             ("ts_code".to_string(), json!("885001.TI")),
             ("name".to_string(), json!("fixture")),

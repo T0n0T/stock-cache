@@ -1,7 +1,10 @@
 use anyhow::Result;
 use tokio_postgres::NoTls;
 
-const SCHEMA_SQL: &str = include_str!("../db/schema.sql");
+pub mod source_writer;
+pub mod write_sql;
+
+const SCHEMA_SQL: &str = include_str!("../../deploy/postgres/schema.sql");
 
 pub async fn init_db(postgres_dsn: &str) -> Result<()> {
     let (client, connection) = tokio_postgres::connect(postgres_dsn, NoTls).await?;

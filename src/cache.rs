@@ -13,17 +13,17 @@ use tokio_postgres::NoTls;
 
 use crate::{
     config::Config,
+    db::source_writer::{parse_date_text, replace_classification_group, write_dataset, SourceRow},
     generated::tushare_fields::{dataset, DatasetMetadata},
-    python_worker::{string_param, worker_params, PythonWorker},
-    source_writer::{parse_date_text, replace_classification_group, write_dataset, SourceRow},
+    tushare::python_worker::{string_param, worker_params, PythonWorker},
     write::DateWindow,
 };
 
 const DAILY_CACHE_DATASETS: &[&str] = &[
     "stock_stk_factor_pro",
     "stock_moneyflow_ths",
-    "limit_list_ths",
-    "limit_cpt_list",
+    "stock_limit_list_ths",
+    "index_limit_cpt_list",
 ];
 const THS_MEMBER_REQUEST_DELAY_MS: u64 = 150;
 const CODE_REQUEST_DELAY_MS: u64 = 150;
@@ -67,18 +67,18 @@ pub async fn run_cache_for_trade_dates(
     if refresh_ths {
         let started = Instant::now();
         eprintln!("[cache] refresh-ths start");
-        let ths_index = required_dataset("ths_index")?;
-        let ths_member = required_dataset("ths_member")?;
-        let ths_index_rows = fetch(
+        let index_ths = required_dataset("index_ths")?;
+        let index_ths_member = required_dataset("index_ths_member")?;
+        let index_ths_rows = fetch(
             &mut worker,
             "refresh-ths-index",
-            ths_index,
+            index_ths,
             &BTreeMap::new(),
         )
         .await?;
-        let mut ths_member_rows = Vec::new();
-        let total_ths_index_rows = ths_index_rows.len();
-        for (member_index, row) in ths_index_rows.iter().enumerate() {
+        let mut index_ths_member_rows = Vec::new();
+        let total_index_ths_rows = index_ths_rows.len();
+        for (member_index, row) in index_ths_rows.iter().enumerate() {
             let Some(ts_code) = row.get("ts_code").and_then(|value| value.as_str()) else {
                 continue;
             };
@@ -86,7 +86,7 @@ pub async fn run_cache_for_trade_dates(
                 eprintln!(
                     "[cache] refresh-ths member {}/{} {}",
                     member_index + 1,
-                    total_ths_index_rows,
+                    total_index_ths_rows,
                     ts_code
                 );
             }
@@ -94,27 +94,27 @@ pub async fn run_cache_for_trade_dates(
             let mut rows = fetch(
                 &mut worker,
                 &format!("refresh-ths-member-{ts_code}"),
-                ths_member,
+                index_ths_member,
                 &params,
             )
             .await?;
-            ths_member_rows.append(&mut rows);
+            index_ths_member_rows.append(&mut rows);
             sleep(StdDuration::from_millis(THS_MEMBER_REQUEST_DELAY_MS)).await;
         }
         replace_classification_group(
             &mut client,
-            ths_index,
-            &ths_index_rows,
-            ths_member,
-            &ths_member_rows,
+            index_ths,
+            &index_ths_rows,
+            index_ths_member,
+            &index_ths_member_rows,
         )
         .await?;
-        row_counts.insert(ths_index.id.to_string(), ths_index_rows.len());
-        row_counts.insert(ths_member.id.to_string(), ths_member_rows.len());
+        row_counts.insert(index_ths.id.to_string(), index_ths_rows.len());
+        row_counts.insert(index_ths_member.id.to_string(), index_ths_member_rows.len());
         eprintln!(
-            "[cache] refresh-ths done ths_index={} ths_member={} elapsed={:.1}s",
-            ths_index_rows.len(),
-            ths_member_rows.len(),
+            "[cache] refresh-ths done index_ths={} index_ths_member={} elapsed={:.1}s",
+            index_ths_rows.len(),
+            index_ths_member_rows.len(),
             started.elapsed().as_secs_f64()
         );
     }
@@ -124,18 +124,6 @@ pub async fn run_cache_for_trade_dates(
     } else {
         enabled_index_codes(&config.index_list_path)?
     };
-    let ths_codes = if dates.is_empty() {
-        Vec::new()
-    } else {
-        let codes = current_ths_codes(&client).await?;
-        if codes.is_empty() {
-            return Err(anyhow!(
-                "ths_index is empty; run write --mode cache --refresh-ths before caching ths_daily/moneyflow_cnt_ths"
-            ));
-        }
-        codes
-    };
-
     for (date_index, trade_date) in dates.iter().enumerate() {
         let day_started = Instant::now();
         let trade_date_text = trade_date.format("%Y%m%d").to_string();
@@ -159,7 +147,7 @@ pub async fn run_cache_for_trade_dates(
                 &params,
             )
             .await?;
-            let delete_date = if *dataset_id == "limit_cpt_list" {
+            let delete_date = if *dataset_id == "index_limit_cpt_list" {
                 Some(*trade_date)
             } else {
                 None
@@ -197,49 +185,23 @@ pub async fn run_cache_for_trade_dates(
             eprintln!("[cache] index_idx_factor_pro {trade_date_text} skip existing codes");
         }
 
-        let ths_daily = required_dataset("ths_daily")?;
-        let existing_ths_daily_codes =
-            existing_ts_codes_for_date(&client, ths_daily.id, *trade_date).await?;
-        let missing_ths_codes = ths_codes
-            .iter()
-            .filter(|ts_code| !existing_ths_daily_codes.contains(*ts_code))
-            .collect::<Vec<_>>();
-        if missing_ths_codes.is_empty() {
-            eprintln!("[cache] ths_daily {trade_date_text} skip existing codes");
-        }
-        let total_missing_ths_codes = missing_ths_codes.len();
-        for (code_index, ts_code) in missing_ths_codes.into_iter().enumerate() {
-            if code_index == 0 || (code_index + 1) % 100 == 0 {
-                eprintln!(
-                    "[cache] ths_daily {trade_date_text} code {}/{} {}",
-                    code_index + 1,
-                    total_missing_ths_codes,
-                    ts_code
-                );
-            }
-            if existing_ths_daily_codes.contains(ts_code) {
-                continue;
-            }
-            let params = worker_params(&[
-                ("ts_code", string_param(ts_code)),
-                ("start_date", string_param(&trade_date_text)),
-                ("end_date", string_param(&trade_date_text)),
-            ]);
-            let rows = fetch(
-                &mut worker,
-                &format!("ths_daily-{ts_code}-{trade_date_text}"),
-                ths_daily,
-                &params,
-            )
-            .await?;
-            write_dataset(&mut client, ths_daily, &rows, None).await?;
-            *row_counts.entry(ths_daily.id.to_string()).or_insert(0) += rows.len();
-            sleep(StdDuration::from_millis(CODE_REQUEST_DELAY_MS)).await;
-        }
+        let index_ths_daily = required_dataset("index_ths_daily")?;
+        let params = trade_date_params(&trade_date_text);
+        let rows = fetch(
+            &mut worker,
+            &format!("index_ths_daily-{trade_date_text}"),
+            index_ths_daily,
+            &params,
+        )
+        .await?;
+        write_dataset(&mut client, index_ths_daily, &rows, None).await?;
+        *row_counts
+            .entry(index_ths_daily.id.to_string())
+            .or_insert(0) += rows.len();
 
-        let moneyflow_cnt = required_dataset("moneyflow_cnt_ths")?;
+        let moneyflow_cnt = required_dataset("index_moneyflow_cnt_ths")?;
         if date_has_rows(&client, moneyflow_cnt.id, *trade_date).await? {
-            eprintln!("[cache] moneyflow_cnt_ths {trade_date_text} skip existing");
+            eprintln!("[cache] index_moneyflow_cnt_ths {trade_date_text} skip existing");
             eprintln!(
                 "[cache] day {}/{} {} done elapsed={:.1}s",
                 date_index + 1,
@@ -249,10 +211,10 @@ pub async fn run_cache_for_trade_dates(
             );
             continue;
         }
-        let params = worker_params(&[("trade_date", string_param(&trade_date_text))]);
+        let params = trade_date_params(&trade_date_text);
         let rows = fetch(
             &mut worker,
-            &format!("moneyflow_cnt_ths-{trade_date_text}"),
+            &format!("index_moneyflow_cnt_ths-{trade_date_text}"),
             moneyflow_cnt,
             &params,
         )
@@ -294,8 +256,7 @@ pub async fn run_calc_source_cache_for_trade_dates(
     let mut worker = PythonWorker::spawn(command).await?;
     let mut row_counts = BTreeMap::new();
     let stock_dataset = required_dataset("stock_stk_factor_pro")?;
-    let index_dataset = required_dataset("index_idx_factor_pro")?;
-    let index_codes = enabled_index_codes(&config.index_list_path)?;
+    let index_ths_daily = required_dataset("index_ths_daily")?;
     let total_dates = dates.len();
 
     for (date_index, trade_date) in dates.iter().enumerate() {
@@ -335,46 +296,18 @@ pub async fn run_calc_source_cache_for_trade_dates(
             );
         }
 
-        let existing_index_codes =
-            existing_ts_codes_for_date(&client, index_dataset.id, *trade_date).await?;
-        let missing_index_codes = index_codes
-            .iter()
-            .filter(|ts_code| !existing_index_codes.contains(*ts_code))
-            .collect::<Vec<_>>();
-        if missing_index_codes.is_empty() {
-            eprintln!("[warmup] index_idx_factor_pro {trade_date_text} skip existing codes");
-            continue;
-        }
-        let index_started = Instant::now();
-        let total_missing_index_codes = missing_index_codes.len();
-        for (code_index, ts_code) in missing_index_codes.into_iter().enumerate() {
-            eprintln!(
-                "[warmup] index_idx_factor_pro {trade_date_text} code {}/{} {}",
-                code_index + 1,
-                total_missing_index_codes,
-                ts_code
-            );
-            let params = worker_params(&[
-                ("ts_code", string_param(ts_code)),
-                ("start_date", string_param(&trade_date_text)),
-                ("end_date", string_param(&trade_date_text)),
-            ]);
-            let rows = fetch(
-                &mut worker,
-                &format!("index_idx_factor_pro-warmup-{ts_code}-{trade_date_text}"),
-                index_dataset,
-                &params,
-            )
-            .await?;
-            write_dataset(&mut client, index_dataset, &rows, None).await?;
-            *row_counts.entry(index_dataset.id.to_string()).or_insert(0) += rows.len();
-            sleep(StdDuration::from_millis(CODE_REQUEST_DELAY_MS)).await;
-        }
-        eprintln!(
-            "[warmup] index_idx_factor_pro {trade_date_text} done codes={} elapsed={:.1}s",
-            total_missing_index_codes,
-            index_started.elapsed().as_secs_f64()
-        );
+        let params = trade_date_params(&trade_date_text);
+        let rows = fetch(
+            &mut worker,
+            &format!("index_ths_daily-warmup-{trade_date_text}"),
+            index_ths_daily,
+            &params,
+        )
+        .await?;
+        write_dataset(&mut client, index_ths_daily, &rows, None).await?;
+        *row_counts
+            .entry(index_ths_daily.id.to_string())
+            .or_insert(0) += rows.len();
     }
 
     connection_task.abort();
@@ -471,19 +404,6 @@ fn enabled_index_codes(path: &str) -> Result<Vec<String>> {
     Ok(codes)
 }
 
-async fn current_ths_codes(client: &tokio_postgres::Client) -> Result<Vec<String>> {
-    let rows = client
-        .query(
-            "select \"ts_code\" from \"ths_index\" order by \"ts_code\"",
-            &[],
-        )
-        .await?;
-    Ok(rows
-        .into_iter()
-        .map(|row| row.get::<_, String>(0))
-        .collect())
-}
-
 async fn date_has_rows(
     client: &tokio_postgres::Client,
     table: &str,
@@ -502,6 +422,10 @@ async fn existing_ts_codes_for_date(
     let sql = format!(r#"select "ts_code" from "{table}" where "trade_date" = $1"#);
     let rows = client.query(&sql, &[&trade_date]).await?;
     Ok(rows.into_iter().map(|row| row.get(0)).collect())
+}
+
+fn trade_date_params(trade_date_text: &str) -> BTreeMap<String, serde_json::Value> {
+    worker_params(&[("trade_date", string_param(trade_date_text))])
 }
 
 async fn fetch(
@@ -608,5 +532,15 @@ mod tests {
                 parse_date_text("20250103").unwrap()
             ]
         );
+    }
+
+    #[test]
+    fn trade_date_params_match_daily_python_function_shape() {
+        let params = trade_date_params("20260625");
+
+        assert_eq!(params.get("trade_date"), Some(&json!("20260625")));
+        assert!(!params.contains_key("ts_code"));
+        assert!(!params.contains_key("start_date"));
+        assert!(!params.contains_key("end_date"));
     }
 }

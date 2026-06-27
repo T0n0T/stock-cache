@@ -3,7 +3,7 @@ use std::{collections::HashMap, env, fs, path::Path};
 use anyhow::{anyhow, Context, Result};
 use serde::Serialize;
 
-const DEFAULT_INDEX_LIST_PATH: &str = "runtime/default-indexes.csv";
+const DEFAULT_INDEX_LIST_PATH: &str = "config/default-indexes.csv";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Config {
@@ -79,9 +79,17 @@ fn unquote_value(value: &str) -> &str {
 }
 
 impl Config {
-    pub fn from_env(env_file: Option<&EnvFile>) -> Result<Self> {
+    pub fn from_env_with_options(
+        env_file: Option<&EnvFile>,
+        require_tushare_token: bool,
+    ) -> Result<Self> {
         let postgres_dsn = required("POSTGRES_DSN", env_file)?;
-        let tushare_token = required("TUSHARE_TOKEN", env_file)?;
+        let tushare_token = if require_tushare_token {
+            required("TUSHARE_TOKEN", env_file)?
+        } else {
+            value("TUSHARE_TOKEN", env_file).unwrap_or_default()
+        };
+        let tushare_token_set = !tushare_token.is_empty();
         let index_list_path = value("INDEX_LIST_PATH", env_file)
             .unwrap_or_else(|| DEFAULT_INDEX_LIST_PATH.to_string());
 
@@ -89,7 +97,7 @@ impl Config {
             postgres_dsn,
             tushare_token,
             postgres_dsn_set: true,
-            tushare_token_set: true,
+            tushare_token_set,
             index_list_path,
             default_lookback_trading_days: parse_or_default(
                 "DEFAULT_LOOKBACK_TRADING_DAYS",

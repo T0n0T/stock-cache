@@ -376,7 +376,7 @@ create table "index_idx_factor_pro" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "ths_index" (
+create table "index_ths" (
     "ts_code" text not null,
     "name" text,
     "count" integer,
@@ -386,7 +386,7 @@ create table "ths_index" (
     primary key ("ts_code")
 );
 
-create table "ths_daily" (
+create table "index_ths_daily" (
     "ts_code" text not null,
     "trade_date" date not null,
     "open" double precision,
@@ -404,7 +404,7 @@ create table "ths_daily" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "moneyflow_cnt_ths" (
+create table "index_moneyflow_cnt_ths" (
     "trade_date" date not null,
     "ts_code" text not null,
     "name" text,
@@ -420,7 +420,7 @@ create table "moneyflow_cnt_ths" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "ths_member" (
+create table "index_ths_member" (
     "ts_code" text not null,
     "con_code" text not null,
     "con_name" text,
@@ -431,10 +431,10 @@ create table "ths_member" (
     primary key ("ts_code", "con_code")
 );
 
-create index "ths_member_con_code_idx" on "ths_member" ("con_code");
-create index "ths_member_ts_code_idx" on "ths_member" ("ts_code");
+create index "index_ths_member_con_code_idx" on "index_ths_member" ("con_code");
+create index "index_ths_member_ts_code_idx" on "index_ths_member" ("ts_code");
 
-create table "limit_cpt_list" (
+create table "index_limit_cpt_list" (
     "ts_code" text not null,
     "name" text,
     "trade_date" date not null,
@@ -446,9 +446,9 @@ create table "limit_cpt_list" (
     "rank" integer
 );
 
-create index "limit_cpt_list_trade_date_idx" on "limit_cpt_list" ("trade_date");
+create index "index_limit_cpt_list_trade_date_idx" on "index_limit_cpt_list" ("trade_date");
 
-create table "limit_list_ths" (
+create table "stock_limit_list_ths" (
     "trade_date" date not null,
     "ts_code" text not null,
     "name" text,
@@ -497,6 +497,28 @@ create index "stock_period_indicator_state_lookup_idx"
     on "stock_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
 
 create table "stock_daily_asof_indicators" (
+    "ts_code" text not null,
+    "trade_date" date not null,
+    "daily_dif_asof" double precision,
+    "daily_dea_asof" double precision,
+    "daily_hist_x2_asof" double precision,
+    "daily_dea_pctile_asof" double precision,
+    "daily_period_count" integer,
+    "weekly_dif_asof" double precision,
+    "weekly_dea_asof" double precision,
+    "weekly_hist_x2_asof" double precision,
+    "weekly_dea_pctile_asof" double precision,
+    "weekly_period_count" integer,
+    "monthly_dif_asof" double precision,
+    "monthly_dea_asof" double precision,
+    "monthly_hist_x2_asof" double precision,
+    "monthly_dea_pctile_asof" double precision,
+    "monthly_period_count" integer,
+    "calc_version" text not null,
+    primary key ("ts_code", "trade_date", "calc_version")
+);
+
+create table "index_daily_asof_indicators" (
     "ts_code" text not null,
     "trade_date" date not null,
     "daily_dif_asof" double precision,

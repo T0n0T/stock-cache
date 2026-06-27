@@ -19,12 +19,12 @@ mod tests {
             ("stock_stk_factor_pro", "stk_factor_pro", 261),
             ("stock_moneyflow_ths", "moneyflow_ths", 13),
             ("index_idx_factor_pro", "idx_factor_pro", 89),
-            ("ths_index", "ths_index", 6),
-            ("ths_daily", "ths_daily", 14),
-            ("moneyflow_cnt_ths", "moneyflow_cnt_ths", 12),
-            ("ths_member", "ths_member", 7),
-            ("limit_cpt_list", "limit_cpt_list", 9),
-            ("limit_list_ths", "limit_list_ths", 24),
+            ("index_ths", "ths_index", 6),
+            ("index_ths_daily", "ths_daily", 14),
+            ("index_moneyflow_cnt_ths", "moneyflow_cnt_ths", 12),
+            ("index_ths_member", "ths_member", 7),
+            ("index_limit_cpt_list", "limit_cpt_list", 9),
+            ("stock_limit_list_ths", "limit_list_ths", 24),
         ];
 
         assert_eq!(DATASETS.len(), 9);
@@ -46,16 +46,25 @@ mod tests {
     }
 
     #[test]
-    fn ths_daily_keeps_optional_market_value_fields() {
-        let fields = field_names("ths_daily");
+    fn index_ths_daily_keeps_optional_market_value_fields() {
+        let fields = field_names("index_ths_daily");
 
         assert!(fields.contains(&"total_mv"));
         assert!(fields.contains(&"float_mv"));
     }
 
     #[test]
-    fn ths_member_keeps_documented_optional_membership_fields() {
-        let fields = field_names("ths_member");
+    fn index_ths_daily_fetch_plan_uses_whole_day_python_function_shape() {
+        let index_ths_daily = dataset("index_ths_daily").expect("index_ths_daily exists");
+
+        assert_eq!(index_ths_daily.fetch_plan.kind, "by_trade_date");
+        assert_eq!(index_ths_daily.fetch_plan.params, &["trade_date"]);
+        assert_eq!(index_ths_daily.fetch_plan.code_source, None);
+    }
+
+    #[test]
+    fn index_ths_member_keeps_documented_optional_membership_fields() {
+        let fields = field_names("index_ths_member");
 
         for required in ["weight", "in_date", "out_date", "is_new"] {
             assert!(fields.contains(&required), "missing {required}");
@@ -63,8 +72,8 @@ mod tests {
     }
 
     #[test]
-    fn limit_list_ths_keeps_all_fields_and_timestamp_formats() {
-        let limit_list = dataset("limit_list_ths").expect("limit_list_ths exists");
+    fn stock_limit_list_ths_keeps_all_fields_and_timestamp_formats() {
+        let limit_list = dataset("stock_limit_list_ths").expect("stock_limit_list_ths exists");
 
         assert_eq!(limit_list.fields.len(), 24);
         for name in [
@@ -80,8 +89,8 @@ mod tests {
     }
 
     #[test]
-    fn limit_cpt_list_uses_exact_trade_date_delete_insert_strategy() {
-        let limit_cpt = dataset("limit_cpt_list").expect("limit_cpt_list exists");
+    fn index_limit_cpt_list_uses_exact_trade_date_delete_insert_strategy() {
+        let limit_cpt = dataset("index_limit_cpt_list").expect("index_limit_cpt_list exists");
 
         assert_eq!(
             limit_cpt.write_strategy,

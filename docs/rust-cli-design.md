@@ -65,13 +65,15 @@ worker 池规则：
 ```bash
 stock-cache init-db
 stock-cache config show
+stock-cache status
 stock-cache write --mode full|cache|calc
 ```
 
 当前实现进度：
 
-- `init-db` 已执行静态 `db/schema.sql` 初始化。
+- `init-db` 已执行静态 `deploy/postgres/schema.sql` 初始化。
 - `config show` 已实现配置加载和脱敏输出。
+- `status` 已实现只读数据库覆盖查询，不依赖 Tushare token，不保存 checkpoint/status 表。
 - `write --mode cache` 已实现 Tushare Python worker 拉取、Rust 字段校验、事务写入和 9 张源表缓存写入。
 - `write --mode calc` 已实现纯本地计算，只读取 `stock_stk_factor_pro`，并写入 4 张计算表。
 - `write --mode full` 已实现 `cache` 成功后执行 `calc` 的编排；`cache` 失败不会进入 `calc`。
@@ -90,10 +92,13 @@ install-skill
 ```bash
 stock-cache --env-file /path/to/.env config show
 stock-cache --env-file /path/to/.env init-db
+stock-cache --env-file /path/to/.env status
 stock-cache --env-file /path/to/.env write --mode full
 ```
 
 `--env-file` 的作用是加载指定环境文件。Shell 环境变量优先级高于 env 文件。
+
+`status` 只需要 `POSTGRES_DSN`。它直接查询当前 PostgreSQL 数据，输出源表、分类表、计算表的行数和日期范围，并根据计算目标起点反推股票/同花顺板块指数 MACD warmup 覆盖情况。
 
 ## Write Modes
 
@@ -124,8 +129,7 @@ stock-cache write --mode full --lookback-trading-days 30
 - 当前 `cache/full` 的按日 Tushare 拉取仍要求显式 `--start-date/--end-date`。
 - `full` 将用户传入的显式日期区间视为 calc 目标区间，并通过 Tushare `trade_cal` 解析精确交易日。
 - `full` 会为 calc 自动补齐目标区间首个交易日前 3 个自然年的 `stock_stk_factor_pro` warmup 源数据；warmup 日期通过 `trade_cal` 精确过滤为交易日，不按自然日或固定交易日数近似。
-- `full` 同时补齐 warmup 区间内 `INDEX_LIST_PATH` 默认指数的 `index_idx_factor_pro` 历史。
-- warmup 不拉取同花顺板块日行情或资金流，避免放大 `ths_daily`/`moneyflow_cnt_ths` 请求量。
+- warmup 会补齐 `stock_stk_factor_pro` 和 `index_ths_daily`，供股票和板块指数长周期计算使用；不拉取资金流、榜单或 `index_idx_factor_pro`。
 - 例外：`write --mode cache --refresh-ths` 且未传任何日期参数时，只刷新同花顺分类，不拉取按日接口。
 
 ## Concurrency
@@ -155,10 +159,10 @@ stock-cache write --mode full \
 stock_stk_factor_pro
 stock_moneyflow_ths
 index_idx_factor_pro
-ths_daily
-moneyflow_cnt_ths
-limit_cpt_list
-limit_list_ths
+index_ths_daily
+index_moneyflow_cnt_ths
+index_limit_cpt_list
+stock_limit_list_ths
 ```
 
 各数据集来源：
@@ -168,12 +172,12 @@ limit_list_ths
 | `stock_stk_factor_pro` | Tushare 全市场股票 | 是 |
 | `stock_moneyflow_ths` | Tushare 全市场股票 | 是 |
 | `index_idx_factor_pro` | `INDEX_LIST_PATH` 中 `enabled=true` 的指数 | 是 |
-| `ths_daily` | 当前 `ths_index` 全部记录 | 是 |
-| `moneyflow_cnt_ths` | 当前 `ths_index` 全部记录 | 是 |
-| `limit_cpt_list` | Tushare 日级榜单 | 是 |
-| `limit_list_ths` | Tushare 日级榜单 | 是 |
+| `index_ths_daily` | Tushare 日级全量同花顺板块行情 | 是 |
+| `index_moneyflow_cnt_ths` | Tushare 日级全量同花顺板块资金流 | 是 |
+| `index_limit_cpt_list` | Tushare 日级榜单 | 是 |
+| `stock_limit_list_ths` | Tushare 日级榜单 | 是 |
 
-如果 `ths_daily` 或 `moneyflow_cnt_ths` 需要运行，但 `ths_index` 为空，命令应失败并提示先执行 `--refresh-ths`。
+`index_ths_daily` 和 `index_moneyflow_cnt_ths` 按 Python 函数的日级全量形态请求，只传 `trade_date`，不从 `index_ths` 枚举 `ts_code`。
 
 ## Refresh THS Classification
 
@@ -186,8 +190,8 @@ stock-cache write --mode cache --refresh-ths
 `--refresh-ths` 刷新：
 
 ```text
-ths_index
-ths_member
+index_ths
+index_ths_member
 ```
 
 刷新语义：
@@ -196,7 +200,7 @@ ths_member
 - 不保留历史快照。
 - 不按 `trade_date` 每日保存成分。
 - 保存 Tushare 文档标注的 `weight/in_date/out_date/is_new` 字段；字段可为空，但应通过 `fields` 参数显式请求。
-- 在事务内替换 `ths_index + ths_member`，失败保留旧数据。
+- 在事务内替换 `index_ths + index_ths_member`，失败保留旧数据。
 
 与日期窗口一起使用时：
 
@@ -215,7 +219,7 @@ stock-cache write --mode full \
 3. calc
 ```
 
-因此 `full --refresh-ths` 会用最新同花顺分类列表拉取 `ths_daily/moneyflow_cnt_ths`。
+因此 `full --refresh-ths` 会先刷新同花顺分类基础表，再进入目标日期窗口的数据缓存与计算。
 
 ## Index List
 
@@ -236,11 +240,13 @@ ts_code,name,category,enabled
 - `enabled=true` 才拉取。
 - `name` 只供人工阅读，不覆盖 Tushare 数据。
 - `category` 只供人工分组，不驱动逻辑。
-- 不新增 `THS_INDEX_LIST_PATH`。同花顺板块列表来自 `ths_index`。
+- 不新增 `THS_INDEX_LIST_PATH`。同花顺板块列表来自 `index_ths`。
 
 ## Calc Scope
 
-`calc/full` 只计算股票级基础因子，输入唯一来自：
+`calc/full` 计算股票级基础因子和同花顺板块指数长周期指标。
+
+股票级基础因子输入来自：
 
 ```text
 stock_stk_factor_pro
@@ -255,7 +261,15 @@ low_qfq
 close_qfq
 ```
 
-以及 `vol/turnover_rate` 等源字段。`calc` 不计算指数、板块指数、市场活跃或板块强弱。
+以及 `vol/turnover_rate` 等源字段。
+
+同花顺板块指数长周期指标输入来自：
+
+```text
+index_ths_daily
+```
+
+当前只写 `index_daily_asof_indicators`，用于保存板块指数 daily/weekly/monthly MACD as-of 和 DEA 历史分位；不计算市场活跃、板块强弱、成分股活跃或策略筛选分。
 
 ## Environment Variables
 
@@ -265,7 +279,7 @@ close_qfq
 | --- | --- | --- | --- |
 | `POSTGRES_DSN` | yes | none | PostgreSQL 连接字符串 |
 | `TUSHARE_TOKEN` | yes | none | Tushare token |
-| `INDEX_LIST_PATH` | no | `runtime/default-indexes.csv` | `index_idx_factor_pro` 指数清单 |
+| `INDEX_LIST_PATH` | no | `config/default-indexes.csv` | `index_idx_factor_pro` 指数清单 |
 | `DEFAULT_LOOKBACK_TRADING_DAYS` | no | `90` | 默认近期交易日窗口 |
 | `MAX_CONCURRENCY` | no | `4` | 默认并发上限 |
 | `REQUEST_TIMEOUT_SECONDS` | no | `30` | Tushare 请求超时 |
@@ -304,9 +318,11 @@ ENABLE_LOCAL_INDICATOR_FALLBACK
   },
   "calc_row_counts": {
     "stock_daily_asof_indicators": 123456
+    "index_daily_asof_indicators": 2345
   },
   "usable_ranges": {
     "stock_daily_asof_indicators": ["2026-06-01", "2026-06-25"],
+    "index_daily_asof_indicators": ["2026-06-01", "2026-06-25"],
     "stock_daily_rolling_factors": ["2026-06-10", "2026-06-25"],
     "stock_daily_left_peak": [null, "2026-06-25"]
   }
