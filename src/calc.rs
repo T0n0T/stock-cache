@@ -1,4 +1,8 @@
-use std::collections::{BTreeMap, HashSet};
+use std::{
+    collections::{BTreeMap, HashSet},
+    thread,
+    time::Instant,
+};
 
 use anyhow::{anyhow, Result};
 use chrono::{Datelike, Duration, NaiveDate};
@@ -131,32 +135,119 @@ pub struct CalcSummary {
     pub message: &'static str,
 }
 
-pub async fn run_calc(window: &DateWindow, config: &Config) -> Result<CalcSummary> {
+pub async fn run_calc(
+    window: &DateWindow,
+    config: &Config,
+    max_concurrency: u32,
+) -> Result<CalcSummary> {
+    let calc_started = Instant::now();
+    eprintln!("[calc] connect postgres start");
     let (mut client, connection) = tokio_postgres::connect(&config.postgres_dsn, NoTls).await?;
+    eprintln!(
+        "[calc] connect postgres done elapsed={:.1}s",
+        calc_started.elapsed().as_secs_f64()
+    );
     let connection_task = tokio::spawn(async move {
         if let Err(error) = connection.await {
             eprintln!("postgres connection error: {error}");
         }
     });
 
+    eprintln!("[calc] resolve target dates start");
+    let started = Instant::now();
     let target_dates = resolve_calc_dates(&client, window).await?;
+    eprintln!(
+        "[calc] resolve target dates done target_days={} elapsed={:.1}s",
+        target_dates.len(),
+        started.elapsed().as_secs_f64()
+    );
     let result = if target_dates.is_empty() {
         Ok(empty_summary())
     } else {
         let max_target_date = *target_dates.last().expect("checked non-empty");
-        let source_rows = load_source_rows(&client, max_target_date).await?;
-        let distinct_dates = distinct_trade_dates(&source_rows);
-        let computed = compute_calc_rows(&source_rows, &target_dates);
-        let row_counts = write_calc_rows(&mut client, &computed).await?;
-        Ok(summary(
-            source_rows.len(),
-            &target_dates,
-            &distinct_dates,
-            row_counts,
-        ))
+        eprintln!("[calc] inspect existing rows start");
+        let started = Instant::now();
+        let existing_coverage = load_existing_calc_coverage(&client, &target_dates).await?;
+        let target_dates_to_compute = target_dates
+            .iter()
+            .copied()
+            .filter(|date| !existing_coverage.is_target_trade_date_complete(*date))
+            .collect::<Vec<_>>();
+        eprintln!(
+            "[calc] inspect existing rows done target_days={} pending_days={} skipped_days={} elapsed={:.1}s",
+            target_dates.len(),
+            target_dates_to_compute.len(),
+            target_dates.len().saturating_sub(target_dates_to_compute.len()),
+            started.elapsed().as_secs_f64()
+        );
+        if target_dates_to_compute.is_empty() {
+            eprintln!("[calc] all target trade dates already complete; skip load/compute/write");
+            let source_row_count = load_source_row_count(&client, max_target_date).await?;
+            let distinct_dates = load_distinct_source_trade_dates(&client, max_target_date).await?;
+            Ok(summary(
+                source_row_count,
+                &target_dates,
+                &distinct_dates,
+                BTreeMap::from([
+                    ("stock_period_indicator_state".to_string(), 0),
+                    ("stock_daily_asof_indicators".to_string(), 0),
+                    ("stock_daily_rolling_factors".to_string(), 0),
+                    ("stock_daily_left_peak".to_string(), 0),
+                ]),
+            ))
+        } else {
+            eprintln!(
+                "[calc] load source rows start max_trade_date={}",
+                max_target_date.format("%Y%m%d")
+            );
+            let started = Instant::now();
+            let source_rows = load_source_rows(&client, max_target_date).await?;
+            eprintln!(
+                "[calc] load source rows done rows={} elapsed={:.1}s",
+                source_rows.len(),
+                started.elapsed().as_secs_f64()
+            );
+            let distinct_dates = distinct_trade_dates(&source_rows);
+            eprintln!(
+                "[calc] compute rows start max_concurrency={} pending_target_days={}",
+                max_concurrency.max(1),
+                target_dates_to_compute.len()
+            );
+            let started = Instant::now();
+            let computed =
+                compute_calc_rows(&source_rows, &target_dates_to_compute, max_concurrency);
+            eprintln!(
+            "[calc] compute rows done period_states={} asof={} rolling={} left_peak={} elapsed={:.1}s",
+            computed.period_states.len(),
+            computed.asof_rows.len(),
+            computed.rolling_rows.len(),
+            computed.left_peak_rows.len(),
+            started.elapsed().as_secs_f64()
+            );
+            eprintln!("[calc] write rows start");
+            let started = Instant::now();
+            let existing_period_state_keys =
+                load_existing_period_state_keys(&client, &computed.period_states).await?;
+            let row_counts =
+                write_calc_rows(&mut client, &computed, &existing_period_state_keys).await?;
+            eprintln!(
+                "[calc] write rows done elapsed={:.1}s",
+                started.elapsed().as_secs_f64()
+            );
+            Ok(summary(
+                source_rows.len(),
+                &target_dates,
+                &distinct_dates,
+                row_counts,
+            ))
+        }
     };
 
     connection_task.abort();
+    eprintln!(
+        "[calc] done elapsed={:.1}s",
+        calc_started.elapsed().as_secs_f64()
+    );
     result
 }
 
@@ -241,6 +332,223 @@ async fn load_source_rows(
         .collect())
 }
 
+async fn load_source_row_count(
+    client: &tokio_postgres::Client,
+    max_trade_date: NaiveDate,
+) -> Result<usize> {
+    let row = client
+        .query_one(
+            r#"
+            select count(*)::bigint
+            from "stock_stk_factor_pro"
+            where "trade_date" <= $1
+            "#,
+            &[&max_trade_date],
+        )
+        .await?;
+    let count: i64 = row.get(0);
+    Ok(count as usize)
+}
+
+async fn load_distinct_source_trade_dates(
+    client: &tokio_postgres::Client,
+    max_trade_date: NaiveDate,
+) -> Result<Vec<NaiveDate>> {
+    let rows = client
+        .query(
+            r#"
+            select distinct "trade_date"
+            from "stock_stk_factor_pro"
+            where "trade_date" <= $1
+            order by "trade_date"
+            "#,
+            &[&max_trade_date],
+        )
+        .await?;
+    Ok(rows.into_iter().map(|row| row.get(0)).collect())
+}
+
+#[derive(Debug, Default)]
+struct ExistingCalcCoverage {
+    source_counts_by_date: BTreeMap<NaiveDate, i64>,
+    asof_counts_by_date: BTreeMap<NaiveDate, i64>,
+    rolling_counts_by_date: BTreeMap<NaiveDate, i64>,
+    left_peak_counts_by_date: BTreeMap<NaiveDate, i64>,
+}
+
+impl ExistingCalcCoverage {
+    fn is_target_trade_date_complete(&self, trade_date: NaiveDate) -> bool {
+        let Some(source_count) = self.source_counts_by_date.get(&trade_date).copied() else {
+            return false;
+        };
+        source_count > 0
+            && self
+                .asof_counts_by_date
+                .get(&trade_date)
+                .copied()
+                .unwrap_or(0)
+                >= source_count
+            && self
+                .rolling_counts_by_date
+                .get(&trade_date)
+                .copied()
+                .unwrap_or(0)
+                >= source_count
+            && self
+                .left_peak_counts_by_date
+                .get(&trade_date)
+                .copied()
+                .unwrap_or(0)
+                >= source_count
+    }
+}
+
+async fn load_existing_calc_coverage(
+    client: &tokio_postgres::Client,
+    target_dates: &[NaiveDate],
+) -> Result<ExistingCalcCoverage> {
+    let Some(first_target_date) = target_dates.first().copied() else {
+        return Ok(ExistingCalcCoverage::default());
+    };
+    let Some(last_target_date) = target_dates.last().copied() else {
+        return Ok(ExistingCalcCoverage::default());
+    };
+    let source_counts_by_date = load_date_counts(
+        client,
+        r#"
+        select "trade_date", count(*)::bigint
+        from "stock_stk_factor_pro"
+        where "trade_date" between $1 and $2
+        group by "trade_date"
+        "#,
+        first_target_date,
+        last_target_date,
+    )
+    .await?;
+    let asof_counts_by_date = load_versioned_date_counts(
+        client,
+        r#"
+        select "trade_date", count(*)::bigint
+        from "stock_daily_asof_indicators"
+        where "trade_date" between $1 and $2 and "calc_version" = $3
+        group by "trade_date"
+        "#,
+        first_target_date,
+        last_target_date,
+        MACD_CALC_VERSION,
+    )
+    .await?;
+    let rolling_counts_by_date = load_versioned_date_counts(
+        client,
+        r#"
+        select "trade_date", count(*)::bigint
+        from "stock_daily_rolling_factors"
+        where "trade_date" between $1 and $2 and "calc_version" = $3
+        group by "trade_date"
+        "#,
+        first_target_date,
+        last_target_date,
+        ROLLING_CALC_VERSION,
+    )
+    .await?;
+    let left_peak_counts_by_date = load_versioned_date_counts(
+        client,
+        r#"
+        select "trade_date", count(*)::bigint
+        from "stock_daily_left_peak"
+        where "trade_date" between $1 and $2 and "calc_version" = $3
+        group by "trade_date"
+        "#,
+        first_target_date,
+        last_target_date,
+        LEFT_PEAK_CALC_VERSION,
+    )
+    .await?;
+    Ok(ExistingCalcCoverage {
+        source_counts_by_date,
+        asof_counts_by_date,
+        rolling_counts_by_date,
+        left_peak_counts_by_date,
+    })
+}
+
+async fn load_date_counts(
+    client: &tokio_postgres::Client,
+    sql: &str,
+    start_date: NaiveDate,
+    end_date: NaiveDate,
+) -> Result<BTreeMap<NaiveDate, i64>> {
+    Ok(client
+        .query(sql, &[&start_date, &end_date])
+        .await?
+        .into_iter()
+        .map(|row| (row.get(0), row.get(1)))
+        .collect())
+}
+
+async fn load_versioned_date_counts(
+    client: &tokio_postgres::Client,
+    sql: &str,
+    start_date: NaiveDate,
+    end_date: NaiveDate,
+    calc_version: &str,
+) -> Result<BTreeMap<NaiveDate, i64>> {
+    Ok(client
+        .query(sql, &[&start_date, &end_date, &calc_version])
+        .await?
+        .into_iter()
+        .map(|row| (row.get(0), row.get(1)))
+        .collect())
+}
+
+async fn load_existing_period_state_keys(
+    client: &tokio_postgres::Client,
+    rows: &[PeriodStateRow],
+) -> Result<HashSet<(String, String, NaiveDate)>> {
+    if rows.is_empty() {
+        return Ok(HashSet::new());
+    }
+    let min_period_end_date = rows
+        .iter()
+        .map(|row| row.period_end_date)
+        .min()
+        .expect("checked non-empty");
+    let max_period_end_date = rows
+        .iter()
+        .map(|row| row.period_end_date)
+        .max()
+        .expect("checked non-empty");
+    Ok(client
+        .query(
+            r#"
+            select "ts_code", "period_type", "period_end_date"
+            from "stock_period_indicator_state"
+            where "period_end_date" between $1 and $2
+              and "calc_version" = $3
+            "#,
+            &[
+                &min_period_end_date,
+                &max_period_end_date,
+                &MACD_CALC_VERSION,
+            ],
+        )
+        .await?
+        .into_iter()
+        .map(|row| (row.get(0), row.get(1), row.get(2)))
+        .collect())
+}
+
+fn has_period_state(
+    existing_period_state_keys: &HashSet<(String, String, NaiveDate)>,
+    row: &PeriodStateRow,
+) -> bool {
+    existing_period_state_keys.contains(&(
+        row.ts_code.clone(),
+        row.period_type.clone(),
+        row.period_end_date,
+    ))
+}
+
 fn distinct_trade_dates(source_rows: &[SourceBar]) -> Vec<NaiveDate> {
     let mut dates = source_rows
         .iter()
@@ -252,9 +560,55 @@ fn distinct_trade_dates(source_rows: &[SourceBar]) -> Vec<NaiveDate> {
     dates
 }
 
-fn compute_calc_rows(source_rows: &[SourceBar], target_dates: &[NaiveDate]) -> ComputedRows {
+fn compute_calc_rows(
+    source_rows: &[SourceBar],
+    target_dates: &[NaiveDate],
+    max_concurrency: u32,
+) -> ComputedRows {
+    let stock_ranges = stock_ranges(source_rows);
+    let concurrency = (max_concurrency.max(1) as usize).min(stock_ranges.len().max(1));
+    if concurrency <= 1 || stock_ranges.len() <= 1 {
+        return compute_calc_rows_for_ranges(source_rows, &stock_ranges, target_dates);
+    }
+
+    let chunk_size = stock_ranges.len().div_ceil(concurrency);
+    let chunks = stock_ranges.chunks(chunk_size).collect::<Vec<_>>();
+    eprintln!(
+        "[calc] compute rows parallel stocks={} workers={}",
+        stock_ranges.len(),
+        chunks.len()
+    );
+
+    thread::scope(|scope| {
+        let handles = chunks
+            .into_iter()
+            .map(|chunk| {
+                scope.spawn(move || compute_calc_rows_for_ranges(source_rows, chunk, target_dates))
+            })
+            .collect::<Vec<_>>();
+        let mut merged = ComputedRows::default();
+        for handle in handles {
+            merged.append(handle.join().expect("calc worker thread panicked"));
+        }
+        merged
+    })
+}
+
+fn compute_calc_rows_for_ranges(
+    source_rows: &[SourceBar],
+    stock_ranges: &[(usize, usize)],
+    target_dates: &[NaiveDate],
+) -> ComputedRows {
     let target_dates = target_dates.iter().copied().collect::<HashSet<_>>();
     let mut computed = ComputedRows::default();
+    for (start, end) in stock_ranges {
+        compute_stock_rows(&source_rows[*start..*end], &target_dates, &mut computed);
+    }
+    computed
+}
+
+fn stock_ranges(source_rows: &[SourceBar]) -> Vec<(usize, usize)> {
+    let mut ranges = Vec::new();
     let mut offset = 0;
     while offset < source_rows.len() {
         let ts_code = &source_rows[offset].ts_code;
@@ -262,9 +616,9 @@ fn compute_calc_rows(source_rows: &[SourceBar], target_dates: &[NaiveDate]) -> C
         while offset < source_rows.len() && source_rows[offset].ts_code == *ts_code {
             offset += 1;
         }
-        compute_stock_rows(&source_rows[start..offset], &target_dates, &mut computed);
+        ranges.push((start, offset));
     }
-    computed
+    ranges
 }
 
 fn compute_stock_rows(
@@ -586,12 +940,35 @@ fn swing_highs(frame: &[SourceBar]) -> Vec<usize> {
 async fn write_calc_rows(
     client: &mut tokio_postgres::Client,
     computed: &ComputedRows,
+    existing_period_state_keys: &HashSet<(String, String, NaiveDate)>,
 ) -> Result<BTreeMap<String, usize>> {
     let transaction = client.transaction().await?;
-    for row in &computed.period_states {
+    let period_statement = transaction.prepare(INSERT_PERIOD_STATE_SQL).await?;
+    let asof_statement = transaction.prepare(INSERT_ASOF_SQL).await?;
+    let rolling_statement = transaction.prepare(INSERT_ROLLING_SQL).await?;
+    let left_peak_statement = transaction.prepare(INSERT_LEFT_PEAK_SQL).await?;
+
+    let mut period_rows = computed.period_states.iter().collect::<Vec<_>>();
+    period_rows.retain(|row| !has_period_state(existing_period_state_keys, row));
+    period_rows.sort_by(|left, right| {
+        left.period_end_date
+            .cmp(&right.period_end_date)
+            .then_with(|| left.period_type.cmp(&right.period_type))
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let period_groups = count_period_state_groups(&period_rows);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write stock_period_indicator_state start rows={} date_groups={}",
+        period_rows.len(),
+        period_groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in period_rows.iter().enumerate() {
         transaction
             .execute(
-                INSERT_PERIOD_STATE_SQL,
+                &period_statement,
                 &[
                     &row.ts_code,
                     &row.period_type,
@@ -608,11 +985,52 @@ async fn write_calc_rows(
                 ],
             )
             .await?;
+        group_rows += 1;
+        let is_group_done = period_rows.get(index + 1).is_none_or(|next| {
+            next.period_end_date != row.period_end_date || next.period_type != row.period_type
+        });
+        if is_group_done {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "stock_period_indicator_state",
+                date_label: "period_end_date",
+                date: row.period_end_date,
+                period_type: Some(row.period_type.as_str()),
+                group_rows,
+                completed_groups,
+                total_groups: period_groups,
+                written_rows: index + 1,
+                total_rows: period_rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
     }
-    for row in &computed.asof_rows {
+    eprintln!(
+        "[calc] write stock_period_indicator_state done rows={} elapsed={:.1}s",
+        period_rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+
+    let mut asof_rows = computed.asof_rows.iter().collect::<Vec<_>>();
+    asof_rows.sort_by(|left, right| {
+        left.trade_date
+            .cmp(&right.trade_date)
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let asof_groups = count_trade_date_groups(&asof_rows, |row| row.trade_date);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write stock_daily_asof_indicators start rows={} trade_date_groups={}",
+        asof_rows.len(),
+        asof_groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in asof_rows.iter().enumerate() {
         transaction
             .execute(
-                INSERT_ASOF_SQL,
+                &asof_statement,
                 &[
                     &row.ts_code,
                     &row.trade_date,
@@ -635,11 +1053,52 @@ async fn write_calc_rows(
                 ],
             )
             .await?;
+        group_rows += 1;
+        let is_group_done = asof_rows
+            .get(index + 1)
+            .is_none_or(|next| next.trade_date != row.trade_date);
+        if is_group_done {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "stock_daily_asof_indicators",
+                date_label: "trade_date",
+                date: row.trade_date,
+                period_type: None,
+                group_rows,
+                completed_groups,
+                total_groups: asof_groups,
+                written_rows: index + 1,
+                total_rows: asof_rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
     }
-    for row in &computed.rolling_rows {
+    eprintln!(
+        "[calc] write stock_daily_asof_indicators done rows={} elapsed={:.1}s",
+        asof_rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+
+    let mut rolling_rows = computed.rolling_rows.iter().collect::<Vec<_>>();
+    rolling_rows.sort_by(|left, right| {
+        left.trade_date
+            .cmp(&right.trade_date)
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let rolling_groups = count_trade_date_groups(&rolling_rows, |row| row.trade_date);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write stock_daily_rolling_factors start rows={} trade_date_groups={}",
+        rolling_rows.len(),
+        rolling_groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in rolling_rows.iter().enumerate() {
         transaction
             .execute(
-                INSERT_ROLLING_SQL,
+                &rolling_statement,
                 &[
                     &row.ts_code,
                     &row.trade_date,
@@ -667,11 +1126,52 @@ async fn write_calc_rows(
                 ],
             )
             .await?;
+        group_rows += 1;
+        let is_group_done = rolling_rows
+            .get(index + 1)
+            .is_none_or(|next| next.trade_date != row.trade_date);
+        if is_group_done {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "stock_daily_rolling_factors",
+                date_label: "trade_date",
+                date: row.trade_date,
+                period_type: None,
+                group_rows,
+                completed_groups,
+                total_groups: rolling_groups,
+                written_rows: index + 1,
+                total_rows: rolling_rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
     }
-    for row in &computed.left_peak_rows {
+    eprintln!(
+        "[calc] write stock_daily_rolling_factors done rows={} elapsed={:.1}s",
+        rolling_rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+
+    let mut left_peak_rows = computed.left_peak_rows.iter().collect::<Vec<_>>();
+    left_peak_rows.sort_by(|left, right| {
+        left.trade_date
+            .cmp(&right.trade_date)
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let left_peak_groups = count_trade_date_groups(&left_peak_rows, |row| row.trade_date);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write stock_daily_left_peak start rows={} trade_date_groups={}",
+        left_peak_rows.len(),
+        left_peak_groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in left_peak_rows.iter().enumerate() {
         transaction
             .execute(
-                INSERT_LEFT_PEAK_SQL,
+                &left_peak_statement,
                 &[
                     &row.ts_code,
                     &row.trade_date,
@@ -693,13 +1193,45 @@ async fn write_calc_rows(
                 ],
             )
             .await?;
+        group_rows += 1;
+        let is_group_done = left_peak_rows
+            .get(index + 1)
+            .is_none_or(|next| next.trade_date != row.trade_date);
+        if is_group_done {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "stock_daily_left_peak",
+                date_label: "trade_date",
+                date: row.trade_date,
+                period_type: None,
+                group_rows,
+                completed_groups,
+                total_groups: left_peak_groups,
+                written_rows: index + 1,
+                total_rows: left_peak_rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
     }
+    eprintln!(
+        "[calc] write stock_daily_left_peak done rows={} elapsed={:.1}s",
+        left_peak_rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+
+    eprintln!("[calc] commit transaction start");
+    let started = Instant::now();
     transaction.commit().await?;
+    eprintln!(
+        "[calc] commit transaction done elapsed={:.1}s",
+        started.elapsed().as_secs_f64()
+    );
 
     Ok(BTreeMap::from([
         (
             "stock_period_indicator_state".to_string(),
-            computed.period_states.len(),
+            period_rows.len(),
         ),
         (
             "stock_daily_asof_indicators".to_string(),
@@ -714,6 +1246,76 @@ async fn write_calc_rows(
             computed.left_peak_rows.len(),
         ),
     ]))
+}
+
+struct CalcDateGroupProgress<'a> {
+    table: &'a str,
+    date_label: &'a str,
+    date: NaiveDate,
+    period_type: Option<&'a str>,
+    group_rows: usize,
+    completed_groups: usize,
+    total_groups: usize,
+    written_rows: usize,
+    total_rows: usize,
+    started: Instant,
+}
+
+fn log_calc_date_group_progress(progress: CalcDateGroupProgress<'_>) {
+    if let Some(period_type) = progress.period_type {
+        eprintln!(
+            "[calc] write {} {}={} period_type={} group_rows={} date_group={}/{} rows={}/{} elapsed={:.1}s",
+            progress.table,
+            progress.date_label,
+            progress.date.format("%Y%m%d"),
+            period_type,
+            progress.group_rows,
+            progress.completed_groups,
+            progress.total_groups,
+            progress.written_rows,
+            progress.total_rows,
+            progress.started.elapsed().as_secs_f64()
+        );
+    } else {
+        eprintln!(
+            "[calc] write {} {}={} group_rows={} date_group={}/{} rows={}/{} elapsed={:.1}s",
+            progress.table,
+            progress.date_label,
+            progress.date.format("%Y%m%d"),
+            progress.group_rows,
+            progress.completed_groups,
+            progress.total_groups,
+            progress.written_rows,
+            progress.total_rows,
+            progress.started.elapsed().as_secs_f64()
+        );
+    }
+}
+
+fn count_period_state_groups(rows: &[&PeriodStateRow]) -> usize {
+    rows.iter()
+        .fold((0, None::<(NaiveDate, &str)>), |(count, previous), row| {
+            let current = (row.period_end_date, row.period_type.as_str());
+            if previous == Some(current) {
+                (count, previous)
+            } else {
+                (count + 1, Some(current))
+            }
+        })
+        .0
+}
+
+fn count_trade_date_groups<T>(rows: &[&T], date: fn(&T) -> NaiveDate) -> usize {
+    rows.iter()
+        .fold((0, None::<NaiveDate>), |(count, previous), row| {
+            let current = date(row);
+            if previous == Some(current) {
+                (count, previous)
+            } else {
+                (count + 1, Some(current))
+            }
+        })
+        .0
 }
 
 fn summary(
@@ -781,6 +1383,15 @@ struct ComputedRows {
     asof_rows: Vec<AsofRow>,
     rolling_rows: Vec<RollingRow>,
     left_peak_rows: Vec<LeftPeakRow>,
+}
+
+impl ComputedRows {
+    fn append(&mut self, mut other: ComputedRows) {
+        self.period_states.append(&mut other.period_states);
+        self.asof_rows.append(&mut other.asof_rows);
+        self.rolling_rows.append(&mut other.rolling_rows);
+        self.left_peak_rows.append(&mut other.left_peak_rows);
+    }
 }
 
 #[derive(Debug)]

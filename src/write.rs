@@ -49,13 +49,14 @@ struct FullTradeDatePlan {
 pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let window = resolve_date_window(&args, config)?;
     let _token_is_configured = !config.tushare_token.is_empty();
+    let max_concurrency = args.max_concurrency.unwrap_or(config.max_concurrency);
     if args.mode == WriteMode::Cache {
         let summary = cache::run_cache(&window, args.refresh_ths, config).await?;
         println!("{}", cache::summary_json(&summary)?);
         return Ok(());
     }
     if args.mode == WriteMode::Calc {
-        let summary = calc::run_calc(&window, config).await?;
+        let summary = calc::run_calc(&window, config, max_concurrency).await?;
         println!("{}", calc::summary_json(&summary)?);
         return Ok(());
     }
@@ -109,7 +110,7 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let warmup_window = warmup_window_from_dates(&trade_date_plan.warmup_trade_dates);
     eprintln!("[full] calc stage start");
     let started = Instant::now();
-    let calc_summary = calc::run_calc(&window, config).await?;
+    let calc_summary = calc::run_calc(&window, config, max_concurrency).await?;
     eprintln!(
         "[full] calc stage done elapsed={:.1}s",
         started.elapsed().as_secs_f64()
