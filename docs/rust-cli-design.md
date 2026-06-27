@@ -124,7 +124,8 @@ stock-cache write --mode full --lookback-trading-days 30
 - 当前 `cache/full` 的按日 Tushare 拉取仍要求显式 `--start-date/--end-date`。
 - `full` 将用户传入的显式日期区间视为 calc 目标区间，并通过 Tushare `trade_cal` 解析精确交易日。
 - `full` 会为 calc 自动补齐目标区间首个交易日前 3 个自然年的 `stock_stk_factor_pro` warmup 源数据；warmup 日期通过 `trade_cal` 精确过滤为交易日，不按自然日或固定交易日数近似。
-- warmup 不拉取其他源表，避免放大 `ths_daily`/`moneyflow_cnt_ths` 请求量。
+- `full` 同时补齐 warmup 区间内 `INDEX_LIST_PATH` 默认指数的 `index_idx_factor_pro` 历史。
+- warmup 不拉取同花顺板块日行情或资金流，避免放大 `ths_daily`/`moneyflow_cnt_ths` 请求量。
 - 例外：`write --mode cache --refresh-ths` 且未传任何日期参数时，只刷新同花顺分类，不拉取按日接口。
 
 ## Concurrency

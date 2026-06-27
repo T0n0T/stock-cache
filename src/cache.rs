@@ -293,44 +293,87 @@ pub async fn run_calc_source_cache_for_trade_dates(
     command.env("TUSHARE_TOKEN", &config.tushare_token);
     let mut worker = PythonWorker::spawn(command).await?;
     let mut row_counts = BTreeMap::new();
-    let dataset = required_dataset("stock_stk_factor_pro")?;
+    let stock_dataset = required_dataset("stock_stk_factor_pro")?;
+    let index_dataset = required_dataset("index_idx_factor_pro")?;
+    let index_codes = enabled_index_codes(&config.index_list_path)?;
     let total_dates = dates.len();
 
     for (date_index, trade_date) in dates.iter().enumerate() {
         let day_started = Instant::now();
         let trade_date_text = trade_date.format("%Y%m%d").to_string();
-        if date_has_rows(&client, dataset.id, *trade_date).await? {
+        if date_has_rows(&client, stock_dataset.id, *trade_date).await? {
             eprintln!(
-                "[warmup] day {}/{} {} skip existing",
+                "[warmup] stock_stk_factor_pro day {}/{} {} skip existing",
                 date_index + 1,
                 total_dates,
                 trade_date_text
             );
+        } else {
+            eprintln!(
+                "[warmup] stock_stk_factor_pro day {}/{} {} start",
+                date_index + 1,
+                total_dates,
+                trade_date_text
+            );
+            let params = worker_params(&[("trade_date", string_param(&trade_date_text))]);
+            let rows = fetch(
+                &mut worker,
+                &format!("stock_stk_factor_pro-warmup-{trade_date_text}"),
+                stock_dataset,
+                &params,
+            )
+            .await?;
+            write_dataset(&mut client, stock_dataset, &rows, None).await?;
+            *row_counts.entry(stock_dataset.id.to_string()).or_insert(0) += rows.len();
+            eprintln!(
+                "[warmup] stock_stk_factor_pro day {}/{} {} done rows={} elapsed={:.1}s",
+                date_index + 1,
+                total_dates,
+                trade_date_text,
+                rows.len(),
+                day_started.elapsed().as_secs_f64()
+            );
+        }
+
+        let existing_index_codes =
+            existing_ts_codes_for_date(&client, index_dataset.id, *trade_date).await?;
+        let missing_index_codes = index_codes
+            .iter()
+            .filter(|ts_code| !existing_index_codes.contains(*ts_code))
+            .collect::<Vec<_>>();
+        if missing_index_codes.is_empty() {
+            eprintln!("[warmup] index_idx_factor_pro {trade_date_text} skip existing codes");
             continue;
         }
+        let index_started = Instant::now();
+        let total_missing_index_codes = missing_index_codes.len();
+        for (code_index, ts_code) in missing_index_codes.into_iter().enumerate() {
+            eprintln!(
+                "[warmup] index_idx_factor_pro {trade_date_text} code {}/{} {}",
+                code_index + 1,
+                total_missing_index_codes,
+                ts_code
+            );
+            let params = worker_params(&[
+                ("ts_code", string_param(ts_code)),
+                ("start_date", string_param(&trade_date_text)),
+                ("end_date", string_param(&trade_date_text)),
+            ]);
+            let rows = fetch(
+                &mut worker,
+                &format!("index_idx_factor_pro-warmup-{ts_code}-{trade_date_text}"),
+                index_dataset,
+                &params,
+            )
+            .await?;
+            write_dataset(&mut client, index_dataset, &rows, None).await?;
+            *row_counts.entry(index_dataset.id.to_string()).or_insert(0) += rows.len();
+            sleep(StdDuration::from_millis(CODE_REQUEST_DELAY_MS)).await;
+        }
         eprintln!(
-            "[warmup] day {}/{} {} start",
-            date_index + 1,
-            total_dates,
-            trade_date_text
-        );
-        let params = worker_params(&[("trade_date", string_param(&trade_date_text))]);
-        let rows = fetch(
-            &mut worker,
-            &format!("stock_stk_factor_pro-warmup-{trade_date_text}"),
-            dataset,
-            &params,
-        )
-        .await?;
-        write_dataset(&mut client, dataset, &rows, None).await?;
-        *row_counts.entry(dataset.id.to_string()).or_insert(0) += rows.len();
-        eprintln!(
-            "[warmup] day {}/{} {} done rows={} elapsed={:.1}s",
-            date_index + 1,
-            total_dates,
-            trade_date_text,
-            rows.len(),
-            day_started.elapsed().as_secs_f64()
+            "[warmup] index_idx_factor_pro {trade_date_text} done codes={} elapsed={:.1}s",
+            total_missing_index_codes,
+            index_started.elapsed().as_secs_f64()
         );
     }
 
