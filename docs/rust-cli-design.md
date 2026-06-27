@@ -62,6 +62,8 @@ src/
 - `metadata/` 放固化的 Tushare 字段、写入策略和数据集元信息。
 - `calc/` 放本地计算流程；MACD/周期状态、股票计算、指数计算、滚动因子、左侧高点分别拆分。
 
+消费者读取计算表、使用 period state 推演盘中长周期指标时，参见 [Data Usage Guide](data-usage-guide.md)。
+
 ## Python Worker Protocol
 
 第一版 Rust 与 Tushare Python SDK 的通信采用常驻 Python worker，不使用 PyO3、gRPC、HTTP 服务、Unix socket 或共享内存。

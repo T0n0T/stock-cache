@@ -2,6 +2,8 @@
 
 本文记录第一版 PostgreSQL schema 设计。数据库只保存 Tushare 源事实、当前同花顺分类关系、股票级本地基础计算结果和同花顺板块指数长周期指标。不保存运行审计、分析聚合或消费者视图。
 
+表结构和约束在本文说明；面向下游消费者的查询方式、盘中推演公式和预存长周期指标使用方式见 [Data Usage Guide](data-usage-guide.md)。
+
 ## Initialization
 
 第一版假设目标数据库为空。
