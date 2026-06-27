@@ -498,7 +498,7 @@ primary key (ts_code, trade_date, calc_version)
 
 ### stock_daily_left_peak
 
-用途：保存 `left_peak.md` 定义的左侧压力位、突破结构和第一阴线锚点。只做 EOD，不做 intraday live。
+用途：保存本地计算版本文档定义的左侧压力位、突破结构和第一阴线锚点。只做 EOD，不做 intraday live。
 
 字段：
 
