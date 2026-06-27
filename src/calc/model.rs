@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 
-use super::period_indicators::MacdState;
+use super::macd::MacdState;
 
 #[derive(Debug, Clone)]
 pub(super) struct SourceBar {

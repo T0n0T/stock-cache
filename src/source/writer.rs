@@ -7,9 +7,10 @@ use chrono::{NaiveDate, NaiveDateTime};
 use serde_json::Value;
 use tokio_postgres::{types::ToSql, Client, Transaction};
 
-use crate::generated::tushare_fields::{DatasetMetadata, FieldMetadata};
-
-use super::write_sql::{static_write_sql, WriteSqlPlan};
+use crate::{
+    db::write_sql::{static_write_sql, WriteSqlPlan},
+    metadata::tushare_fields::{DatasetMetadata, FieldMetadata},
+};
 
 pub type SourceRow = BTreeMap<String, Value>;
 
@@ -328,7 +329,7 @@ pub fn parse_date_text(text: &str) -> Result<NaiveDate> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::generated::tushare_fields::dataset;
+    use crate::metadata::tushare_fields::dataset;
     use serde_json::json;
 
     #[test]

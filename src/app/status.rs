@@ -5,7 +5,7 @@ use chrono::{Months, NaiveDate};
 use serde::Serialize;
 use tokio_postgres::{Client, NoTls, Row};
 
-use crate::config::Config;
+use crate::app::config::Config;
 
 const MACD_CALC_VERSION: &str = "macd_qfq_12_26_9_v1";
 const ROLLING_CALC_VERSION: &str = "rolling_qfq_v1";

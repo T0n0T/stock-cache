@@ -195,6 +195,10 @@ fn percentile_with_current(previous: &[f64], current: f64) -> f64 {
     less_or_equal as f64 / (previous.len() + 1) as f64
 }
 
+pub(super) fn close_or_nan(close: Option<f64>) -> f64 {
+    close.expect("MACD state only exists with close_qfq")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

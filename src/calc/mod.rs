@@ -9,23 +9,26 @@ use serde::Serialize;
 use serde_json::json;
 use tokio_postgres::NoTls;
 
-use crate::{config::Config, write::DateWindow};
+use crate::app::{config::Config, write::DateWindow};
 
 mod constants;
 mod coverage;
-mod engine;
+mod index;
+mod left_peak;
+mod macd;
 mod model;
-mod period_indicators;
+mod rolling;
 mod source;
+mod stock;
 mod writer;
 
 use coverage::{load_existing_calc_coverage, load_existing_period_state_keys};
-use engine::{compute_calc_rows, distinct_trade_dates};
 use source::{
     load_distinct_index_source_trade_dates, load_distinct_source_trade_dates,
     load_index_source_row_count, load_index_source_rows, load_source_row_count, load_source_rows,
     resolve_calc_dates,
 };
+use stock::{compute_calc_rows, distinct_trade_dates};
 use writer::write_calc_rows;
 
 #[derive(Debug, Serialize)]

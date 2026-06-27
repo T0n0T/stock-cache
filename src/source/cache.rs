@@ -12,11 +12,12 @@ use tokio::time::sleep;
 use tokio_postgres::NoTls;
 
 use crate::{
-    config::Config,
-    db::source_writer::{parse_date_text, replace_classification_group, write_dataset, SourceRow},
-    generated::tushare_fields::{dataset, DatasetMetadata},
-    tushare::python_worker::{string_param, worker_params, PythonWorker},
-    write::DateWindow,
+    app::{config::Config, write::DateWindow},
+    metadata::tushare_fields::{dataset, DatasetMetadata},
+    source::{
+        tushare_worker::{string_param, worker_params, PythonWorker},
+        writer::{parse_date_text, replace_classification_group, write_dataset, SourceRow},
+    },
 };
 
 const DAILY_CACHE_DATASETS: &[&str] = &[

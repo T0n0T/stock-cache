@@ -11,7 +11,7 @@ use tokio::{
     task::JoinHandle,
 };
 
-use crate::generated::tushare_fields::DatasetMetadata;
+use crate::metadata::tushare_fields::DatasetMetadata;
 
 const DEFAULT_WORKER_PATH: &str = "python/tushare_worker.py";
 const DEFAULT_UV_PYTHON: &str = "python/.venv/bin/python";
@@ -204,7 +204,7 @@ pub fn string_param(value: impl Into<String>) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::generated::tushare_fields::dataset;
+    use crate::metadata::tushare_fields::dataset;
 
     #[tokio::test]
     async fn fixture_worker_returns_batch_rows() {

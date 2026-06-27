@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::generated::tushare_fields::{DatasetMetadata, WriteSql, WriteStrategy};
+use crate::metadata::tushare_fields::{DatasetMetadata, WriteSql, WriteStrategy};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum WriteSqlPlan {
@@ -56,7 +56,7 @@ pub fn static_write_sql(dataset: &DatasetMetadata) -> WriteSqlPlan {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::generated::tushare_fields::{dataset, DATASETS};
+    use crate::metadata::tushare_fields::{dataset, DATASETS};
 
     #[test]
     fn index_ths_daily_upsert_sql_is_quoted_and_contiguous() {

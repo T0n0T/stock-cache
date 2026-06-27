@@ -1,14 +1,12 @@
-mod cache;
+mod app;
 mod calc;
 mod cli;
-mod config;
 mod db;
-mod generated;
-mod status;
-mod tushare;
-mod write;
+mod metadata;
+mod source;
 
 use anyhow::Result;
+use app::{config, status, write};
 use clap::Parser;
 use cli::{Cli, Commands};
 
