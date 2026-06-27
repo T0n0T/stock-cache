@@ -104,3 +104,12 @@ fn write_calc_rejects_unpaired_dates_before_connecting() {
             "--start-date and --end-date must be provided together",
         ));
 }
+
+#[test]
+fn write_help_mentions_force_recalc() {
+    stock_cache()
+        .args(["write", "--help"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("--force-recalc"));
+}

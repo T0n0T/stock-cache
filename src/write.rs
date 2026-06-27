@@ -56,7 +56,7 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
         return Ok(());
     }
     if args.mode == WriteMode::Calc {
-        let summary = calc::run_calc(&window, config, max_concurrency).await?;
+        let summary = calc::run_calc(&window, config, max_concurrency, args.force_recalc).await?;
         println!("{}", calc::summary_json(&summary)?);
         return Ok(());
     }
@@ -110,7 +110,7 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let warmup_window = warmup_window_from_dates(&trade_date_plan.warmup_trade_dates);
     eprintln!("[full] calc stage start");
     let started = Instant::now();
-    let calc_summary = calc::run_calc(&window, config, max_concurrency).await?;
+    let calc_summary = calc::run_calc(&window, config, max_concurrency, args.force_recalc).await?;
     eprintln!(
         "[full] calc stage done elapsed={:.1}s",
         started.elapsed().as_secs_f64()
@@ -343,6 +343,7 @@ mod tests {
             lookback_trading_days: None,
             max_concurrency: None,
             refresh_ths: false,
+            force_recalc: false,
         }
     }
 

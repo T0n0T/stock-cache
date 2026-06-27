@@ -54,4 +54,7 @@ pub struct WriteArgs {
 
     #[arg(long)]
     pub refresh_ths: bool,
+
+    #[arg(long)]
+    pub force_recalc: bool,
 }

@@ -139,6 +139,7 @@ pub async fn run_calc(
     window: &DateWindow,
     config: &Config,
     max_concurrency: u32,
+    force_recalc: bool,
 ) -> Result<CalcSummary> {
     let calc_started = Instant::now();
     eprintln!("[calc] connect postgres start");
@@ -168,16 +169,21 @@ pub async fn run_calc(
         eprintln!("[calc] inspect existing rows start");
         let started = Instant::now();
         let existing_coverage = load_existing_calc_coverage(&client, &target_dates).await?;
-        let target_dates_to_compute = target_dates
-            .iter()
-            .copied()
-            .filter(|date| !existing_coverage.is_target_trade_date_complete(*date))
-            .collect::<Vec<_>>();
+        let target_dates_to_compute = if force_recalc {
+            target_dates.clone()
+        } else {
+            target_dates
+                .iter()
+                .copied()
+                .filter(|date| !existing_coverage.is_target_trade_date_complete(*date))
+                .collect::<Vec<_>>()
+        };
         eprintln!(
-            "[calc] inspect existing rows done target_days={} pending_days={} skipped_days={} elapsed={:.1}s",
+            "[calc] inspect existing rows done target_days={} pending_days={} skipped_days={} force_recalc={} elapsed={:.1}s",
             target_dates.len(),
             target_dates_to_compute.len(),
             target_dates.len().saturating_sub(target_dates_to_compute.len()),
+            force_recalc,
             started.elapsed().as_secs_f64()
         );
         if target_dates_to_compute.is_empty() {
@@ -226,8 +232,11 @@ pub async fn run_calc(
             );
             eprintln!("[calc] write rows start");
             let started = Instant::now();
-            let existing_period_state_keys =
-                load_existing_period_state_keys(&client, &computed.period_states).await?;
+            let existing_period_state_keys = if force_recalc {
+                HashSet::new()
+            } else {
+                load_existing_period_state_keys(&client, &computed.period_states).await?
+            };
             let row_counts =
                 write_calc_rows(&mut client, &computed, &existing_period_state_keys).await?;
             eprintln!(
