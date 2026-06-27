@@ -4,9 +4,9 @@ use chrono::NaiveDate;
 
 use super::{
     constants::{BREAKOUT_LOOKBACK, HIGH_CYCLE_DAYS, MIN_PULLBACK_PCT, SWING_LOOKBACK},
-    model::{
-        AsofRow, ComputedRows, LeftPeakRow, MacdAccumulator, MacdState, PeriodBuilder, PeriodKind,
-        PeriodStateRow, RollingRow, SourceBar,
+    model::{ComputedRows, LeftPeakRow, PeriodStateRow, RollingRow, SourceBar},
+    period_indicators::{
+        compute_asof_row, finalize_period, MacdAccumulator, PeriodBuilder, PeriodKind,
     },
 };
 
@@ -250,63 +250,6 @@ fn compute_index_rows(
                 &monthly_deas,
             ));
         }
-    }
-}
-
-fn finalize_period(
-    ts_code: &str,
-    period_type: &str,
-    period: &PeriodBuilder,
-    macd: &mut MacdAccumulator,
-    deas: &mut Vec<f64>,
-    rows: &mut Vec<PeriodStateRow>,
-) {
-    if let Some(close) = period.close_qfq {
-        let state = macd.push(close);
-        deas.push(state.dea);
-        rows.push(PeriodStateRow::from_state(
-            ts_code,
-            period_type,
-            period.start_date,
-            period.end_date,
-            close,
-            state,
-        ));
-    }
-}
-
-fn compute_asof_row(
-    bar: &SourceBar,
-    daily_state: Option<MacdState>,
-    daily_deas: &[f64],
-    weekly_macd: &MacdAccumulator,
-    weekly_deas: &[f64],
-    monthly_macd: &MacdAccumulator,
-    monthly_deas: &[f64],
-) -> AsofRow {
-    let weekly_state = bar.close_qfq.map(|close| weekly_macd.preview_next(close));
-    let monthly_state = bar.close_qfq.map(|close| monthly_macd.preview_next(close));
-    AsofRow {
-        ts_code: bar.ts_code.clone(),
-        trade_date: bar.trade_date,
-        daily_dif_asof: daily_state.map(|state| state.dif),
-        daily_dea_asof: daily_state.map(|state| state.dea),
-        daily_hist_x2_asof: daily_state.map(|state| state.hist_x2),
-        daily_dea_pctile_asof: daily_state
-            .and_then(|state| percentile_inclusive(daily_deas, state.dea)),
-        daily_period_count: daily_state.map(|state| state.period_count),
-        weekly_dif_asof: weekly_state.map(|state| state.dif),
-        weekly_dea_asof: weekly_state.map(|state| state.dea),
-        weekly_hist_x2_asof: weekly_state.map(|state| state.hist_x2),
-        weekly_dea_pctile_asof: weekly_state
-            .map(|state| percentile_with_current(weekly_deas, state.dea)),
-        weekly_period_count: weekly_state.map(|state| state.period_count),
-        monthly_dif_asof: monthly_state.map(|state| state.dif),
-        monthly_dea_asof: monthly_state.map(|state| state.dea),
-        monthly_hist_x2_asof: monthly_state.map(|state| state.hist_x2),
-        monthly_dea_pctile_asof: monthly_state
-            .map(|state| percentile_with_current(monthly_deas, state.dea)),
-        monthly_period_count: monthly_state.map(|state| state.period_count),
     }
 }
 
@@ -681,18 +624,6 @@ fn range_compression(high: Option<f64>, low: Option<f64>, close: Option<f64>) ->
     Some((high? - low?) / close)
 }
 
-fn percentile_inclusive(values: &[f64], current: f64) -> Option<f64> {
-    if values.is_empty() {
-        return None;
-    }
-    Some(values.iter().filter(|value| **value <= current).count() as f64 / values.len() as f64)
-}
-
-fn percentile_with_current(previous: &[f64], current: f64) -> f64 {
-    let less_or_equal = previous.iter().filter(|value| **value <= current).count() + 1;
-    less_or_equal as f64 / (previous.len() + 1) as f64
-}
-
 fn open(bar: &SourceBar) -> f64 {
     bar.open_qfq.expect("left peak frame filters open_qfq")
 }
@@ -715,22 +646,6 @@ fn close_or_nan(close: Option<f64>) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calc::model::period_start_date;
-
-    #[test]
-    fn macd_seeds_first_close_and_recurs() {
-        let mut macd = MacdAccumulator::default();
-        let first = macd.push(10.0);
-        assert_eq!(first.ema12, 10.0);
-        assert_eq!(first.ema26, 10.0);
-        assert_eq!(first.dif, 0.0);
-        assert_eq!(first.dea, 0.0);
-
-        let second = macd.push(11.0);
-        assert!(second.dif > 0.0);
-        assert_eq!(second.period_count, 2);
-        assert!((second.hist_x2 - 2.0 * (second.dif - second.dea)).abs() < 1e-12);
-    }
 
     #[test]
     fn rolling_values_require_complete_window() {
@@ -741,19 +656,6 @@ mod tests {
         assert_eq!(
             rolling_average(&bars, 24, 25, PriceField::Close),
             Some(13.0)
-        );
-    }
-
-    #[test]
-    fn period_start_dates_use_natural_week_and_month_bounds() {
-        let date = NaiveDate::from_ymd_opt(2025, 6, 25).unwrap();
-        assert_eq!(
-            period_start_date(PeriodKind::Weekly, date),
-            NaiveDate::from_ymd_opt(2025, 6, 23).unwrap()
-        );
-        assert_eq!(
-            period_start_date(PeriodKind::Monthly, date),
-            NaiveDate::from_ymd_opt(2025, 6, 1).unwrap()
         );
     }
 

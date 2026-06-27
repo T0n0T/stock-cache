@@ -15,6 +15,7 @@ mod constants;
 mod coverage;
 mod engine;
 mod model;
+mod period_indicators;
 mod source;
 mod writer;
 
