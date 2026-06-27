@@ -75,7 +75,7 @@ stock-cache write --mode full|cache|calc
 - `config show` 已实现配置加载和脱敏输出。
 - `status` 已实现只读数据库覆盖查询，不依赖 Tushare token，不保存 checkpoint/status 表。
 - `write --mode cache` 已实现 Tushare Python worker 拉取、Rust 字段校验、事务写入和 9 张源表缓存写入。
-- `write --mode calc` 已实现纯本地计算，只读取 `stock_stk_factor_pro`，并写入 4 张计算表。
+- `write --mode calc` 已实现纯本地计算，读取 `stock_stk_factor_pro`、`index_ths_daily` 和 `index_idx_factor_pro`，并写入股票与指数计算表。
 - `write --mode full` 已实现 `cache` 成功后执行 `calc` 的编排；`cache` 失败不会进入 `calc`。
 
 不提供：
@@ -98,7 +98,7 @@ stock-cache --env-file /path/to/.env write --mode full
 
 `--env-file` 的作用是加载指定环境文件。Shell 环境变量优先级高于 env 文件。
 
-`status` 只需要 `POSTGRES_DSN`。它直接查询当前 PostgreSQL 数据，输出源表、分类表、计算表的行数和日期范围，并根据计算目标起点反推股票/同花顺板块指数 MACD warmup 覆盖情况。
+`status` 只需要 `POSTGRES_DSN`。它直接查询当前 PostgreSQL 数据，输出源表、分类表、计算表的行数和日期范围；对 period-state 计算表额外输出 daily/weekly/monthly 分布，并根据计算目标起点反推股票/指数 MACD warmup 覆盖情况。
 
 ## Write Modes
 
@@ -129,7 +129,7 @@ stock-cache write --mode full --lookback-trading-days 30
 - 当前 `cache/full` 的按日 Tushare 拉取仍要求显式 `--start-date/--end-date`。
 - `full` 将用户传入的显式日期区间视为 calc 目标区间，并通过 Tushare `trade_cal` 解析精确交易日。
 - `full` 会为 calc 自动补齐目标区间首个交易日前 3 个自然年的 `stock_stk_factor_pro` warmup 源数据；warmup 日期通过 `trade_cal` 精确过滤为交易日，不按自然日或固定交易日数近似。
-- warmup 会补齐 `stock_stk_factor_pro` 和 `index_ths_daily`，供股票和板块指数长周期计算使用；不拉取资金流、榜单或 `index_idx_factor_pro`。
+- warmup 会补齐 `stock_stk_factor_pro`、`index_ths_daily` 和 `index_idx_factor_pro`，供股票和指数长周期计算使用；不拉取资金流或榜单。
 - 例外：`write --mode cache --refresh-ths` 且未传任何日期参数时，只刷新同花顺分类，不拉取按日接口。
 
 ## Concurrency
@@ -263,13 +263,14 @@ close_qfq
 
 以及 `vol/turnover_rate` 等源字段。
 
-同花顺板块指数长周期指标输入来自：
+指数长周期指标输入来自：
 
 ```text
 index_ths_daily
+index_idx_factor_pro
 ```
 
-当前只写 `index_daily_asof_indicators`，用于保存板块指数 daily/weekly/monthly MACD as-of 和 DEA 历史分位；不计算市场活跃、板块强弱、成分股活跃或策略筛选分。
+当前写 `index_period_indicator_state` 和 `index_daily_asof_indicators`。前者保存指数 daily/weekly/monthly MACD 完成周期状态，后者保存指数 daily/weekly/monthly MACD as-of 和 DEA 历史分位；不计算市场活跃、板块强弱、成分股活跃或策略筛选分。
 
 ## Environment Variables
 

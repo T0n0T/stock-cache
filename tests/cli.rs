@@ -124,3 +124,14 @@ fn status_does_not_require_tushare_token() {
         .failure()
         .stderr(predicate::str::contains("TUSHARE_TOKEN").not());
 }
+
+#[test]
+fn write_calc_does_not_require_tushare_token() {
+    stock_cache()
+        .args(["write", "--mode", "calc"])
+        .env("POSTGRES_DSN", "not-a-postgres-dsn")
+        .env_remove("TUSHARE_TOKEN")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("TUSHARE_TOKEN").not());
+}

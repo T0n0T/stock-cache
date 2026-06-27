@@ -25,8 +25,13 @@ const SOURCE_TABLES: &[TableDateSpec] = &[
 const CLASSIFICATION_TABLES: &[&str] = &["index_ths", "index_ths_member"];
 
 const CALC_TABLES: &[CalcTableSpec] = &[
-    CalcTableSpec::new(
+    CalcTableSpec::with_period_breakdown(
         "stock_period_indicator_state",
+        "period_end_date",
+        Some(MACD_CALC_VERSION),
+    ),
+    CalcTableSpec::with_period_breakdown(
+        "index_period_indicator_state",
         "period_end_date",
         Some(MACD_CALC_VERSION),
     ),
@@ -72,6 +77,7 @@ struct CalcTableSpec {
     table: &'static str,
     date_field: &'static str,
     calc_version: Option<&'static str>,
+    period_breakdown: bool,
 }
 
 impl CalcTableSpec {
@@ -84,6 +90,20 @@ impl CalcTableSpec {
             table,
             date_field,
             calc_version,
+            period_breakdown: false,
+        }
+    }
+
+    const fn with_period_breakdown(
+        table: &'static str,
+        date_field: &'static str,
+        calc_version: Option<&'static str>,
+    ) -> Self {
+        Self {
+            table,
+            date_field,
+            calc_version,
+            period_breakdown: true,
         }
     }
 }
@@ -99,6 +119,16 @@ struct StatusSummary {
 
 #[derive(Debug, Clone, Serialize)]
 struct DateTableStatus {
+    row_count: i64,
+    min_date: Option<String>,
+    max_date: Option<String>,
+    distinct_dates: i64,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    periods: BTreeMap<String, PeriodTableStatus>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PeriodTableStatus {
     row_count: i64,
     min_date: Option<String>,
     max_date: Option<String>,
@@ -169,14 +199,19 @@ async fn status_summary(client: &Client) -> Result<StatusSummary> {
         "stock_macd".to_string(),
         load_macd_warmup_status(
             client,
-            "stock_stk_factor_pro",
+            WarmupSourceSpec::table("stock_stk_factor_pro"),
             "stock_daily_asof_indicators",
         )
         .await?,
     );
     warmup.insert(
         "index_macd".to_string(),
-        load_macd_warmup_status(client, "index_ths_daily", "index_daily_asof_indicators").await?,
+        load_macd_warmup_status(
+            client,
+            WarmupSourceSpec::combined_index(),
+            "index_daily_asof_indicators",
+        )
+        .await?,
     );
 
     Ok(StatusSummary {
@@ -225,7 +260,51 @@ async fn load_calc_table_status(client: &Client, spec: CalcTableSpec) -> Result<
     } else {
         client.query_one(&sql, &[]).await?
     };
-    Ok(date_table_status_from_row(&row))
+    let mut status = date_table_status_from_row(&row);
+    if spec.period_breakdown {
+        status.periods = load_calc_period_table_statuses(client, spec).await?;
+    }
+    Ok(status)
+}
+
+async fn load_calc_period_table_statuses(
+    client: &Client,
+    spec: CalcTableSpec,
+) -> Result<BTreeMap<String, PeriodTableStatus>> {
+    let sql = if spec.calc_version.is_some() {
+        format!(
+            "select \"period_type\", count(*)::bigint, min({date}), max({date}), count(distinct {date})::bigint from {table} where \"calc_version\" = $1 group by \"period_type\" order by \"period_type\"",
+            date = quote_ident(spec.date_field),
+            table = quote_ident(spec.table),
+        )
+    } else {
+        format!(
+            "select \"period_type\", count(*)::bigint, min({date}), max({date}), count(distinct {date})::bigint from {table} group by \"period_type\" order by \"period_type\"",
+            date = quote_ident(spec.date_field),
+            table = quote_ident(spec.table),
+        )
+    };
+    let rows = if let Some(calc_version) = spec.calc_version {
+        client.query(&sql, &[&calc_version]).await?
+    } else {
+        client.query(&sql, &[]).await?
+    };
+    let mut statuses = BTreeMap::new();
+    for row in rows {
+        let period_type = row.get::<_, String>(0);
+        let min_date = row.get::<_, Option<NaiveDate>>(2);
+        let max_date = row.get::<_, Option<NaiveDate>>(3);
+        statuses.insert(
+            period_type,
+            PeriodTableStatus {
+                row_count: row.get(1),
+                min_date: min_date.map(format_date),
+                max_date: max_date.map(format_date),
+                distinct_dates: row.get(4),
+            },
+        );
+    }
+    Ok(statuses)
 }
 
 fn date_table_status_from_row(row: &Row) -> DateTableStatus {
@@ -236,12 +315,13 @@ fn date_table_status_from_row(row: &Row) -> DateTableStatus {
         min_date: min_date.map(format_date),
         max_date: max_date.map(format_date),
         distinct_dates: row.get(3),
+        periods: BTreeMap::new(),
     }
 }
 
 async fn load_macd_warmup_status(
     client: &Client,
-    source_table: &'static str,
+    source: WarmupSourceSpec,
     calc_table: &'static str,
 ) -> Result<WarmupStatus> {
     let target = load_calc_table_status(
@@ -254,11 +334,11 @@ async fn load_macd_warmup_status(
     let required_start = target_start
         .and_then(|date| date.checked_sub_months(Months::new(MONTHLY_MACD_WARMUP_MONTHS)));
     let warmup = match target_start {
-        Some(start) => load_source_before_target(client, source_table, start).await?,
+        Some(start) => load_source_before_target(client, source, start).await?,
         None => WarmupCoverage::empty(),
     };
     Ok(warmup_status(
-        source_table,
+        source.label,
         calc_table,
         target_start,
         target_end,
@@ -267,15 +347,55 @@ async fn load_macd_warmup_status(
     ))
 }
 
+#[derive(Debug, Clone, Copy)]
+struct WarmupSourceSpec {
+    label: &'static str,
+    kind: WarmupSourceKind,
+}
+
+impl WarmupSourceSpec {
+    const fn table(table: &'static str) -> Self {
+        Self {
+            label: table,
+            kind: WarmupSourceKind::Table(table),
+        }
+    }
+
+    const fn combined_index() -> Self {
+        Self {
+            label: "index_ths_daily + index_idx_factor_pro",
+            kind: WarmupSourceKind::CombinedIndex,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum WarmupSourceKind {
+    Table(&'static str),
+    CombinedIndex,
+}
+
 async fn load_source_before_target(
     client: &Client,
-    source_table: &'static str,
+    source: WarmupSourceSpec,
     target_start: NaiveDate,
 ) -> Result<WarmupCoverage> {
-    let sql = format!(
-        "select count(*)::bigint, min(\"trade_date\"), max(\"trade_date\"), count(distinct \"trade_date\")::bigint from {} where \"trade_date\" < $1",
-        quote_ident(source_table),
-    );
+    let sql = match source.kind {
+        WarmupSourceKind::Table(table) => format!(
+            "select count(*)::bigint, min(\"trade_date\"), max(\"trade_date\"), count(distinct \"trade_date\")::bigint from {} where \"trade_date\" < $1",
+            quote_ident(table),
+        ),
+        WarmupSourceKind::CombinedIndex => {
+            r#"
+            select count(*)::bigint, min("trade_date"), max("trade_date"), count(distinct "trade_date")::bigint
+            from (
+                select "trade_date" from "index_ths_daily" where "trade_date" < $1
+                union all
+                select "trade_date" from "index_idx_factor_pro" where "trade_date" < $1
+            ) index_source
+            "#.to_string()
+        }
+    };
     let row = client.query_one(&sql, &[&target_start]).await?;
     Ok(WarmupCoverage {
         row_count: row.get(0),

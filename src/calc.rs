@@ -41,6 +41,22 @@ on conflict ("ts_code", "period_type", "period_end_date", "calc_version") do upd
     "period_count" = excluded."period_count"
 "#;
 
+const INSERT_INDEX_PERIOD_STATE_SQL: &str = r#"
+insert into "index_period_indicator_state" (
+    "ts_code", "period_type", "period_start_date", "period_end_date", "period_close",
+    "ema12", "ema26", "dif", "dea", "hist_x2", "period_count", "calc_version"
+) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+on conflict ("ts_code", "period_type", "period_end_date", "calc_version") do update set
+    "period_start_date" = excluded."period_start_date",
+    "period_close" = excluded."period_close",
+    "ema12" = excluded."ema12",
+    "ema26" = excluded."ema26",
+    "dif" = excluded."dif",
+    "dea" = excluded."dea",
+    "hist_x2" = excluded."hist_x2",
+    "period_count" = excluded."period_count"
+"#;
+
 const INSERT_ASOF_SQL: &str = r#"
 insert into "stock_daily_asof_indicators" (
     "ts_code", "trade_date",
@@ -227,6 +243,7 @@ pub async fn run_calc(
                 &distinct_index_dates,
                 BTreeMap::from([
                     ("stock_period_indicator_state".to_string(), 0),
+                    ("index_period_indicator_state".to_string(), 0),
                     ("stock_daily_asof_indicators".to_string(), 0),
                     ("stock_daily_rolling_factors".to_string(), 0),
                     ("stock_daily_left_peak".to_string(), 0),
@@ -262,8 +279,9 @@ pub async fn run_calc(
                 max_concurrency,
             );
             eprintln!(
-            "[calc] compute rows done period_states={} asof={} rolling={} left_peak={} index_asof={} elapsed={:.1}s",
+            "[calc] compute rows done stock_period_states={} index_period_states={} asof={} rolling={} left_peak={} index_asof={} elapsed={:.1}s",
             computed.period_states.len(),
+            computed.index_period_states.len(),
             computed.asof_rows.len(),
             computed.rolling_rows.len(),
             computed.left_peak_rows.len(),
@@ -390,8 +408,15 @@ async fn load_index_source_rows(
         .query(
             r#"
             select "ts_code", "trade_date", "open", "high", "low", "close", "vol", "turnover_rate"
-            from "index_ths_daily"
-            where "trade_date" <= $1
+            from (
+                select "ts_code", "trade_date", "open", "high", "low", "close", "vol", "turnover_rate"
+                from "index_ths_daily"
+                where "trade_date" <= $1
+                union all
+                select "ts_code", "trade_date", "open", "high", "low", "close", "vol", null::double precision as "turnover_rate"
+                from "index_idx_factor_pro"
+                where "trade_date" <= $1
+            ) index_source
             order by "ts_code", "trade_date"
             "#,
             &[&max_trade_date],
@@ -438,8 +463,15 @@ async fn load_index_source_row_count(
         .query_one(
             r#"
             select count(*)::bigint
-            from "index_ths_daily"
-            where "trade_date" <= $1
+            from (
+                select "ts_code", "trade_date"
+                from "index_ths_daily"
+                where "trade_date" <= $1
+                union all
+                select "ts_code", "trade_date"
+                from "index_idx_factor_pro"
+                where "trade_date" <= $1
+            ) index_source
             "#,
             &[&max_trade_date],
         )
@@ -474,8 +506,15 @@ async fn load_distinct_index_source_trade_dates(
         .query(
             r#"
             select distinct "trade_date"
-            from "index_ths_daily"
-            where "trade_date" <= $1
+            from (
+                select "trade_date"
+                from "index_ths_daily"
+                where "trade_date" <= $1
+                union all
+                select "trade_date"
+                from "index_idx_factor_pro"
+                where "trade_date" <= $1
+            ) index_source
             order by "trade_date"
             "#,
             &[&max_trade_date],
@@ -488,6 +527,7 @@ async fn load_distinct_index_source_trade_dates(
 struct ExistingCalcCoverage {
     source_counts_by_date: BTreeMap<NaiveDate, i64>,
     index_source_counts_by_date: BTreeMap<NaiveDate, i64>,
+    index_period_daily_counts_by_date: BTreeMap<NaiveDate, i64>,
     asof_counts_by_date: BTreeMap<NaiveDate, i64>,
     rolling_counts_by_date: BTreeMap<NaiveDate, i64>,
     left_peak_counts_by_date: BTreeMap<NaiveDate, i64>,
@@ -520,11 +560,17 @@ impl ExistingCalcCoverage {
                 >= source_count;
         let index_complete = match self.index_source_counts_by_date.get(&trade_date).copied() {
             Some(index_source_count) if index_source_count > 0 => {
-                self.index_asof_counts_by_date
+                self.index_period_daily_counts_by_date
                     .get(&trade_date)
                     .copied()
                     .unwrap_or(0)
                     >= index_source_count
+                    && self
+                        .index_asof_counts_by_date
+                        .get(&trade_date)
+                        .copied()
+                        .unwrap_or(0)
+                        >= index_source_count
             }
             _ => true,
         };
@@ -558,8 +604,15 @@ async fn load_existing_calc_coverage(
         client,
         r#"
         select "trade_date", count(*)::bigint
-        from "index_ths_daily"
-        where "trade_date" between $1 and $2
+        from (
+            select "trade_date"
+            from "index_ths_daily"
+            where "trade_date" between $1 and $2
+            union all
+            select "trade_date"
+            from "index_idx_factor_pro"
+            where "trade_date" between $1 and $2
+        ) index_source
         group by "trade_date"
         "#,
         first_target_date,
@@ -618,9 +671,25 @@ async fn load_existing_calc_coverage(
         MACD_CALC_VERSION,
     )
     .await?;
+    let index_period_daily_counts_by_date = load_versioned_date_counts(
+        client,
+        r#"
+        select "period_end_date", count(*)::bigint
+        from "index_period_indicator_state"
+        where "period_end_date" between $1 and $2
+          and "period_type" = 'daily'
+          and "calc_version" = $3
+        group by "period_end_date"
+        "#,
+        first_target_date,
+        last_target_date,
+        MACD_CALC_VERSION,
+    )
+    .await?;
     Ok(ExistingCalcCoverage {
         source_counts_by_date,
         index_source_counts_by_date,
+        index_period_daily_counts_by_date,
         asof_counts_by_date,
         rolling_counts_by_date,
         left_peak_counts_by_date,
@@ -895,17 +964,41 @@ fn compute_index_rows(
 
     for bar in bars {
         if !current_week.contains(bar.trade_date) {
-            finalize_asof_period(&current_week, &mut weekly_macd, &mut weekly_deas);
+            finalize_period(
+                &bars[0].ts_code,
+                "weekly",
+                &current_week,
+                &mut weekly_macd,
+                &mut weekly_deas,
+                &mut computed.index_period_states,
+            );
             current_week = PeriodBuilder::new(PeriodKind::Weekly, bar.trade_date);
         }
         if !current_month.contains(bar.trade_date) {
-            finalize_asof_period(&current_month, &mut monthly_macd, &mut monthly_deas);
+            finalize_period(
+                &bars[0].ts_code,
+                "monthly",
+                &current_month,
+                &mut monthly_macd,
+                &mut monthly_deas,
+                &mut computed.index_period_states,
+            );
             current_month = PeriodBuilder::new(PeriodKind::Monthly, bar.trade_date);
         }
 
         let daily_state = bar.close_qfq.map(|close| daily_macd.push(close));
         if let Some(state) = daily_state {
             daily_deas.push(state.dea);
+            computed
+                .index_period_states
+                .push(PeriodStateRow::from_state(
+                    &bar.ts_code,
+                    "daily",
+                    bar.trade_date,
+                    bar.trade_date,
+                    close_or_nan(bar.close_qfq),
+                    state,
+                ));
         }
         current_week.observe(bar);
         current_month.observe(bar);
@@ -921,13 +1014,6 @@ fn compute_index_rows(
                 &monthly_deas,
             ));
         }
-    }
-}
-
-fn finalize_asof_period(period: &PeriodBuilder, macd: &mut MacdAccumulator, deas: &mut Vec<f64>) {
-    if let Some(close) = period.close_qfq {
-        let state = macd.push(close);
-        deas.push(state.dea);
     }
 }
 
@@ -1180,6 +1266,7 @@ async fn write_calc_rows(
 ) -> Result<BTreeMap<String, usize>> {
     let transaction = client.transaction().await?;
     let period_statement = transaction.prepare(INSERT_PERIOD_STATE_SQL).await?;
+    let index_period_statement = transaction.prepare(INSERT_INDEX_PERIOD_STATE_SQL).await?;
     let asof_statement = transaction.prepare(INSERT_ASOF_SQL).await?;
     let index_asof_statement = transaction.prepare(INSERT_INDEX_ASOF_SQL).await?;
     let rolling_statement = transaction.prepare(INSERT_ROLLING_SQL).await?;
@@ -1246,6 +1333,69 @@ async fn write_calc_rows(
     eprintln!(
         "[calc] write stock_period_indicator_state done rows={} elapsed={:.1}s",
         period_rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+
+    let mut index_period_rows = computed.index_period_states.iter().collect::<Vec<_>>();
+    index_period_rows.sort_by(|left, right| {
+        left.period_end_date
+            .cmp(&right.period_end_date)
+            .then_with(|| left.period_type.cmp(&right.period_type))
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let index_period_groups = count_period_state_groups(&index_period_rows);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write index_period_indicator_state start rows={} date_groups={}",
+        index_period_rows.len(),
+        index_period_groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in index_period_rows.iter().enumerate() {
+        transaction
+            .execute(
+                &index_period_statement,
+                &[
+                    &row.ts_code,
+                    &row.period_type,
+                    &row.period_start_date,
+                    &row.period_end_date,
+                    &row.period_close_qfq,
+                    &row.ema12,
+                    &row.ema26,
+                    &row.dif,
+                    &row.dea,
+                    &row.hist_x2,
+                    &row.period_count,
+                    &MACD_CALC_VERSION,
+                ],
+            )
+            .await?;
+        group_rows += 1;
+        let is_group_done = index_period_rows.get(index + 1).is_none_or(|next| {
+            next.period_end_date != row.period_end_date || next.period_type != row.period_type
+        });
+        if is_group_done {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "index_period_indicator_state",
+                date_label: "period_end_date",
+                date: row.period_end_date,
+                period_type: Some(row.period_type.as_str()),
+                group_rows,
+                completed_groups,
+                total_groups: index_period_groups,
+                written_rows: index + 1,
+                total_rows: index_period_rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
+    }
+    eprintln!(
+        "[calc] write index_period_indicator_state done rows={} elapsed={:.1}s",
+        index_period_rows.len(),
         started.elapsed().as_secs_f64()
     );
 
@@ -1539,6 +1689,10 @@ async fn write_calc_rows(
             period_rows.len(),
         ),
         (
+            "index_period_indicator_state".to_string(),
+            index_period_rows.len(),
+        ),
+        (
             "stock_daily_asof_indicators".to_string(),
             computed.asof_rows.len(),
         ),
@@ -1694,6 +1848,7 @@ struct SourceBar {
 #[derive(Debug, Default)]
 struct ComputedRows {
     period_states: Vec<PeriodStateRow>,
+    index_period_states: Vec<PeriodStateRow>,
     asof_rows: Vec<AsofRow>,
     index_asof_rows: Vec<AsofRow>,
     rolling_rows: Vec<RollingRow>,
@@ -1703,6 +1858,8 @@ struct ComputedRows {
 impl ComputedRows {
     fn append(&mut self, mut other: ComputedRows) {
         self.period_states.append(&mut other.period_states);
+        self.index_period_states
+            .append(&mut other.index_period_states);
         self.asof_rows.append(&mut other.asof_rows);
         self.index_asof_rows.append(&mut other.index_asof_rows);
         self.rolling_rows.append(&mut other.rolling_rows);
@@ -2205,17 +2362,36 @@ mod tests {
         let bars = vec![
             bar("885001.TI", 2025, 1, 2, 10.0),
             bar("885001.TI", 2025, 1, 3, 11.0),
+            bar("885001.TI", 2025, 1, 6, 12.0),
         ];
-        let target_dates = vec![NaiveDate::from_ymd_opt(2025, 1, 3).unwrap()];
+        let target_dates = vec![NaiveDate::from_ymd_opt(2025, 1, 6).unwrap()];
 
         let computed = compute_calc_rows(&[], &bars, &target_dates, 1);
 
         assert_eq!(computed.index_asof_rows.len(), 1);
+        assert_eq!(computed.index_period_states.len(), 4);
+        let daily_count = computed
+            .index_period_states
+            .iter()
+            .filter(|row| row.period_type == "daily")
+            .count();
+        assert_eq!(daily_count, 3);
+        let weekly_state = computed
+            .index_period_states
+            .iter()
+            .find(|row| row.period_type == "weekly")
+            .expect("weekly state exists");
+        assert_eq!(weekly_state.ts_code, "885001.TI");
+        assert_eq!(
+            weekly_state.period_end_date,
+            NaiveDate::from_ymd_opt(2025, 1, 3).unwrap()
+        );
+        assert_eq!(weekly_state.period_close_qfq, Some(11.0));
         let row = &computed.index_asof_rows[0];
         assert_eq!(row.ts_code, "885001.TI");
         assert_eq!(row.trade_date, target_dates[0]);
-        assert_eq!(row.daily_period_count, Some(2));
-        assert_eq!(row.weekly_period_count, Some(1));
+        assert_eq!(row.daily_period_count, Some(3));
+        assert_eq!(row.weekly_period_count, Some(2));
         assert_eq!(row.monthly_period_count, Some(1));
     }
 

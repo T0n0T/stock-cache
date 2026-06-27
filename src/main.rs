@@ -35,5 +35,6 @@ async fn main() -> Result<()> {
 }
 
 fn command_requires_tushare_token(command: &Commands) -> bool {
-    matches!(command, Commands::Config { .. } | Commands::Write(_))
+    matches!(command, Commands::Config { .. })
+        || matches!(command, Commands::Write(args) if args.mode != cli::WriteMode::Calc)
 }

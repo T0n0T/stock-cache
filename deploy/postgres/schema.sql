@@ -496,6 +496,26 @@ create table "stock_period_indicator_state" (
 create index "stock_period_indicator_state_lookup_idx"
     on "stock_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
 
+create table "index_period_indicator_state" (
+    "ts_code" text not null,
+    "period_type" text not null,
+    "period_start_date" date,
+    "period_end_date" date not null,
+    "period_close" double precision,
+    "ema12" double precision,
+    "ema26" double precision,
+    "dif" double precision,
+    "dea" double precision,
+    "hist_x2" double precision,
+    "period_count" integer,
+    "calc_version" text not null,
+    check ("period_type" in ('daily', 'weekly', 'monthly')),
+    primary key ("ts_code", "period_type", "period_end_date", "calc_version")
+);
+
+create index "index_period_indicator_state_lookup_idx"
+    on "index_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
+
 create table "stock_daily_asof_indicators" (
     "ts_code" text not null,
     "trade_date" date not null,

@@ -390,6 +390,33 @@ primary key (ts_code, trade_date, calc_version)
 
 数据来源：`index_ths_daily` 的 `open/high/low/close` 日行情。当前版本只保存 as-of 长周期指标，不保存板块指数 rolling/left-peak 股票专用结构。
 
+### index_period_indicator_state
+
+用途：保存指数 daily/weekly/monthly MACD 12/26/9 的完成周期递推状态，供盘中用当前指数价格推演 live 周/月 MACD。
+
+数据来源包括：
+
+```text
+index_ths_daily
+index_idx_factor_pro
+```
+
+其中 `index_ths_daily` 覆盖同花顺板块指数，`index_idx_factor_pro` 覆盖 `config/default-indexes.csv` 启用的默认市场指数。
+
+字段与 `stock_period_indicator_state` 对齐，但收盘字段命名为 `period_close`，不使用复权语义。
+
+主键：
+
+```sql
+primary key (ts_code, period_type, period_end_date, calc_version)
+```
+
+推荐索引：
+
+```sql
+create index on index_period_indicator_state (ts_code, period_type, period_end_date desc);
+```
+
 字段与 `stock_daily_asof_indicators` 相同：
 
 ```text
