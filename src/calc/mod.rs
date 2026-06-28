@@ -31,6 +31,9 @@ use source::{
 use stock::{compute_calc_rows, distinct_trade_dates};
 use writer::write_calc_rows;
 
+const AUTO_CHUNK_THRESHOLD_DAYS: usize = 60;
+const AUTO_CHUNK_SIZE_DAYS: usize = 20;
+
 #[derive(Debug, Serialize)]
 pub struct CalcSummary {
     pub status: &'static str,
@@ -47,6 +50,7 @@ pub async fn run_calc(
     config: &Config,
     max_concurrency: u32,
     force_recalc: bool,
+    requested_chunk_size: Option<usize>,
 ) -> Result<CalcSummary> {
     let calc_started = Instant::now();
     eprintln!("[calc] connect postgres start");
@@ -131,41 +135,75 @@ pub async fn run_calc(
             );
             let distinct_dates = distinct_trade_dates(&source_rows);
             let distinct_index_dates = distinct_trade_dates(&index_source_rows);
+            let chunk_size =
+                resolve_chunk_size(target_dates_to_compute.len(), requested_chunk_size);
+            let chunk_count = target_dates_to_compute.len().div_ceil(chunk_size);
             eprintln!(
-                "[calc] compute rows start max_concurrency={} pending_target_days={}",
-                max_concurrency.max(1),
-                target_dates_to_compute.len()
+                "[calc] chunk plan pending_days={} chunk_size={} chunks={} requested_chunk_size={}",
+                target_dates_to_compute.len(),
+                chunk_size,
+                chunk_count,
+                requested_chunk_size
+                    .map(|value| value.to_string())
+                    .unwrap_or_else(|| "auto".to_string())
             );
-            let started = Instant::now();
-            let computed = compute_calc_rows(
-                &source_rows,
-                &index_source_rows,
-                &target_dates_to_compute,
-                max_concurrency,
-            );
-            eprintln!(
-            "[calc] compute rows done stock_period_states={} index_period_states={} asof={} rolling={} left_peak={} index_asof={} elapsed={:.1}s",
-            computed.period_states.len(),
-            computed.index_period_states.len(),
-            computed.asof_rows.len(),
-            computed.rolling_rows.len(),
-            computed.left_peak_rows.len(),
-            computed.index_asof_rows.len(),
-            started.elapsed().as_secs_f64()
-            );
-            eprintln!("[calc] write rows start");
-            let started = Instant::now();
-            let existing_period_state_keys = if force_recalc {
-                HashSet::new()
-            } else {
-                load_existing_period_state_keys(&client, &computed.period_states).await?
-            };
-            let row_counts =
-                write_calc_rows(&mut client, &computed, &existing_period_state_keys).await?;
-            eprintln!(
-                "[calc] write rows done elapsed={:.1}s",
-                started.elapsed().as_secs_f64()
-            );
+            let mut row_counts = empty_row_counts();
+            let mut seen_period_state_keys = HashSet::new();
+            for (chunk_index, chunk_dates) in target_dates_to_compute.chunks(chunk_size).enumerate()
+            {
+                eprintln!(
+                    "[calc] chunk {}/{} compute rows start date_window={}..{} max_concurrency={} target_days={}",
+                    chunk_index + 1,
+                    chunk_count,
+                    chunk_dates.first().expect("chunk is non-empty").format("%Y%m%d"),
+                    chunk_dates.last().expect("chunk is non-empty").format("%Y%m%d"),
+                    max_concurrency.max(1),
+                    chunk_dates.len()
+                );
+                let started = Instant::now();
+                let computed = compute_calc_rows(
+                    &source_rows,
+                    &index_source_rows,
+                    chunk_dates,
+                    max_concurrency,
+                );
+                eprintln!(
+                    "[calc] chunk {}/{} compute rows done stock_period_states={} index_period_states={} asof={} rolling={} left_peak={} index_asof={} elapsed={:.1}s",
+                    chunk_index + 1,
+                    chunk_count,
+                    computed.period_states.len(),
+                    computed.index_period_states.len(),
+                    computed.asof_rows.len(),
+                    computed.rolling_rows.len(),
+                    computed.left_peak_rows.len(),
+                    computed.index_asof_rows.len(),
+                    started.elapsed().as_secs_f64()
+                );
+                eprintln!(
+                    "[calc] chunk {}/{} write rows start",
+                    chunk_index + 1,
+                    chunk_count
+                );
+                let started = Instant::now();
+                let existing_period_state_keys = if force_recalc {
+                    seen_period_state_keys.clone()
+                } else {
+                    let mut keys =
+                        load_existing_period_state_keys(&client, &computed.period_states).await?;
+                    keys.extend(seen_period_state_keys.iter().cloned());
+                    keys
+                };
+                let chunk_row_counts =
+                    write_calc_rows(&mut client, &computed, &existing_period_state_keys).await?;
+                remember_period_state_keys(&mut seen_period_state_keys, &computed);
+                merge_counts(&mut row_counts, &chunk_row_counts);
+                eprintln!(
+                    "[calc] chunk {}/{} write rows done elapsed={:.1}s",
+                    chunk_index + 1,
+                    chunk_count,
+                    started.elapsed().as_secs_f64()
+                );
+            }
             Ok(summary(
                 source_rows.len() + index_source_rows.len(),
                 &target_dates,
@@ -229,6 +267,54 @@ fn empty_summary() -> CalcSummary {
     summary(0, &[], &[], &[], BTreeMap::new())
 }
 
+fn resolve_chunk_size(pending_days: usize, requested_chunk_size: Option<usize>) -> usize {
+    if let Some(chunk_size) = requested_chunk_size {
+        return chunk_size.max(1);
+    }
+    if pending_days > AUTO_CHUNK_THRESHOLD_DAYS {
+        AUTO_CHUNK_SIZE_DAYS
+    } else {
+        pending_days.max(1)
+    }
+}
+
+fn empty_row_counts() -> BTreeMap<String, usize> {
+    BTreeMap::from([
+        ("stock_period_indicator_state".to_string(), 0),
+        ("index_period_indicator_state".to_string(), 0),
+        ("stock_daily_asof_indicators".to_string(), 0),
+        ("index_daily_asof_indicators".to_string(), 0),
+        ("stock_daily_rolling_factors".to_string(), 0),
+        ("stock_daily_left_peak".to_string(), 0),
+    ])
+}
+
+fn merge_counts(target: &mut BTreeMap<String, usize>, source: &BTreeMap<String, usize>) {
+    for (table, count) in source {
+        *target.entry(table.clone()).or_insert(0) += count;
+    }
+}
+
+fn remember_period_state_keys(
+    keys: &mut HashSet<(String, String, NaiveDate)>,
+    computed: &model::ComputedRows,
+) {
+    keys.extend(computed.period_states.iter().map(|row| {
+        (
+            row.ts_code.clone(),
+            row.period_type.clone(),
+            row.period_end_date,
+        )
+    }));
+    keys.extend(computed.index_period_states.iter().map(|row| {
+        (
+            row.ts_code.clone(),
+            row.period_type.clone(),
+            row.period_end_date,
+        )
+    }));
+}
+
 fn usable_start(distinct_dates: &[NaiveDate], window: usize) -> Option<NaiveDate> {
     distinct_dates.get(window.saturating_sub(1)).copied()
 }
@@ -238,4 +324,24 @@ fn date_range(start: Option<NaiveDate>, end: Option<NaiveDate>) -> Vec<Option<St
         start.map(|date| date.to_string()),
         end.map(|date| date.to_string()),
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn automatic_chunk_size_keeps_small_windows_together() {
+        assert_eq!(resolve_chunk_size(60, None), 60);
+    }
+
+    #[test]
+    fn automatic_chunk_size_splits_large_backfills() {
+        assert_eq!(resolve_chunk_size(61, None), AUTO_CHUNK_SIZE_DAYS);
+    }
+
+    #[test]
+    fn requested_chunk_size_overrides_auto() {
+        assert_eq!(resolve_chunk_size(200, Some(45)), 45);
+    }
 }

@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
         Commands::Status => status::run(&config).await,
         Commands::Config { command } => match command {
             cli::ConfigCommand::Show => {
-                config.print_json()?;
+                config.print_human_readable();
                 Ok(())
             }
         },

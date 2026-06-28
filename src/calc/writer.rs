@@ -231,6 +231,7 @@ pub(super) async fn write_calc_rows(
     );
 
     let mut index_period_rows = computed.index_period_states.iter().collect::<Vec<_>>();
+    index_period_rows.retain(|row| !has_period_state(existing_period_state_keys, row));
     index_period_rows.sort_by(|left, right| {
         left.period_end_date
             .cmp(&right.period_end_date)

@@ -88,16 +88,19 @@ pub async fn replace_classification_group(
 }
 
 async fn upsert_rows(
-    client: &Client,
+    client: &mut Client,
     dataset: &DatasetMetadata,
     sql: &str,
     rows: &[SourceRow],
 ) -> Result<usize> {
+    let transaction = client.transaction().await?;
+    let statement = transaction.prepare(sql).await?;
     for row in rows {
         let values = bind_values(dataset, row)?;
         let params = params(&values);
-        client.execute(sql, &params).await?;
+        transaction.execute(&statement, &params).await?;
     }
+    transaction.commit().await?;
     Ok(rows.len())
 }
 
@@ -136,10 +139,11 @@ async fn insert_rows_in_transaction(
     insert_sql: &str,
     rows: &[SourceRow],
 ) -> Result<()> {
+    let statement = transaction.prepare(insert_sql).await?;
     for row in rows {
         let values = bind_values(dataset, row)?;
         let params = params(&values);
-        transaction.execute(insert_sql, &params).await?;
+        transaction.execute(&statement, &params).await?;
     }
     Ok(())
 }

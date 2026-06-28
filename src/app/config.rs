@@ -1,18 +1,12 @@
 use std::{collections::HashMap, env, fs, path::Path};
 
 use anyhow::{anyhow, Context, Result};
-use serde::Serialize;
-
 const DEFAULT_INDEX_LIST_PATH: &str = "config/default-indexes.csv";
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Config {
-    #[serde(skip_serializing)]
     pub postgres_dsn: String,
-    #[serde(skip_serializing)]
     pub tushare_token: String,
-    pub postgres_dsn_set: bool,
-    pub tushare_token_set: bool,
     pub index_list_path: String,
     pub default_lookback_trading_days: u32,
     pub max_concurrency: u32,
@@ -20,6 +14,7 @@ pub struct Config {
     pub max_retries: u32,
     pub retry_base_delay_seconds: f64,
     pub write_batch_size: usize,
+    pub calc_chunk_size: Option<usize>,
     pub log_level: String,
 }
 
@@ -89,15 +84,12 @@ impl Config {
         } else {
             value("TUSHARE_TOKEN", env_file).unwrap_or_default()
         };
-        let tushare_token_set = !tushare_token.is_empty();
         let index_list_path = value("INDEX_LIST_PATH", env_file)
             .unwrap_or_else(|| DEFAULT_INDEX_LIST_PATH.to_string());
 
         Ok(Self {
             postgres_dsn,
             tushare_token,
-            postgres_dsn_set: true,
-            tushare_token_set,
             index_list_path,
             default_lookback_trading_days: parse_or_default(
                 "DEFAULT_LOOKBACK_TRADING_DAYS",
@@ -109,13 +101,43 @@ impl Config {
             max_retries: parse_or_default("MAX_RETRIES", env_file, 3)?,
             retry_base_delay_seconds: parse_or_default("RETRY_BASE_DELAY_SECONDS", env_file, 1.0)?,
             write_batch_size: parse_or_default("WRITE_BATCH_SIZE", env_file, 1000)?,
+            calc_chunk_size: parse_optional_positive_usize("CALC_CHUNK_SIZE", env_file)?,
             log_level: value("LOG_LEVEL", env_file).unwrap_or_else(|| "info".to_string()),
         })
     }
 
-    pub fn print_json(&self) -> Result<()> {
-        println!("{}", serde_json::to_string_pretty(self)?);
-        Ok(())
+    pub fn print_human_readable(&self) {
+        println!("Configuration");
+        println!("  Secrets");
+        println!("    POSTGRES_DSN: {}", self.postgres_dsn);
+        println!("    TUSHARE_TOKEN: {}", self.tushare_token);
+        println!();
+        println!("  Paths");
+        println!("    INDEX_LIST_PATH: {}", self.index_list_path);
+        println!();
+        println!("  Runtime");
+        println!(
+            "    DEFAULT_LOOKBACK_TRADING_DAYS: {}",
+            self.default_lookback_trading_days
+        );
+        println!("    MAX_CONCURRENCY: {}", self.max_concurrency);
+        println!(
+            "    REQUEST_TIMEOUT_SECONDS: {}",
+            self.request_timeout_seconds
+        );
+        println!("    MAX_RETRIES: {}", self.max_retries);
+        println!(
+            "    RETRY_BASE_DELAY_SECONDS: {}",
+            self.retry_base_delay_seconds
+        );
+        println!("    WRITE_BATCH_SIZE: {}", self.write_batch_size);
+        println!(
+            "    CALC_CHUNK_SIZE: {}",
+            self.calc_chunk_size
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| "auto".to_string())
+        );
+        println!("    LOG_LEVEL: {}", self.log_level);
     }
 }
 
@@ -143,6 +165,19 @@ where
     };
     raw.parse::<T>()
         .map_err(|err| anyhow!("invalid value for {key}: {err}"))
+}
+
+fn parse_optional_positive_usize(key: &str, env_file: Option<&EnvFile>) -> Result<Option<usize>> {
+    let Some(raw) = value(key, env_file) else {
+        return Ok(None);
+    };
+    let parsed = raw
+        .parse::<usize>()
+        .map_err(|err| anyhow!("invalid value for {key}: {err}"))?;
+    if parsed == 0 {
+        return Err(anyhow!("{key} must be greater than 0"));
+    }
+    Ok(Some(parsed))
 }
 
 #[cfg(test)]

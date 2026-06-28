@@ -341,6 +341,7 @@ index_idx_factor_pro
 | `MAX_RETRIES` | no | `3` | 可重试错误次数 |
 | `RETRY_BASE_DELAY_SECONDS` | no | `1.0` | 初始重试延迟 |
 | `WRITE_BATCH_SIZE` | no | `1000` | PostgreSQL 批量写入大小 |
+| `CALC_CHUNK_SIZE` | no | auto | calc 回补时每个 chunk 的目标交易日数量；未设置时 60 天以内不拆，超过 60 天按 20 天拆 |
 | `LOG_LEVEL` | no | `info` | 日志级别 |
 
 不保留：

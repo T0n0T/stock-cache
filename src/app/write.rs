@@ -50,13 +50,21 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let window = resolve_date_window(&args, config)?;
     let _token_is_configured = !config.tushare_token.is_empty();
     let max_concurrency = args.max_concurrency.unwrap_or(config.max_concurrency);
+    let calc_chunk_size = args.chunk_size.or(config.calc_chunk_size);
     if args.mode == WriteMode::Cache {
         let summary = cache::run_cache(&window, args.refresh_ths, config).await?;
         println!("{}", cache::summary_json(&summary)?);
         return Ok(());
     }
     if args.mode == WriteMode::Calc {
-        let summary = calc::run_calc(&window, config, max_concurrency, args.force_recalc).await?;
+        let summary = calc::run_calc(
+            &window,
+            config,
+            max_concurrency,
+            args.force_recalc,
+            calc_chunk_size,
+        )
+        .await?;
         println!("{}", calc::summary_json(&summary)?);
         return Ok(());
     }
@@ -110,7 +118,14 @@ pub async fn run(args: WriteArgs, config: &Config) -> Result<()> {
     let warmup_window = warmup_window_from_dates(&trade_date_plan.warmup_trade_dates);
     eprintln!("[full] calc stage start");
     let started = Instant::now();
-    let calc_summary = calc::run_calc(&window, config, max_concurrency, args.force_recalc).await?;
+    let calc_summary = calc::run_calc(
+        &window,
+        config,
+        max_concurrency,
+        args.force_recalc,
+        calc_chunk_size,
+    )
+    .await?;
     eprintln!(
         "[full] calc stage done elapsed={:.1}s",
         started.elapsed().as_secs_f64()
@@ -204,6 +219,11 @@ pub fn resolve_date_window(args: &WriteArgs, config: &Config) -> Result<DateWind
     if let Some(max_concurrency) = args.max_concurrency {
         if max_concurrency == 0 {
             return Err(anyhow!("--max-concurrency must be greater than 0"));
+        }
+    }
+    if let Some(chunk_size) = args.chunk_size {
+        if chunk_size == 0 {
+            return Err(anyhow!("--chunk-size must be greater than 0"));
         }
     }
 
@@ -322,11 +342,10 @@ mod tests {
         Config {
             postgres_dsn: "postgres://example".to_string(),
             tushare_token: "token".to_string(),
-            postgres_dsn_set: true,
-            tushare_token_set: true,
             index_list_path: "config/default-indexes.csv".to_string(),
             default_lookback_trading_days: 90,
             max_concurrency: 4,
+            calc_chunk_size: None,
             request_timeout_seconds: 30,
             max_retries: 3,
             retry_base_delay_seconds: 1.0,
@@ -342,6 +361,7 @@ mod tests {
             end_date: None,
             lookback_trading_days: None,
             max_concurrency: None,
+            chunk_size: None,
             refresh_ths: false,
             force_recalc: false,
         }

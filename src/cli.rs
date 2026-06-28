@@ -54,6 +54,9 @@ pub struct WriteArgs {
     pub max_concurrency: Option<u32>,
 
     #[arg(long)]
+    pub chunk_size: Option<usize>,
+
+    #[arg(long)]
     pub refresh_ths: bool,
 
     #[arg(long)]

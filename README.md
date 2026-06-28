@@ -48,6 +48,14 @@ TUSHARE_TOKEN
 
 `TUSHARE_TOKEN` is not required for `status`, `config show`, or `write --mode calc`.
 
+Optional backfill tuning:
+
+```text
+CALC_CHUNK_SIZE
+```
+
+`CALC_CHUNK_SIZE` controls how many pending calc target trading days are computed and written per transaction. If unset, calc keeps windows of 60 or fewer pending trading days together and splits larger backfills into 20-day chunks. The same value can be overridden per run with `write --chunk-size`.
+
 ## Setup
 
 Start PostgreSQL:

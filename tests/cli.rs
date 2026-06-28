@@ -7,11 +7,11 @@ fn stock_cache() -> Command {
 }
 
 #[test]
-fn config_show_reads_env_file_and_hides_secrets() {
+fn config_show_reads_env_file_and_prints_effective_values() {
     let env_file = NamedTempFile::new().unwrap();
     std::fs::write(
         env_file.path(),
-        "POSTGRES_DSN=postgres://env-file\nTUSHARE_TOKEN=secret-token\nMAX_CONCURRENCY=7\n",
+        "POSTGRES_DSN=postgres://env-file\nTUSHARE_TOKEN=secret-token\nMAX_CONCURRENCY=7\nCALC_CHUNK_SIZE=33\n",
     )
     .unwrap();
 
@@ -23,11 +23,15 @@ fn config_show_reads_env_file_and_hides_secrets() {
         .env_remove("TUSHARE_TOKEN")
         .assert()
         .success()
-        .stdout(predicate::str::contains("\"postgres_dsn_set\": true"))
-        .stdout(predicate::str::contains("\"tushare_token_set\": true"))
-        .stdout(predicate::str::contains("\"max_concurrency\": 7"))
-        .stdout(predicate::str::contains("secret-token").not())
-        .stdout(predicate::str::contains("postgres://env-file").not());
+        .stdout(predicate::str::contains("Configuration"))
+        .stdout(predicate::str::contains(
+            "POSTGRES_DSN: postgres://env-file",
+        ))
+        .stdout(predicate::str::contains("TUSHARE_TOKEN: secret-token"))
+        .stdout(predicate::str::contains("MAX_CONCURRENCY: 7"))
+        .stdout(predicate::str::contains("CALC_CHUNK_SIZE: 33"))
+        .stdout(predicate::str::contains("POSTGRES_DSN: set").not())
+        .stdout(predicate::str::contains("TUSHARE_TOKEN: set").not());
 }
 
 #[test]
@@ -48,8 +52,10 @@ fn shell_env_overrides_env_file() {
         .env("MAX_CONCURRENCY", "9")
         .assert()
         .success()
-        .stdout(predicate::str::contains("\"max_concurrency\": 9"))
-        .stdout(predicate::str::contains("shell-token").not())
+        .stdout(predicate::str::contains("POSTGRES_DSN: postgres://shell"))
+        .stdout(predicate::str::contains("TUSHARE_TOKEN: shell-token"))
+        .stdout(predicate::str::contains("MAX_CONCURRENCY: 9"))
+        .stdout(predicate::str::contains("postgres://env-file").not())
         .stdout(predicate::str::contains("file-token").not());
 }
 
@@ -111,7 +117,8 @@ fn write_help_mentions_force_recalc() {
         .args(["write", "--help"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("--force-recalc"));
+        .stdout(predicate::str::contains("--force-recalc"))
+        .stdout(predicate::str::contains("--chunk-size"));
 }
 
 #[test]
