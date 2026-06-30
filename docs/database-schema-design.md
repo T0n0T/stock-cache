@@ -139,6 +139,7 @@ broker_recommend 相关表
 
 ```text
 stock_stk_factor_pro
+stock_basic
 stock_moneyflow_ths
 index_idx_factor_pro
 index_ths
@@ -150,6 +151,23 @@ stock_limit_list_ths
 ```
 
 源表字段需要在实现时用实际 Tushare 返回字段确认。下面只记录主键和写入语义。
+
+### stock_basic
+
+用途：当前 A 股股票列表和名称等基础信息，用于指出可用股票标的。
+
+刷新方式：
+
+- 由 `write --mode cache --refresh` 或 `full --refresh` 触发。
+- 只保存当前股票列表，不保留历史快照。
+- 与 `index_ths`、`index_ths_member` 在同一刷新事务内整表替换。
+- 失败保留旧数据。
+
+推荐主键：
+
+```sql
+primary key (ts_code)
+```
 
 ### stock_stk_factor_pro
 
@@ -178,6 +196,30 @@ mtm_qfq
 psy_qfq
 wr_qfq
 rsi_qfq_6/12/24
+```
+
+KDJ 字段契约：
+
+- `kdj_k_qfq` 是 K 值。
+- `kdj_d_qfq` 是 D 值。
+- `kdj_qfq` 是 J 值，需满足 `kdj_qfq ~= 3 * kdj_k_qfq - 2 * kdj_d_qfq`。
+- 后复权/不复权字段同理：`kdj_hfq`、`kdj_bfq` 分别是对应复权口径的 J 值。
+
+缓存层不新增物理列或 generated column `kdj_j_qfq/kdj_j_hfq/kdj_j_bfq`。
+下游如需要显式 J 命名，应在查询或消费侧投影：
+
+```sql
+select
+  "kdj_k_qfq",
+  "kdj_d_qfq",
+  "kdj_qfq" as "kdj_j_qfq"
+from "stock_stk_factor_pro";
+```
+
+如果需要独立校验，也可使用公式派生：
+
+```sql
+3 * "kdj_k_qfq" - 2 * "kdj_d_qfq" as "kdj_j_qfq"
 ```
 
 ### stock_moneyflow_ths
@@ -210,9 +252,9 @@ primary key (trade_date, ts_code)
 
 刷新方式：
 
-- 由 `write --mode cache --refresh-ths` 或 `full --refresh-ths` 触发。
+- 由 `write --mode cache --refresh` 或 `full --refresh` 触发。
 - 只保存当前列表。
-- 与 `index_ths_member` 在同一事务内整表替换。
+- 与 `stock_basic`、`index_ths_member` 在同一刷新事务内整表替换。
 - 失败保留旧数据。
 
 主键以实际接口字段为准，通常为同花顺板块/指数代码字段。
@@ -385,6 +427,52 @@ calc_version
 ```sql
 primary key (ts_code, trade_date, calc_version)
 ```
+
+## stock-select DB-native Contract
+
+`stock-select` 的 DB-native EOD 输入以 `stock_stk_factor_pro` 最新交易日股票全集为目标 universe。
+
+必需源表：
+
+| 表 | 用途 | 关键字段/版本 |
+| --- | --- | --- |
+| `stock_stk_factor_pro` | 股票日行情、估值、Tushare 技术指标 | `open_qfq/high_qfq/low_qfq/close_qfq`、`adj_factor`、`kdj_k_qfq/kdj_d_qfq/kdj_qfq` |
+| `stock_daily_asof_indicators` | 股票 daily/weekly/monthly MACD as-of | `calc_version = macd_qfq_12_26_9_v1` |
+| `stock_daily_rolling_factors` | 股票滚动窗口因子 | `calc_version = rolling_qfq_v1` |
+| `stock_daily_left_peak` | 股票左峰结构因子 | `calc_version = left_peak_qfq_v1` |
+| `stock_period_indicator_state` | 完成周期 MACD 递推状态 | `calc_version = macd_qfq_12_26_9_v1`，`period_type in daily/weekly/monthly` |
+| `index_ths_daily` | 同花顺板块日行情 | 最新交易日行数应大于 0 |
+| `index_daily_asof_indicators` | 板块/指数 MACD as-of | `calc_version = macd_qfq_12_26_9_v1` |
+| `index_moneyflow_cnt_ths` | 同花顺板块资金流 | 最新交易日行数应大于 0 |
+| `index_ths_member` | 当前同花顺成分关系 | 整表当前快照，应大于 0 |
+
+阻断条件：
+
+- `stock_stk_factor_pro` 最新交易日行数为 0。
+- 近 252 个交易日窗口不足。
+- `adj_factor` 在窗口内非空、有限、`> 0` 覆盖不完整。
+- 最新交易日 `open_qfq/high_qfq/low_qfq/close_qfq` 任一字段非空覆盖不完整。
+- KDJ 不满足 K/D/J 契约：`kdj_k_qfq`、`kdj_d_qfq`、`kdj_qfq` 缺字段，或 `kdj_qfq` 与 `3*K-2*D` 不一致。
+- 三张股票计算表最新交易日行数与目标 universe 不一致，且没有可解释差异。
+- THS 相关表最新交易日或当前 membership 为空。
+
+可接受跳过：
+
+- `stock_period_indicator_state` 的 weekly/monthly 是完成周期状态，不要求 `period_end_date` 等于 pick date。
+- 对最新交易日 universe，应按 `period_end_date <= pick_date` 取每个 `ts_code + period_type` 的最新完成状态。
+- 极短历史股票可能缺 weekly 或 monthly state。缺失列表必须输出 `ts_code`、首个源表交易日、源表交易日数、缺失周期和原因。
+- 默认门禁建议三周期覆盖率不低于 `0.995`；低于阈值阻断，高于阈值时短历史缺口可由 `stock-select` 跳过并记录。
+
+发布前建议运行：
+
+```bash
+cargo run -- contract-check stock-select \
+  --pick-date 20260615 \
+  --lookback-trading-days 252 \
+  --period-coverage-threshold 0.995
+```
+
+该检查只读数据库，输出 JSON 摘要，不输出 DSN 或 token。
 
 ### index_daily_asof_indicators
 

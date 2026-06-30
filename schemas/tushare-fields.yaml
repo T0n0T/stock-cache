@@ -1,5 +1,95 @@
 version: 1
 datasets:
+  stock_basic:
+    api: stock_basic
+    doc_url: https://tushare.pro/document/2?doc_id=25
+    checked_at: '2026-06-30'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: replace_all
+      key:
+      - ts_code
+      transaction_group: reference_snapshot
+    fetch_plan:
+      kind: refresh_current
+      params: []
+    notes:
+    - Current A-share stock list snapshot used to identify available stocks and their names. Refresh explicitly with the
+      generic refresh stage together with THS classification tables.
+    - Fields are frozen from official Tushare output docs checked on 2026-06-30; optional output fields are included and
+      should be requested explicitly with the Tushare fields parameter.
+    doc_mismatch: []
+    fields:
+    - name: ts_code
+      pg_type: text
+      nullable: false
+      description: TS代码
+    - name: symbol
+      pg_type: text
+      nullable: true
+      description: 股票代码
+    - name: name
+      pg_type: text
+      nullable: true
+      description: 股票名称
+    - name: area
+      pg_type: text
+      nullable: true
+      description: 地域
+    - name: industry
+      pg_type: text
+      nullable: true
+      description: 所属行业
+    - name: fullname
+      pg_type: text
+      nullable: true
+      description: 股票全称
+    - name: enname
+      pg_type: text
+      nullable: true
+      description: 英文全称
+    - name: cnspell
+      pg_type: text
+      nullable: true
+      description: 拼音缩写
+    - name: market
+      pg_type: text
+      nullable: true
+      description: 市场类型
+    - name: exchange
+      pg_type: text
+      nullable: true
+      description: 交易所代码
+    - name: curr_type
+      pg_type: text
+      nullable: true
+      description: 交易货币
+    - name: list_status
+      pg_type: text
+      nullable: true
+      description: 上市状态
+    - name: list_date
+      pg_type: date
+      nullable: true
+      description: 上市日期
+      source_format: YYYYMMDD
+    - name: delist_date
+      pg_type: date
+      nullable: true
+      description: 退市日期
+      source_format: YYYYMMDD
+    - name: is_hs
+      pg_type: text
+      nullable: true
+      description: 是否沪深港通标的
+    - name: act_name
+      pg_type: text
+      nullable: true
+      description: 实控人名称
+    - name: act_ent_type
+      pg_type: text
+      nullable: true
+      description: 实控人企业性质
   stock_stk_factor_pro:
     api: stk_factor_pro
     doc_url: https://tushare.pro/wctapi/documents/328.md

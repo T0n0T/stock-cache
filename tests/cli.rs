@@ -11,7 +11,7 @@ fn config_show_reads_env_file_and_prints_effective_values() {
     let env_file = NamedTempFile::new().unwrap();
     std::fs::write(
         env_file.path(),
-        "POSTGRES_DSN=postgres://env-file\nTUSHARE_TOKEN=secret-token\nMAX_CONCURRENCY=7\nCALC_CHUNK_SIZE=33\n",
+        "POSTGRES_DSN=postgres://env-file\nTUSHARE_TOKEN=secret-token\nMAX_CONCURRENCY=7\nCACHE_WARMUP_CONCURRENCY=3\nCALC_CHUNK_SIZE=33\n",
     )
     .unwrap();
 
@@ -24,14 +24,13 @@ fn config_show_reads_env_file_and_prints_effective_values() {
         .assert()
         .success()
         .stdout(predicate::str::contains("Configuration"))
-        .stdout(predicate::str::contains(
-            "POSTGRES_DSN: postgres://env-file",
-        ))
-        .stdout(predicate::str::contains("TUSHARE_TOKEN: secret-token"))
+        .stdout(predicate::str::contains("POSTGRES_DSN: set"))
+        .stdout(predicate::str::contains("TUSHARE_TOKEN: set"))
         .stdout(predicate::str::contains("MAX_CONCURRENCY: 7"))
+        .stdout(predicate::str::contains("CACHE_WARMUP_CONCURRENCY: 3"))
         .stdout(predicate::str::contains("CALC_CHUNK_SIZE: 33"))
-        .stdout(predicate::str::contains("POSTGRES_DSN: set").not())
-        .stdout(predicate::str::contains("TUSHARE_TOKEN: set").not());
+        .stdout(predicate::str::contains("postgres://env-file").not())
+        .stdout(predicate::str::contains("secret-token").not());
 }
 
 #[test]
@@ -52,9 +51,11 @@ fn shell_env_overrides_env_file() {
         .env("MAX_CONCURRENCY", "9")
         .assert()
         .success()
-        .stdout(predicate::str::contains("POSTGRES_DSN: postgres://shell"))
-        .stdout(predicate::str::contains("TUSHARE_TOKEN: shell-token"))
+        .stdout(predicate::str::contains("POSTGRES_DSN: set"))
+        .stdout(predicate::str::contains("TUSHARE_TOKEN: set"))
         .stdout(predicate::str::contains("MAX_CONCURRENCY: 9"))
+        .stdout(predicate::str::contains("postgres://shell").not())
+        .stdout(predicate::str::contains("shell-token").not())
         .stdout(predicate::str::contains("postgres://env-file").not())
         .stdout(predicate::str::contains("file-token").not());
 }
@@ -86,19 +87,6 @@ fn write_cache_default_lookback_requires_explicit_dates_for_now() {
 }
 
 #[test]
-fn write_full_default_lookback_requires_explicit_cache_dates_for_now() {
-    stock_cache()
-        .args(["write", "--mode", "full"])
-        .env("POSTGRES_DSN", "postgres://example")
-        .env("TUSHARE_TOKEN", "token")
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains(
-            "cache execution currently requires explicit --start-date/--end-date",
-        ));
-}
-
-#[test]
 fn write_calc_rejects_unpaired_dates_before_connecting() {
     stock_cache()
         .args(["write", "--mode", "calc", "--start-date", "20260601"])
@@ -117,8 +105,31 @@ fn write_help_mentions_force_recalc() {
         .args(["write", "--help"])
         .assert()
         .success()
+        .stdout(predicate::str::contains("--refresh"))
         .stdout(predicate::str::contains("--force-recalc"))
         .stdout(predicate::str::contains("--chunk-size"));
+}
+
+#[test]
+fn write_accepts_legacy_refresh_ths_alias() {
+    stock_cache()
+        .args(["write", "--mode", "cache", "--refresh-ths"])
+        .env("POSTGRES_DSN", "not-a-postgres-dsn")
+        .env("TUSHARE_TOKEN", "token")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("unexpected argument '--refresh-ths'").not());
+}
+
+#[test]
+fn contract_check_help_mentions_stock_select_gate_options() {
+    stock_cache()
+        .args(["contract-check", "stock-select", "--help"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("--pick-date"))
+        .stdout(predicate::str::contains("--lookback-trading-days"))
+        .stdout(predicate::str::contains("--period-coverage-threshold"));
 }
 
 #[test]
@@ -136,6 +147,17 @@ fn status_does_not_require_tushare_token() {
 fn write_calc_does_not_require_tushare_token() {
     stock_cache()
         .args(["write", "--mode", "calc"])
+        .env("POSTGRES_DSN", "not-a-postgres-dsn")
+        .env_remove("TUSHARE_TOKEN")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("TUSHARE_TOKEN").not());
+}
+
+#[test]
+fn contract_check_stock_select_does_not_require_tushare_token() {
+    stock_cache()
+        .args(["contract-check", "stock-select"])
         .env("POSTGRES_DSN", "not-a-postgres-dsn")
         .env_remove("TUSHARE_TOKEN")
         .assert()

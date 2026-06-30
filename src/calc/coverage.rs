@@ -163,6 +163,7 @@ pub(super) async fn load_existing_calc_coverage(
         from "index_period_indicator_state"
         where "period_end_date" between $1 and $2
           and "period_type" = 'daily'
+          and "dif" <> 0
           and "calc_version" = $3
         group by "period_end_date"
         "#,
@@ -211,8 +212,24 @@ async fn load_versioned_date_counts(
         .collect())
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(super) enum PeriodStateTable {
+    Stock,
+    Index,
+}
+
+impl PeriodStateTable {
+    fn table_name(self) -> &'static str {
+        match self {
+            Self::Stock => "stock_period_indicator_state",
+            Self::Index => "index_period_indicator_state",
+        }
+    }
+}
+
 pub(super) async fn load_existing_period_state_keys(
     client: &tokio_postgres::Client,
+    table: PeriodStateTable,
     rows: &[PeriodStateRow],
 ) -> Result<HashSet<(String, String, NaiveDate)>> {
     if rows.is_empty() {
@@ -228,14 +245,18 @@ pub(super) async fn load_existing_period_state_keys(
         .map(|row| row.period_end_date)
         .max()
         .expect("checked non-empty");
-    Ok(client
-        .query(
-            r#"
+    let table_name = table.table_name();
+    let sql = format!(
+        r#"
             select "ts_code", "period_type", "period_end_date"
-            from "stock_period_indicator_state"
+            from "{table_name}"
             where "period_end_date" between $1 and $2
               and "calc_version" = $3
-            "#,
+            "#
+    );
+    Ok(client
+        .query(
+            &sql,
             &[
                 &min_period_end_date,
                 &max_period_end_date,

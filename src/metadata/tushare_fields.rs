@@ -68,6 +68,111 @@ pub fn dataset(id: &str) -> Option<&'static DatasetMetadata> {
     DATASETS.iter().find(|dataset| dataset.id == id)
 }
 
+const STOCK_BASIC_FIELDS: &[FieldMetadata] = &[
+    FieldMetadata {
+        name: "ts_code",
+        pg_type: "text",
+        nullable: false,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "symbol",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "name",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "area",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "industry",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "fullname",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "enname",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "cnspell",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "market",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "exchange",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "curr_type",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "list_status",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "list_date",
+        pg_type: "date",
+        nullable: true,
+        source_format: Some("YYYYMMDD"),
+    },
+    FieldMetadata {
+        name: "delist_date",
+        pg_type: "date",
+        nullable: true,
+        source_format: Some("YYYYMMDD"),
+    },
+    FieldMetadata {
+        name: "is_hs",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "act_name",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "act_ent_type",
+        pg_type: "text",
+        nullable: true,
+        source_format: None,
+    },
+];
+
 const STOCK_STK_FACTOR_PRO_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
@@ -2706,6 +2811,25 @@ const STOCK_LIMIT_LIST_THS_FIELDS: &[FieldMetadata] = &[
 ];
 
 pub const DATASETS: &[DatasetMetadata] = &[
+    DatasetMetadata {
+        id: "stock_basic",
+        table: "stock_basic",
+        api: "stock_basic",
+        fields: STOCK_BASIC_FIELDS,
+        write_strategy: WriteStrategy::ReplaceAll {
+            key: &["ts_code"],
+            transaction_group: Some("reference_snapshot"),
+        },
+        write_sql: WriteSql::ReplaceAll {
+            clear_sql: r#"delete from "stock_basic""#,
+            insert_sql: r#"insert into "stock_basic" ("ts_code", "symbol", "name", "area", "industry", "fullname", "enname", "cnspell", "market", "exchange", "curr_type", "list_status", "list_date", "delist_date", "is_hs", "act_name", "act_ent_type") values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)"#,
+        },
+        fetch_plan: FetchPlan {
+            kind: "refresh_current",
+            params: &[],
+            code_source: None,
+        },
+    },
     DatasetMetadata {
         id: "stock_stk_factor_pro",
         table: "stock_stk_factor_pro",

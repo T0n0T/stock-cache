@@ -46,6 +46,29 @@ turnover_rate
 - 分母为 `0` 或 `NULL` 时，比值输出 `NULL`。
 - 不用 `0` 伪装缺失或不可计算。
 
+## Source Indicator Contract
+
+`stock_stk_factor_pro` 中的 Tushare 技术指标按源字段保存，不在缓存层改名。
+
+KDJ 字段定义：
+
+| 字段 | 含义 |
+| --- | --- |
+| `kdj_k_qfq` | 前复权 K 值 |
+| `kdj_d_qfq` | 前复权 D 值 |
+| `kdj_qfq` | 前复权 J 值 |
+| `kdj_k_hfq/kdj_d_hfq/kdj_hfq` | 后复权 K/D/J |
+| `kdj_k_bfq/kdj_d_bfq/kdj_bfq` | 不复权 K/D/J |
+
+发布契约要求 `kdj_qfq` 在容差内满足：
+
+```text
+kdj_qfq = 3 * kdj_k_qfq - 2 * kdj_d_qfq
+```
+
+缓存层不输出 `kdj_j_qfq/kdj_j_hfq/kdj_j_bfq` 物理列。
+消费者如需要 J 字段名，应使用 `kdj_qfq AS kdj_j_qfq`，或按上式派生。
+
 ## MACD State
 
 版本：`macd_qfq_12_26_9_v1`。
@@ -98,6 +121,12 @@ monthly
 | `monthly` | 自然月最后一个交易日 `close_qfq` | 每个完成自然月一个周期 |
 
 `period_start_date` 和 `period_end_date` 保存周期范围。主键使用 `period_end_date`，不使用派生字符串 `period_key`。
+
+weekly/monthly state 只在自然周或自然月完成后落表。
+因此 pick date 不是周末/月末时，消费者应取 `period_end_date <= pick_date` 的最新状态。
+
+极短历史股票可能尚未形成 weekly 或 monthly state。
+这类缺口不是计算错误，但必须在发布前 coverage report 中列出，供下游跳过。
 
 ### As-Of Daily Values
 
@@ -323,3 +352,29 @@ a_lt_b = A < B
 - `stock_daily_left_peak`: 保守窗口为 360 个交易日，因此可使用起点为本地可用历史中的第 360 个交易日。
 
 如果本地历史不足对应窗口，起点输出 `null`。
+
+## DB-native Release Gate
+
+`contract-check stock-select` 是面向 `stock-select` 发布前 smoke 的只读门禁。
+
+建议命令：
+
+```bash
+cargo run -- contract-check stock-select \
+  --pick-date 20260615 \
+  --lookback-trading-days 252 \
+  --period-coverage-threshold 0.995
+```
+
+检查范围：
+
+- 最新交易日 `stock_stk_factor_pro` 行数大于 0。
+- 近 252 个交易日窗口存在且 `adj_factor` 全量非空、有限、`> 0`。
+- 最新交易日 qfq OHLC 非空覆盖完整。
+- KDJ 满足 K/D/J 契约，且 `kdj_qfq` 是 J 值。
+- 三张股票计算表按指定 `calc_version` 与股票 universe 对齐。
+- `stock_period_indicator_state` 输出三周期覆盖率和缺失列表。
+- THS 行情、MACD as-of、资金流和 membership 表可用。
+
+阻断项以 `blocking_failures` 输出。
+短历史股票缺 weekly/monthly state 时，缺失记录应标记为可接受跳过。

@@ -180,11 +180,12 @@ stock-cache write --mode full --lookback-trading-days 30
 - `--start-date` 和 `--end-date` 必须同时出现。
 - `--start-date/--end-date` 与 `--lookback-trading-days` 互斥。
 - `calc` 支持基于本地 `stock_stk_factor_pro` 已有交易日的 `--lookback-trading-days` 和默认 `DEFAULT_LOOKBACK_TRADING_DAYS`。
-- 当前 `cache/full` 的按日 Tushare 拉取仍要求显式 `--start-date/--end-date`。
+- `full` 支持 `--lookback-trading-days`，会先通过 Tushare `trade_cal` 解析最近 N 个真实交易日，再按这些交易日执行 cache 和 calc。
+- 当前 `cache` 单独模式的按日 Tushare 拉取仍要求显式 `--start-date/--end-date`。
 - `full` 将用户传入的显式日期区间视为 calc 目标区间，并通过 Tushare `trade_cal` 解析精确交易日。
 - `full` 会为 calc 自动补齐目标区间首个交易日前 3 个自然年的 `stock_stk_factor_pro` warmup 源数据；warmup 日期通过 `trade_cal` 精确过滤为交易日，不按自然日或固定交易日数近似。
 - warmup 会补齐 `stock_stk_factor_pro`、`index_ths_daily` 和 `index_idx_factor_pro`，供股票和指数长周期计算使用；不拉取资金流或榜单。
-- 例外：`write --mode cache --refresh-ths` 且未传任何日期参数时，只刷新同花顺分类，不拉取按日接口。
+- 例外：`write --mode cache --refresh` 且未传任何日期参数时，只刷新当前基础快照，不拉取按日接口。
 
 ## Concurrency
 
@@ -233,28 +234,30 @@ stock_limit_list_ths
 
 `index_ths_daily` 和 `index_moneyflow_cnt_ths` 按 Python 函数的日级全量形态请求，只传 `trade_date`，不从 `index_ths` 枚举 `ts_code`。
 
-## Refresh THS Classification
+## Refresh Current Snapshots
 
-同花顺分类基础数据不随历史回填自动刷新。使用显式参数：
+股票基础列表和同花顺分类基础数据不随历史回填自动刷新。使用显式参数：
 
 ```bash
-stock-cache write --mode cache --refresh-ths
+stock-cache write --mode cache --refresh
 ```
 
-`--refresh-ths` 刷新：
+`--refresh` 刷新：
 
 ```text
+stock_basic
 index_ths
 index_ths_member
 ```
 
 刷新语义：
 
-- 只保存当前列表和当前成分关系。
+- `stock_basic` 只保存当前股票列表和名称等基础信息。
+- `index_ths`/`index_ths_member` 只保存当前板块列表和当前成分关系。
 - 不保留历史快照。
 - 不按 `trade_date` 每日保存成分。
 - 保存 Tushare 文档标注的 `weight/in_date/out_date/is_new` 字段；字段可为空，但应通过 `fields` 参数显式请求。
-- 在事务内替换 `index_ths + index_ths_member`，失败保留旧数据。
+- 在事务内替换 `stock_basic + index_ths + index_ths_member`，失败保留旧数据。
 
 与日期窗口一起使用时：
 
@@ -262,18 +265,18 @@ index_ths_member
 stock-cache write --mode full \
   --start-date 2026-06-01 \
   --end-date 2026-06-25 \
-  --refresh-ths
+  --refresh
 ```
 
 执行顺序固定为：
 
 ```text
-1. refresh-ths
+1. refresh
 2. cache
 3. calc
 ```
 
-因此 `full --refresh-ths` 会先刷新同花顺分类基础表，再进入目标日期窗口的数据缓存与计算。
+因此 `full --refresh` 会先刷新当前基础快照表，再进入目标日期窗口的数据缓存与计算。
 
 ## Index List
 
@@ -337,6 +340,7 @@ index_idx_factor_pro
 | `INDEX_LIST_PATH` | no | `config/default-indexes.csv` | `index_idx_factor_pro` 指数清单 |
 | `DEFAULT_LOOKBACK_TRADING_DAYS` | no | `90` | 默认近期交易日窗口 |
 | `MAX_CONCURRENCY` | no | `4` | 默认并发上限 |
+| `CACHE_WARMUP_CONCURRENCY` | no | `1` | full 模式补 calc warmup source 时的并发 worker 数；空库大范围 warmup 可调高，注意 Tushare 限流 |
 | `REQUEST_TIMEOUT_SECONDS` | no | `30` | Tushare 请求超时 |
 | `MAX_RETRIES` | no | `3` | 可重试错误次数 |
 | `RETRY_BASE_DELAY_SECONDS` | no | `1.0` | 初始重试延迟 |
@@ -384,5 +388,13 @@ ENABLE_LOCAL_INDICATOR_FALLBACK
   }
 }
 ```
+
+每次 `write` 或 `status` 成功结束后，摘要 JSON 也会写入：
+
+```text
+runtime/database-state.json
+```
+
+该文件表示最近一次成功 `write` 或 `status` 后的本地数据库状态快照，用于快速判断当前数据库已经缓存或计算了哪些窗口和行数；运行 `status` 会用数据库当前实际覆盖情况直接覆盖它。它不是数据库内的审计表或 checkpoint 表。
 
 `usable_ranges` 只在输出摘要中出现，不入库。

@@ -6,9 +6,9 @@ mod metadata;
 mod source;
 
 use anyhow::Result;
-use app::{config, status, write};
+use app::{config, contract_check, status, write};
 use clap::Parser;
-use cli::{Cli, Commands};
+use cli::{Cli, Commands, ContractCheckCommand};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -22,6 +22,11 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::InitDb => db::init_db(&config.postgres_dsn).await,
         Commands::Status => status::run(&config).await,
+        Commands::ContractCheck { command } => match command {
+            ContractCheckCommand::StockSelect(args) => {
+                contract_check::run_stock_select(args, &config).await
+            }
+        },
         Commands::Config { command } => match command {
             cli::ConfigCommand::Show => {
                 config.print_human_readable();

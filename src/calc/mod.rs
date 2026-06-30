@@ -22,7 +22,7 @@ mod source;
 mod stock;
 mod writer;
 
-use coverage::{load_existing_calc_coverage, load_existing_period_state_keys};
+use coverage::{load_existing_calc_coverage, load_existing_period_state_keys, PeriodStateTable};
 use source::{
     load_distinct_index_source_trade_dates, load_distinct_source_trade_dates,
     load_index_source_row_count, load_index_source_rows, load_source_row_count, load_source_rows,
@@ -148,7 +148,8 @@ pub async fn run_calc(
                     .unwrap_or_else(|| "auto".to_string())
             );
             let mut row_counts = empty_row_counts();
-            let mut seen_period_state_keys = HashSet::new();
+            let mut seen_stock_period_state_keys = HashSet::new();
+            let mut seen_index_period_state_keys = HashSet::new();
             for (chunk_index, chunk_dates) in target_dates_to_compute.chunks(chunk_size).enumerate()
             {
                 eprintln!(
@@ -185,17 +186,42 @@ pub async fn run_calc(
                     chunk_count
                 );
                 let started = Instant::now();
-                let existing_period_state_keys = if force_recalc {
-                    seen_period_state_keys.clone()
+                let existing_stock_period_state_keys = if force_recalc {
+                    seen_stock_period_state_keys.clone()
                 } else {
-                    let mut keys =
-                        load_existing_period_state_keys(&client, &computed.period_states).await?;
-                    keys.extend(seen_period_state_keys.iter().cloned());
+                    let mut keys = load_existing_period_state_keys(
+                        &client,
+                        PeriodStateTable::Stock,
+                        &computed.period_states,
+                    )
+                    .await?;
+                    keys.extend(seen_stock_period_state_keys.iter().cloned());
                     keys
                 };
-                let chunk_row_counts =
-                    write_calc_rows(&mut client, &computed, &existing_period_state_keys).await?;
-                remember_period_state_keys(&mut seen_period_state_keys, &computed);
+                let existing_index_period_state_keys = if force_recalc {
+                    seen_index_period_state_keys.clone()
+                } else {
+                    let mut keys = load_existing_period_state_keys(
+                        &client,
+                        PeriodStateTable::Index,
+                        &computed.index_period_states,
+                    )
+                    .await?;
+                    keys.extend(seen_index_period_state_keys.iter().cloned());
+                    keys
+                };
+                let chunk_row_counts = write_calc_rows(
+                    &mut client,
+                    &computed,
+                    &existing_stock_period_state_keys,
+                    &existing_index_period_state_keys,
+                )
+                .await?;
+                remember_period_state_keys(
+                    &mut seen_stock_period_state_keys,
+                    &mut seen_index_period_state_keys,
+                    &computed,
+                );
                 merge_counts(&mut row_counts, &chunk_row_counts);
                 eprintln!(
                     "[calc] chunk {}/{} write rows done elapsed={:.1}s",
@@ -296,17 +322,18 @@ fn merge_counts(target: &mut BTreeMap<String, usize>, source: &BTreeMap<String, 
 }
 
 fn remember_period_state_keys(
-    keys: &mut HashSet<(String, String, NaiveDate)>,
+    stock_keys: &mut HashSet<(String, String, NaiveDate)>,
+    index_keys: &mut HashSet<(String, String, NaiveDate)>,
     computed: &model::ComputedRows,
 ) {
-    keys.extend(computed.period_states.iter().map(|row| {
+    stock_keys.extend(computed.period_states.iter().map(|row| {
         (
             row.ts_code.clone(),
             row.period_type.clone(),
             row.period_end_date,
         )
     }));
-    keys.extend(computed.index_period_states.iter().map(|row| {
+    index_keys.extend(computed.index_period_states.iter().map(|row| {
         (
             row.ts_code.clone(),
             row.period_type.clone(),

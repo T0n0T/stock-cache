@@ -156,7 +156,8 @@ on conflict ("ts_code", "trade_date", "calc_version") do update set
 pub(super) async fn write_calc_rows(
     client: &mut tokio_postgres::Client,
     computed: &ComputedRows,
-    existing_period_state_keys: &HashSet<(String, String, NaiveDate)>,
+    existing_stock_period_state_keys: &HashSet<(String, String, NaiveDate)>,
+    existing_index_period_state_keys: &HashSet<(String, String, NaiveDate)>,
 ) -> Result<BTreeMap<String, usize>> {
     let transaction = client.transaction().await?;
     let period_statement = transaction.prepare(INSERT_PERIOD_STATE_SQL).await?;
@@ -166,8 +167,8 @@ pub(super) async fn write_calc_rows(
     let rolling_statement = transaction.prepare(INSERT_ROLLING_SQL).await?;
     let left_peak_statement = transaction.prepare(INSERT_LEFT_PEAK_SQL).await?;
 
-    let mut period_rows = computed.period_states.iter().collect::<Vec<_>>();
-    period_rows.retain(|row| !has_period_state(existing_period_state_keys, row));
+    let mut period_rows =
+        pending_period_rows(&computed.period_states, existing_stock_period_state_keys);
     period_rows.sort_by(|left, right| {
         left.period_end_date
             .cmp(&right.period_end_date)
@@ -230,8 +231,10 @@ pub(super) async fn write_calc_rows(
         started.elapsed().as_secs_f64()
     );
 
-    let mut index_period_rows = computed.index_period_states.iter().collect::<Vec<_>>();
-    index_period_rows.retain(|row| !has_period_state(existing_period_state_keys, row));
+    let mut index_period_rows = pending_non_zero_dif_period_rows(
+        &computed.index_period_states,
+        existing_index_period_state_keys,
+    );
     index_period_rows.sort_by(|left, right| {
         left.period_end_date
             .cmp(&right.period_end_date)
@@ -674,4 +677,75 @@ fn count_trade_date_groups<T>(rows: &[&T], date: fn(&T) -> NaiveDate) -> usize {
             }
         })
         .0
+}
+
+fn pending_period_rows<'a>(
+    rows: &'a [PeriodStateRow],
+    existing_period_state_keys: &HashSet<(String, String, NaiveDate)>,
+) -> Vec<&'a PeriodStateRow> {
+    rows.iter()
+        .filter(|row| !has_period_state(existing_period_state_keys, row))
+        .collect()
+}
+
+fn pending_non_zero_dif_period_rows<'a>(
+    rows: &'a [PeriodStateRow],
+    existing_period_state_keys: &HashSet<(String, String, NaiveDate)>,
+) -> Vec<&'a PeriodStateRow> {
+    rows.iter()
+        .filter(|row| !has_period_state(existing_period_state_keys, row))
+        .filter(|row| row.dif != Some(0.0))
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn index_period_rows_are_not_filtered_by_stock_period_keys() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let index_row = period_row("000001.SH", date);
+        let existing_stock_keys =
+            HashSet::from([("000001.SH".to_string(), "daily".to_string(), date)]);
+        let existing_index_keys = HashSet::new();
+
+        assert_eq!(
+            pending_period_rows(&[index_row], &existing_stock_keys).len(),
+            0
+        );
+        let index_row = period_row("000001.SH", date);
+        assert_eq!(
+            pending_period_rows(&[index_row], &existing_index_keys).len(),
+            1
+        );
+    }
+
+    #[test]
+    fn index_period_rows_skip_zero_dif_states() {
+        let date = NaiveDate::from_ymd_opt(2026, 6, 1).unwrap();
+        let zero_dif_row = period_row("000001.SH", date);
+        let existing_index_keys = HashSet::new();
+
+        assert_eq!(
+            pending_non_zero_dif_period_rows(&[zero_dif_row], &existing_index_keys).len(),
+            0
+        );
+    }
+
+    fn period_row(ts_code: &str, period_end_date: NaiveDate) -> PeriodStateRow {
+        PeriodStateRow {
+            ts_code: ts_code.to_string(),
+            period_type: "daily".to_string(),
+            period_start_date: period_end_date,
+            period_end_date,
+            period_close_qfq: Some(1.0),
+            ema12: Some(1.0),
+            ema26: Some(1.0),
+            dif: Some(0.0),
+            dea: Some(0.0),
+            hist_x2: Some(0.0),
+            period_count: Some(1),
+        }
+    }
 }

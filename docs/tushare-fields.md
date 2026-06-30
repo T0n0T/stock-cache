@@ -3,6 +3,37 @@
 This file is generated from `schemas/tushare-fields.yaml`.
 Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields_doc.py`.
 
+## stock_basic
+
+- API: `stock_basic`
+- Official doc: https://tushare.pro/document/2?doc_id=25
+- Checked at: `2026-06-30`
+- SDK version: `1.4.29`
+- Fetch plan: `kind`=`refresh_current`; `params`=
+- Write strategy: `type`=`replace_all`; `key`=`ts_code`; `transaction_group`=`reference_snapshot`
+- Note: Current A-share stock list snapshot used to identify available stocks and their names. Refresh explicitly with the generic refresh stage together with THS classification tables.
+- Note: Fields are frozen from official Tushare output docs checked on 2026-06-30; optional output fields are included and should be requested explicitly with the Tushare fields parameter.
+
+| Field | PostgreSQL type | Nullable | Source format | Description |
+| --- | --- | --- | --- | --- |
+| `ts_code` | `text` | no |  | TS代码 |
+| `symbol` | `text` | yes |  | 股票代码 |
+| `name` | `text` | yes |  | 股票名称 |
+| `area` | `text` | yes |  | 地域 |
+| `industry` | `text` | yes |  | 所属行业 |
+| `fullname` | `text` | yes |  | 股票全称 |
+| `enname` | `text` | yes |  | 英文全称 |
+| `cnspell` | `text` | yes |  | 拼音缩写 |
+| `market` | `text` | yes |  | 市场类型 |
+| `exchange` | `text` | yes |  | 交易所代码 |
+| `curr_type` | `text` | yes |  | 交易货币 |
+| `list_status` | `text` | yes |  | 上市状态 |
+| `list_date` | `date` | yes | YYYYMMDD | 上市日期 |
+| `delist_date` | `date` | yes | YYYYMMDD | 退市日期 |
+| `is_hs` | `text` | yes |  | 是否沪深港通标的 |
+| `act_name` | `text` | yes |  | 实控人名称 |
+| `act_ent_type` | `text` | yes |  | 实控人企业性质 |
+
 ## stock_stk_factor_pro
 
 - API: `stk_factor_pro`

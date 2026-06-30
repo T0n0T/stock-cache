@@ -43,48 +43,32 @@ pub async fn write_dataset(
     }
 }
 
-pub async fn replace_classification_group(
+pub async fn replace_refresh_group(
     client: &mut Client,
-    index_ths: &DatasetMetadata,
-    index_ths_rows: &[SourceRow],
-    index_ths_member: &DatasetMetadata,
-    index_ths_member_rows: &[SourceRow],
+    datasets: &[(&DatasetMetadata, &[SourceRow])],
 ) -> Result<usize> {
-    let WriteSqlPlan::ReplaceAll {
-        clear_sql: index_ths_clear,
-        insert_sql: index_ths_insert,
-        transaction_group: index_group,
-    } = static_write_sql(index_ths)
-    else {
-        return Err(anyhow!("{} is not replace_all", index_ths.id));
-    };
-    let WriteSqlPlan::ReplaceAll {
-        clear_sql: index_ths_member_clear,
-        insert_sql: index_ths_member_insert,
-        transaction_group: member_group,
-    } = static_write_sql(index_ths_member)
-    else {
-        return Err(anyhow!("{} is not replace_all", index_ths_member.id));
-    };
-    if index_group != Some("ths_classification") || member_group != Some("ths_classification") {
-        return Err(anyhow!(
-            "THS classification datasets must share transaction group"
-        ));
+    let mut plans = Vec::new();
+    for (dataset, rows) in datasets {
+        let WriteSqlPlan::ReplaceAll {
+            clear_sql,
+            insert_sql,
+            transaction_group,
+        } = static_write_sql(dataset)
+        else {
+            return Err(anyhow!("{} is not replace_all", dataset.id));
+        };
+        plans.push((*dataset, *rows, clear_sql, insert_sql, transaction_group));
     }
 
     let transaction = client.transaction().await?;
-    transaction.execute(index_ths_member_clear, &[]).await?;
-    transaction.execute(index_ths_clear, &[]).await?;
-    insert_rows_in_transaction(&transaction, index_ths, index_ths_insert, index_ths_rows).await?;
-    insert_rows_in_transaction(
-        &transaction,
-        index_ths_member,
-        index_ths_member_insert,
-        index_ths_member_rows,
-    )
-    .await?;
+    for (_, _, clear_sql, _, _) in plans.iter().rev() {
+        transaction.execute(*clear_sql, &[]).await?;
+    }
+    for (dataset, rows, _, insert_sql, _) in &plans {
+        insert_rows_in_transaction(&transaction, dataset, insert_sql, rows).await?;
+    }
     transaction.commit().await?;
-    Ok(index_ths_rows.len() + index_ths_member_rows.len())
+    Ok(datasets.iter().map(|(_, rows)| rows.len()).sum())
 }
 
 async fn upsert_rows(

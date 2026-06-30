@@ -46,7 +46,7 @@ pub(super) async fn resolve_calc_dates(
             dates.reverse();
             Ok(dates)
         }
-        DateWindow::RefreshThsOnly => Err(anyhow!(
+        DateWindow::RefreshOnly => Err(anyhow!(
             "calc execution requires a stock_stk_factor_pro date window"
         )),
     }

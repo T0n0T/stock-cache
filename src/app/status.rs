@@ -5,7 +5,7 @@ use chrono::{Months, NaiveDate};
 use serde::Serialize;
 use tokio_postgres::{Client, NoTls, Row};
 
-use crate::app::config::Config;
+use crate::app::{config::Config, database_state};
 
 const MACD_CALC_VERSION: &str = "macd_qfq_12_26_9_v1";
 const ROLLING_CALC_VERSION: &str = "rolling_qfq_v1";
@@ -165,7 +165,9 @@ pub async fn run(config: &Config) -> Result<()> {
     let result = status_summary(&client).await;
     connection_task.abort();
     let summary = result?;
-    println!("{}", serde_json::to_string_pretty(&summary)?);
+    let summary_json = serde_json::to_string_pretty(&summary)?;
+    database_state::write_json(&summary_json)?;
+    println!("{summary_json}");
     Ok(())
 }
 

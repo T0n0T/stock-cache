@@ -99,6 +99,27 @@ mod tests {
     }
 
     #[test]
+    fn stock_basic_replace_all_sql_uses_ts_code_key_and_name_fields() {
+        let stock_basic = dataset("stock_basic").expect("dataset exists");
+        let WriteSqlPlan::ReplaceAll {
+            clear_sql,
+            insert_sql,
+            transaction_group,
+        } = static_write_sql(stock_basic)
+        else {
+            panic!("expected replace_all plan");
+        };
+
+        assert_eq!(clear_sql, "delete from \"stock_basic\"");
+        assert_eq!(transaction_group, Some("reference_snapshot"));
+        assert!(insert_sql
+            .starts_with("insert into \"stock_basic\" (\"ts_code\", \"symbol\", \"name\""));
+        assert!(insert_sql.contains("\"list_date\""));
+        assert!(insert_sql.contains("\"delist_date\""));
+        assert!(insert_sql.contains("values ($1, $2, $3"));
+    }
+
+    #[test]
     fn index_ths_member_replace_all_sql_keeps_optional_fields() {
         let index_ths_member = dataset("index_ths_member").expect("dataset exists");
         let WriteSqlPlan::ReplaceAll {

@@ -17,6 +17,10 @@ pub struct Cli {
 pub enum Commands {
     InitDb,
     Status,
+    ContractCheck {
+        #[command(subcommand)]
+        command: ContractCheckCommand,
+    },
     Config {
         #[command(subcommand)]
         command: ConfigCommand,
@@ -27,6 +31,23 @@ pub enum Commands {
 #[derive(Debug, Subcommand)]
 pub enum ConfigCommand {
     Show,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ContractCheckCommand {
+    StockSelect(StockSelectContractArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct StockSelectContractArgs {
+    #[arg(long)]
+    pub pick_date: Option<String>,
+
+    #[arg(long, default_value_t = 252)]
+    pub lookback_trading_days: i64,
+
+    #[arg(long, default_value_t = 0.995)]
+    pub period_coverage_threshold: f64,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
@@ -56,8 +77,8 @@ pub struct WriteArgs {
     #[arg(long)]
     pub chunk_size: Option<usize>,
 
-    #[arg(long)]
-    pub refresh_ths: bool,
+    #[arg(long, alias = "refresh-ths")]
+    pub refresh: bool,
 
     #[arg(long)]
     pub force_recalc: bool,

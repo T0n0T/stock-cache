@@ -10,6 +10,7 @@ pub struct Config {
     pub index_list_path: String,
     pub default_lookback_trading_days: u32,
     pub max_concurrency: u32,
+    pub cache_warmup_concurrency: usize,
     pub request_timeout_seconds: u64,
     pub max_retries: u32,
     pub retry_base_delay_seconds: f64,
@@ -97,6 +98,11 @@ impl Config {
                 90,
             )?,
             max_concurrency: parse_or_default("MAX_CONCURRENCY", env_file, 4)?,
+            cache_warmup_concurrency: parse_positive_or_default(
+                "CACHE_WARMUP_CONCURRENCY",
+                env_file,
+                1,
+            )?,
             request_timeout_seconds: parse_or_default("REQUEST_TIMEOUT_SECONDS", env_file, 30)?,
             max_retries: parse_or_default("MAX_RETRIES", env_file, 3)?,
             retry_base_delay_seconds: parse_or_default("RETRY_BASE_DELAY_SECONDS", env_file, 1.0)?,
@@ -109,8 +115,8 @@ impl Config {
     pub fn print_human_readable(&self) {
         println!("Configuration");
         println!("  Secrets");
-        println!("    POSTGRES_DSN: {}", self.postgres_dsn);
-        println!("    TUSHARE_TOKEN: {}", self.tushare_token);
+        println!("    POSTGRES_DSN: {}", secret_state(&self.postgres_dsn));
+        println!("    TUSHARE_TOKEN: {}", secret_state(&self.tushare_token));
         println!();
         println!("  Paths");
         println!("    INDEX_LIST_PATH: {}", self.index_list_path);
@@ -121,6 +127,10 @@ impl Config {
             self.default_lookback_trading_days
         );
         println!("    MAX_CONCURRENCY: {}", self.max_concurrency);
+        println!(
+            "    CACHE_WARMUP_CONCURRENCY: {}",
+            self.cache_warmup_concurrency
+        );
         println!(
             "    REQUEST_TIMEOUT_SECONDS: {}",
             self.request_timeout_seconds
@@ -138,6 +148,14 @@ impl Config {
                 .unwrap_or_else(|| "auto".to_string())
         );
         println!("    LOG_LEVEL: {}", self.log_level);
+    }
+}
+
+fn secret_state(value: &str) -> &'static str {
+    if value.is_empty() {
+        "unset"
+    } else {
+        "set"
     }
 }
 
@@ -165,6 +183,18 @@ where
     };
     raw.parse::<T>()
         .map_err(|err| anyhow!("invalid value for {key}: {err}"))
+}
+
+fn parse_positive_or_default(
+    key: &str,
+    env_file: Option<&EnvFile>,
+    default: usize,
+) -> Result<usize> {
+    let parsed = parse_or_default(key, env_file, default)?;
+    if parsed == 0 {
+        return Err(anyhow!("{key} must be greater than 0"));
+    }
+    Ok(parsed)
 }
 
 fn parse_optional_positive_usize(key: &str, env_file: Option<&EnvFile>) -> Result<Option<usize>> {

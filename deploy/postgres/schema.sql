@@ -1,6 +1,27 @@
 -- Generated from schemas/tushare-fields.yaml by tools/generate_schema_sql.py.
 -- Do not edit by hand.
 
+create table "stock_basic" (
+    "ts_code" text not null,
+    "symbol" text,
+    "name" text,
+    "area" text,
+    "industry" text,
+    "fullname" text,
+    "enname" text,
+    "cnspell" text,
+    "market" text,
+    "exchange" text,
+    "curr_type" text,
+    "list_status" text,
+    "list_date" date,
+    "delist_date" date,
+    "is_hs" text,
+    "act_name" text,
+    "act_ent_type" text,
+    primary key ("ts_code")
+);
+
 create table "stock_stk_factor_pro" (
     "ts_code" text not null,
     "trade_date" date not null,
