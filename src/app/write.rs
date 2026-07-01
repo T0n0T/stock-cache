@@ -252,9 +252,7 @@ fn full_trade_date_plan_from_lookback_open_dates(
 }
 
 fn lookback_trade_cal_as_of(today: NaiveDate) -> Result<NaiveDate> {
-    today
-        .checked_sub_signed(ChronoDuration::days(1))
-        .ok_or_else(|| anyhow!("failed to calculate completed trading-day cutoff"))
+    Ok(today)
 }
 
 fn lookback_trade_cal_query_start(as_of: NaiveDate, days: u32) -> Result<NaiveDate> {
@@ -567,15 +565,15 @@ mod tests {
     }
 
     #[test]
-    fn lookback_trade_cal_as_of_uses_last_completed_calendar_day() {
+    fn lookback_trade_cal_as_of_uses_current_calendar_day() {
         assert_eq!(
             lookback_trade_cal_as_of(parse_date_text("20260630").unwrap()).unwrap(),
-            parse_date_text("20260629").unwrap()
+            parse_date_text("20260630").unwrap()
         );
     }
 
     #[test]
-    fn full_trade_date_plan_lookback_uses_last_completed_trading_day() {
+    fn full_trade_date_plan_lookback_can_use_current_trading_day() {
         let as_of = lookback_trade_cal_as_of(parse_date_text("20260630").unwrap()).unwrap();
         let open_dates = ["20260626", "20260629", "20260630"]
             .into_iter()
@@ -586,7 +584,7 @@ mod tests {
 
         assert_eq!(
             plan.target_trade_dates,
-            vec![parse_date_text("20260629").unwrap()]
+            vec![parse_date_text("20260630").unwrap()]
         );
     }
 
