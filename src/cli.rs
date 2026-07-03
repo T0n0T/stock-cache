@@ -17,6 +17,7 @@ pub struct Cli {
 pub enum Commands {
     InitDb,
     Status,
+    Erase(EraseArgs),
     ContractCheck {
         #[command(subcommand)]
         command: ContractCheckCommand,
@@ -26,6 +27,15 @@ pub enum Commands {
         command: ConfigCommand,
     },
     Write(WriteArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct EraseArgs {
+    #[arg(long)]
+    pub start_date: Option<String>,
+
+    #[arg(long)]
+    pub end_date: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]

@@ -111,6 +111,66 @@ fn write_help_mentions_force_recalc() {
 }
 
 #[test]
+fn erase_help_mentions_start_and_end_dates() {
+    stock_cache()
+        .args(["erase", "--help"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("--start-date"))
+        .stdout(predicate::str::contains("--end-date"))
+        .stdout(predicate::str::contains("--trade-date").not());
+}
+
+#[test]
+fn erase_does_not_require_tushare_token() {
+    stock_cache()
+        .args([
+            "erase",
+            "--start-date",
+            "20260703",
+            "--end-date",
+            "20260703",
+        ])
+        .env("POSTGRES_DSN", "not-a-postgres-dsn")
+        .env_remove("TUSHARE_TOKEN")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("TUSHARE_TOKEN").not());
+}
+
+#[test]
+fn erase_rejects_invalid_trade_date_before_connecting() {
+    stock_cache()
+        .args([
+            "erase",
+            "--start-date",
+            "2026-7-3",
+            "--end-date",
+            "2026-07-03",
+        ])
+        .env("POSTGRES_DSN", "postgres://example")
+        .env_remove("TUSHARE_TOKEN")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "--start-date must use YYYYMMDD or YYYY-MM-DD format",
+        ));
+}
+
+#[test]
+fn erase_rejects_unpaired_dates_before_connecting() {
+    stock_cache()
+        .args(["erase", "--start-date", "20260703"])
+        .env("POSTGRES_DSN", "postgres://example")
+        .env_remove("TUSHARE_TOKEN")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "--start-date and --end-date must be provided together",
+        ));
+}
+
+#[test]
 fn write_accepts_legacy_refresh_ths_alias() {
     stock_cache()
         .args(["write", "--mode", "cache", "--refresh-ths"])
