@@ -1,11 +1,14 @@
 use std::collections::BTreeMap;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use chrono::{Duration as ChronoDuration, NaiveDate};
 use serde::Serialize;
 use tokio_postgres::{Client, NoTls};
 
-use crate::{app::config::Config, cli::EraseArgs, source::writer::parse_date_text};
+use crate::{
+    app::{config::Config, write::parse_cli_date_arg},
+    cli::EraseArgs,
+};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct EraseTarget {
@@ -142,18 +145,7 @@ fn resolve_erase_dates(args: &EraseArgs) -> Result<Vec<NaiveDate>> {
 }
 
 fn parse_erase_date_arg(name: &str, value: &str) -> Result<NaiveDate> {
-    let compact = value.len() == 8 && value.bytes().all(|byte| byte.is_ascii_digit());
-    let dashed = value.len() == 10
-        && value.as_bytes()[4] == b'-'
-        && value.as_bytes()[7] == b'-'
-        && value
-            .bytes()
-            .enumerate()
-            .all(|(index, byte)| matches!(index, 4 | 7) || byte.is_ascii_digit());
-    if !compact && !dashed {
-        anyhow::bail!("{name} must use YYYYMMDD or YYYY-MM-DD format");
-    }
-    parse_date_text(value).with_context(|| format!("{name} must use YYYYMMDD or YYYY-MM-DD format"))
+    parse_cli_date_arg(name, value)
 }
 
 async fn erase_dates(
@@ -161,11 +153,19 @@ async fn erase_dates(
     target_dates: &[NaiveDate],
 ) -> Result<BTreeMap<String, u64>> {
     let transaction = client.transaction().await?;
+    transaction
+        .batch_execute("set local lock_timeout = '5s'; set local statement_timeout = '5min'")
+        .await?;
     let mut deleted_row_counts = BTreeMap::new();
     for trade_date in target_dates {
         for target in ERASE_TARGETS {
             let sql = delete_sql(target);
+            eprintln!(
+                "[erase] deleting table={} {}={}",
+                target.table, target.date_column, trade_date
+            );
             let deleted = transaction.execute(sql.as_str(), &[trade_date]).await?;
+            eprintln!("[erase] deleted table={} rows={}", target.table, deleted);
             *deleted_row_counts
                 .entry(target.table.to_string())
                 .or_insert(0) += deleted;
@@ -185,6 +185,12 @@ fn delete_sql(target: &EraseTarget) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn schema_has_date_leading_access_path(schema_sql: &str, target: &EraseTarget) -> bool {
+        let index_pattern = format!(r#"on "{}" ("{}"#, target.table, target.date_column);
+        let primary_key_pattern = format!(r#"primary key ("{}"#, target.date_column);
+        schema_sql.contains(&index_pattern) || schema_sql.contains(&primary_key_pattern)
+    }
 
     #[test]
     fn erase_targets_include_source_and_calc_date_slices_only() {
@@ -219,9 +225,9 @@ mod tests {
     }
 
     #[test]
-    fn erase_accepts_compact_and_dashed_date_window() {
+    fn erase_accepts_dashed_date_window() {
         let args = EraseArgs {
-            start_date: Some("20260703".to_string()),
+            start_date: Some("2026-07-03".to_string()),
             end_date: Some("2026-07-04".to_string()),
         };
         assert_eq!(
@@ -234,17 +240,17 @@ mod tests {
     }
 
     #[test]
-    fn erase_rejects_non_zero_padded_trade_date() {
-        assert!(parse_erase_date_arg("--start-date", "2026-7-3")
+    fn erase_rejects_compact_trade_date() {
+        assert!(parse_erase_date_arg("--start-date", "20260703")
             .unwrap_err()
             .to_string()
-            .contains("YYYYMMDD or YYYY-MM-DD"));
+            .contains("YYYY-MM-DD"));
     }
 
     #[test]
     fn erase_dates_must_be_paired() {
         let args = EraseArgs {
-            start_date: Some("20260703".to_string()),
+            start_date: Some("2026-07-03".to_string()),
             end_date: None,
         };
         assert!(resolve_erase_dates(&args)
@@ -256,8 +262,8 @@ mod tests {
     #[test]
     fn erase_start_date_must_not_be_after_end_date() {
         let args = EraseArgs {
-            start_date: Some("20260704".to_string()),
-            end_date: Some("20260703".to_string()),
+            start_date: Some("2026-07-04".to_string()),
+            end_date: Some("2026-07-03".to_string()),
         };
         assert!(resolve_erase_dates(&args)
             .unwrap_err()
@@ -273,6 +279,22 @@ mod tests {
                 date_column: "period_end_date",
             }),
             r#"delete from "stock_period_indicator_state" where "period_end_date" = $1"#
+        );
+    }
+
+    #[test]
+    fn erase_targets_have_date_leading_indexes_in_schema() {
+        let schema_sql = include_str!("../../deploy/postgres/schema.sql");
+        let missing = ERASE_TARGETS
+            .iter()
+            .filter(|target| !schema_has_date_leading_access_path(schema_sql, target))
+            .map(|target| format!("{}.{}", target.table, target.date_column))
+            .collect::<Vec<_>>();
+
+        assert!(
+            missing.is_empty(),
+            "erase targets need date-leading indexes or primary keys: {}",
+            missing.join(", ")
         );
     }
 }

@@ -127,9 +127,9 @@ fn erase_does_not_require_tushare_token() {
         .args([
             "erase",
             "--start-date",
-            "20260703",
+            "2026-07-03",
             "--end-date",
-            "20260703",
+            "2026-07-03",
         ])
         .env("POSTGRES_DSN", "not-a-postgres-dsn")
         .env_remove("TUSHARE_TOKEN")
@@ -144,7 +144,7 @@ fn erase_rejects_invalid_trade_date_before_connecting() {
         .args([
             "erase",
             "--start-date",
-            "2026-7-3",
+            "20260703",
             "--end-date",
             "2026-07-03",
         ])
@@ -153,14 +153,14 @@ fn erase_rejects_invalid_trade_date_before_connecting() {
         .assert()
         .failure()
         .stderr(predicate::str::contains(
-            "--start-date must use YYYYMMDD or YYYY-MM-DD format",
+            "--start-date must use YYYY-MM-DD format",
         ));
 }
 
 #[test]
 fn erase_rejects_unpaired_dates_before_connecting() {
     stock_cache()
-        .args(["erase", "--start-date", "20260703"])
+        .args(["erase", "--start-date", "2026-07-03"])
         .env("POSTGRES_DSN", "postgres://example")
         .env_remove("TUSHARE_TOKEN")
         .assert()

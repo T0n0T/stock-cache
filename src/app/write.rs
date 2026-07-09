@@ -239,7 +239,7 @@ fn full_trade_date_plan_from_lookback_open_dates(
             "trade_cal returned only {} open days for --lookback-trading-days {} as of {}",
             target_trade_dates.len(),
             days,
-            yyyymmdd(as_of)
+            yyyy_mm_dd(as_of)
         ));
     }
     let start = *target_trade_dates
@@ -301,9 +301,9 @@ pub fn resolve_date_window(args: &WriteArgs, config: &Config) -> Result<DateWind
     if has_start {
         let start_date = args.start_date.clone().expect("checked has_start");
         let end_date = args.end_date.clone().expect("checked has_end");
-        validate_yyyymmdd("--start-date", &start_date)?;
-        validate_yyyymmdd("--end-date", &end_date)?;
-        if start_date > end_date {
+        let start = parse_cli_date_arg("--start-date", &start_date)?;
+        let end = parse_cli_date_arg("--end-date", &end_date)?;
+        if start > end {
             return Err(anyhow!("--start-date must be <= --end-date"));
         }
         return Ok(DateWindow::Explicit {
@@ -322,11 +322,19 @@ pub fn resolve_date_window(args: &WriteArgs, config: &Config) -> Result<DateWind
     ))
 }
 
-fn validate_yyyymmdd(name: &str, value: &str) -> Result<()> {
-    if value.len() != 8 || !value.bytes().all(|byte| byte.is_ascii_digit()) {
-        return Err(anyhow!("{name} must use YYYYMMDD format"));
+pub(crate) fn parse_cli_date_arg(name: &str, value: &str) -> Result<NaiveDate> {
+    let dashed = value.len() == 10
+        && value.as_bytes()[4] == b'-'
+        && value.as_bytes()[7] == b'-'
+        && value
+            .bytes()
+            .enumerate()
+            .all(|(index, byte)| matches!(index, 4 | 7) || byte.is_ascii_digit());
+    if !dashed {
+        return Err(anyhow!("{name} must use YYYY-MM-DD format"));
     }
-    Ok(())
+    NaiveDate::parse_from_str(value, "%Y-%m-%d")
+        .map_err(|_| anyhow!("{name} must use YYYY-MM-DD format"))
 }
 
 fn full_summary(
@@ -387,21 +395,21 @@ fn format_window(window: &DateWindow) -> String {
     }
 }
 
-fn yyyymmdd(date: NaiveDate) -> String {
-    date.format("%Y%m%d").to_string()
+fn yyyy_mm_dd(date: NaiveDate) -> String {
+    date.format("%Y-%m-%d").to_string()
 }
 
 fn warmup_window_from_dates(dates: &[NaiveDate]) -> Option<DateWindow> {
     Some(DateWindow::Explicit {
-        start_date: yyyymmdd(*dates.first()?),
-        end_date: yyyymmdd(*dates.last()?),
+        start_date: yyyy_mm_dd(*dates.first()?),
+        end_date: yyyy_mm_dd(*dates.last()?),
     })
 }
 
 fn target_window_from_dates(dates: &[NaiveDate]) -> Option<DateWindow> {
     Some(DateWindow::Explicit {
-        start_date: yyyymmdd(*dates.first()?),
-        end_date: yyyymmdd(*dates.last()?),
+        start_date: yyyy_mm_dd(*dates.first()?),
+        end_date: yyyy_mm_dd(*dates.last()?),
     })
 }
 
@@ -449,10 +457,37 @@ mod tests {
     #[test]
     fn explicit_dates_and_lookback_are_mutually_exclusive() {
         let mut args = args(WriteMode::Full);
-        args.start_date = Some("20260601".to_string());
-        args.end_date = Some("20260625".to_string());
+        args.start_date = Some("2026-06-01".to_string());
+        args.end_date = Some("2026-06-25".to_string());
         args.lookback_trading_days = Some(30);
         assert!(resolve_date_window(&args, &config()).is_err());
+    }
+
+    #[test]
+    fn explicit_dates_accept_dashed_format() {
+        let mut args = args(WriteMode::Full);
+        args.start_date = Some("2026-06-01".to_string());
+        args.end_date = Some("2026-06-25".to_string());
+
+        assert_eq!(
+            resolve_date_window(&args, &config()).unwrap(),
+            DateWindow::Explicit {
+                start_date: "2026-06-01".to_string(),
+                end_date: "2026-06-25".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn explicit_dates_reject_compact_format() {
+        let mut args = args(WriteMode::Full);
+        args.start_date = Some("20260601".to_string());
+        args.end_date = Some("2026-06-25".to_string());
+
+        assert!(resolve_date_window(&args, &config())
+            .unwrap_err()
+            .to_string()
+            .contains("--start-date must use YYYY-MM-DD format"));
     }
 
     #[test]
@@ -613,8 +648,8 @@ mod tests {
         assert_eq!(
             target_window_from_dates(&dates),
             Some(DateWindow::Explicit {
-                start_date: "20260626".to_string(),
-                end_date: "20260629".to_string(),
+                start_date: "2026-06-26".to_string(),
+                end_date: "2026-06-29".to_string(),
             })
         );
     }
@@ -622,8 +657,8 @@ mod tests {
     #[test]
     fn full_summary_combines_cache_and_calc_counts() {
         let window = DateWindow::Explicit {
-            start_date: "20250625".to_string(),
-            end_date: "20250625".to_string(),
+            start_date: "2025-06-25".to_string(),
+            end_date: "2025-06-25".to_string(),
         };
         let target_cache_summary = cache::CacheSummary {
             status: "success",
@@ -633,8 +668,8 @@ mod tests {
             message: "source cache write completed",
         };
         let warmup_window = DateWindow::Explicit {
-            start_date: "20240102".to_string(),
-            end_date: "20250624".to_string(),
+            start_date: "2024-01-02".to_string(),
+            end_date: "2025-06-24".to_string(),
         };
         let warmup_cache_summary = cache::CacheSummary {
             status: "success",
@@ -675,11 +710,11 @@ mod tests {
         assert_eq!(summary.status, "success");
         assert_eq!(summary.mode, "full");
         assert_eq!(summary.refresh, true);
-        assert_eq!(summary.calc_date_window, "20250625..20250625");
-        assert_eq!(summary.cache_date_window, "20250625..20250625");
+        assert_eq!(summary.calc_date_window, "2025-06-25..2025-06-25");
+        assert_eq!(summary.cache_date_window, "2025-06-25..2025-06-25");
         assert_eq!(
             summary.calc_source_warmup_date_window,
-            Some("20240102..20250624".to_string())
+            Some("2024-01-02..2025-06-24".to_string())
         );
         assert_eq!(
             summary.source_row_counts.get("stock_stk_factor_pro"),

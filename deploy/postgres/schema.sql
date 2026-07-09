@@ -517,6 +517,9 @@ create table "stock_period_indicator_state" (
 create index "stock_period_indicator_state_lookup_idx"
     on "stock_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
 
+create index "stock_period_indicator_state_period_end_date_idx"
+    on "stock_period_indicator_state" ("period_end_date");
+
 create table "index_period_indicator_state" (
     "ts_code" text not null,
     "period_type" text not null,
@@ -536,6 +539,9 @@ create table "index_period_indicator_state" (
 
 create index "index_period_indicator_state_lookup_idx"
     on "index_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
+
+create index "index_period_indicator_state_period_end_date_idx"
+    on "index_period_indicator_state" ("period_end_date");
 
 create table "stock_daily_asof_indicators" (
     "ts_code" text not null,
@@ -559,6 +565,9 @@ create table "stock_daily_asof_indicators" (
     primary key ("ts_code", "trade_date", "calc_version")
 );
 
+create index "stock_daily_asof_indicators_trade_date_idx"
+    on "stock_daily_asof_indicators" ("trade_date");
+
 create table "index_daily_asof_indicators" (
     "ts_code" text not null,
     "trade_date" date not null,
@@ -580,6 +589,9 @@ create table "index_daily_asof_indicators" (
     "calc_version" text not null,
     primary key ("ts_code", "trade_date", "calc_version")
 );
+
+create index "index_daily_asof_indicators_trade_date_idx"
+    on "index_daily_asof_indicators" ("trade_date");
 
 create table "stock_daily_rolling_factors" (
     "ts_code" text not null,
@@ -607,6 +619,9 @@ create table "stock_daily_rolling_factors" (
     "calc_version" text not null,
     primary key ("ts_code", "trade_date", "calc_version")
 );
+
+create index "stock_daily_rolling_factors_trade_date_idx"
+    on "stock_daily_rolling_factors" ("trade_date");
 
 create table "stock_daily_left_peak" (
     "ts_code" text not null,
@@ -637,3 +652,6 @@ create table "stock_daily_left_peak" (
     )),
     primary key ("ts_code", "trade_date", "calc_version")
 );
+
+create index "stock_daily_left_peak_trade_date_idx"
+    on "stock_daily_left_peak" ("trade_date");

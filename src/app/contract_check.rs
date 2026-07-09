@@ -204,9 +204,9 @@ async fn query_adj_factor(
     pick_date: NaiveDate,
     lookback_trading_days: i64,
 ) -> Result<AdjFactorSummary> {
-    let row = client
-        .query_one(
-            r#"
+    let positive_finite_predicate = positive_finite_float_predicate("adj_factor");
+    let sql = format!(
+        r#"
             with dates as (
                 select distinct "trade_date"
                 from "stock_stk_factor_pro"
@@ -221,13 +221,14 @@ async fn query_adj_factor(
             select
                 count(*)::bigint,
                 count(*) filter (where "adj_factor" is not null)::bigint,
-                count(*) filter (where "adj_factor" is not null and isfinite("adj_factor") and "adj_factor" > 0)::bigint,
+                count(*) filter (where {positive_finite_predicate})::bigint,
                 min("adj_factor"),
                 max("adj_factor")
             from window_rows
             "#,
-            &[&pick_date, &lookback_trading_days],
-        )
+    );
+    let row = client
+        .query_one(&sql, &[&pick_date, &lookback_trading_days])
         .await?;
     Ok(AdjFactorSummary {
         rows: row.get(0),
@@ -236,6 +237,17 @@ async fn query_adj_factor(
         min: row.get(3),
         max: row.get(4),
     })
+}
+
+fn positive_finite_float_predicate(column: &str) -> String {
+    let column = quote_ident(column);
+    format!(
+        r#"{column} is not null and {column} > 0 and {column} < 'Infinity'::float8 and {column} > '-Infinity'::float8"#
+    )
+}
+
+fn quote_ident(value: &str) -> String {
+    format!(r#""{}""#, value.replace('"', "\"\""))
 }
 
 async fn query_qfq_ohlc(client: &Client, pick_date: NaiveDate) -> Result<QfqOhlcSummary> {
@@ -693,4 +705,19 @@ fn date_text(date: NaiveDate) -> String {
 
 fn optional_date_text(date: Option<NaiveDate>) -> Option<String> {
     date.map(date_text)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn adj_factor_positive_finite_predicate_uses_postgres_float_literals() {
+        let predicate = positive_finite_float_predicate("adj_factor");
+        assert_eq!(
+            predicate,
+            r#""adj_factor" is not null and "adj_factor" > 0 and "adj_factor" < 'Infinity'::float8 and "adj_factor" > '-Infinity'::float8"#
+        );
+        assert!(!predicate.contains("isfinite"));
+    }
 }
