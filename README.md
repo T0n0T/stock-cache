@@ -201,11 +201,14 @@ Use these tables for downstream readers:
 - `index_period_indicator_state`: completed index daily/weekly/monthly MACD recursive state.
 - `stock_daily_rolling_factors`: stock rolling moving average, position, volume, turnover, and range compression factors.
 - `stock_daily_left_peak`: stock left-peak structure factors.
+- `stock_daily_czsc_structure`: point-in-time CZSC BI/ZS, recent peak, and first-bear snapshots from qfq OHLC.
 
 For EOD screening, prefer the `*_daily_asof_indicators` tables. For intraday simulation, use the latest completed period state plus the live/current qfq price and apply the formula documented in [Data usage guide](docs/data-usage-guide.md).
 
 For weekly/monthly period state, use the latest row with `period_end_date <= pick_date`.
 Very short-history stocks may lack weekly or monthly state; downstream consumers should skip those rows when the contract report marks the gap as acceptable.
+
+The temporary `backfill-czsc-structure` binary is intentionally separate from the long-lived CLI. It defaults to the latest 252 market trade dates, replays each stock from its earliest local history, skips dates already complete for `czsc_structure_qfq_min6_r7_v1`, and supports `--dry-run` and explicit `--force` overwrite.
 
 ## Development Checks
 

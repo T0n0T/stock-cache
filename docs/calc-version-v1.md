@@ -12,6 +12,7 @@
 | `stock_daily_asof_indicators` | `macd_qfq_12_26_9_v1` |
 | `stock_daily_rolling_factors` | `rolling_qfq_v1` |
 | `stock_daily_left_peak` | `left_peak_qfq_v1` |
+| `stock_daily_czsc_structure` | `czsc_structure_qfq_min6_r7_v1` |
 
 `calc_version` 是计算口径的一部分，不是运行审计字段。
 
@@ -341,6 +342,32 @@ a_lt_b = A < B
 
 `A` 缺失时，上述派生字段写 `NULL`。
 
+## CZSC Structure
+
+版本：`czsc_structure_qfq_min6_r7_v1`。
+
+输入仅使用按股票、交易日严格递增的 `open_qfq/high_qfq/low_qfq/close_qfq`。停牌日期不补 K 线；无效 OHLC 不送入分析器，但仍输出沿用既有状态的当日行。核心参数为：
+
+```text
+min_bi_len = 6
+max_bi_num = 50
+recent_bi_window = 7
+```
+
+所有派生结构基于 `finished_bis`，并严格在目标交易日当场生成，未来笔延伸、破坏或撤销不会回写过去快照。输出包括最近完成笔及其中点、最后一个有效 ZS、最近最多 7 笔覆盖原始 K 线的峰值，以及峰值之后第一根 `close_qfq < open_qfq` 的阴线。并列最高价取最后一个实际交易日。
+
+`status` 按以下优先级互斥：
+
+```text
+invalid_source_bar
+no_finished_bi
+insufficient_bis_for_zs
+no_valid_zs
+ok
+```
+
+结构算法、完成笔尾部判定、参数、ZS 划分、recent 窗口、峰值并列规则、阴线定义或 as-of 语义发生变化时必须升级 `calc_version`。仅源行情修订不升级版本，使用同版本 UPSERT 覆盖。
+
 ## Usable Ranges
 
 `write --mode calc/full` 完成后，stdout 摘要输出每张计算表的保守可使用范围，不入库。
@@ -350,6 +377,7 @@ a_lt_b = A < B
 - `stock_daily_asof_indicators`: 输出实际请求范围。消费者可参考 `*_period_count` 判断早期 warmup。
 - `stock_daily_rolling_factors`: 最大窗口为 220 个交易日，因此可使用起点为本地可用历史中的第 220 个交易日。
 - `stock_daily_left_peak`: 保守窗口为 360 个交易日，因此可使用起点为本地可用历史中的第 360 个交易日。
+- `stock_daily_czsc_structure`: 没有固定 N 日预热期，但有路径依赖；输出范围是实际请求范围，计算必须从每只股票最早本地历史恢复状态。
 
 如果本地历史不足对应窗口，起点输出 `null`。
 

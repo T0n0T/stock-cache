@@ -22,6 +22,7 @@ pub(super) struct ComputedRows {
     pub(super) index_asof_rows: Vec<AsofRow>,
     pub(super) rolling_rows: Vec<RollingRow>,
     pub(super) left_peak_rows: Vec<LeftPeakRow>,
+    pub(super) czsc_rows: Vec<CzscStructureRow>,
 }
 
 impl ComputedRows {
@@ -33,6 +34,7 @@ impl ComputedRows {
         self.index_asof_rows.append(&mut other.index_asof_rows);
         self.rolling_rows.append(&mut other.rolling_rows);
         self.left_peak_rows.append(&mut other.left_peak_rows);
+        self.czsc_rows.append(&mut other.czsc_rows);
     }
 }
 
@@ -141,4 +143,71 @@ pub(super) struct LeftPeakRow {
     pub(super) a_lt_b: Option<bool>,
     pub(super) is_valid: Option<bool>,
     pub(super) status: String,
+}
+
+#[derive(Debug)]
+pub(super) struct CzscStructureRow {
+    pub(super) ts_code: String,
+    pub(super) trade_date: NaiveDate,
+    pub(super) source_bar_valid: bool,
+    pub(super) status: String,
+    pub(super) available_finished_bi_count: i32,
+    pub(super) recent_bi_count: i32,
+    pub(super) last_bi_direction: Option<String>,
+    pub(super) last_bi_start_date: Option<NaiveDate>,
+    pub(super) last_bi_end_date: Option<NaiveDate>,
+    pub(super) last_bi_high: Option<f64>,
+    pub(super) last_bi_low: Option<f64>,
+    pub(super) last_bi_mid: Option<f64>,
+    pub(super) latest_zs_start_date: Option<NaiveDate>,
+    pub(super) latest_zs_end_date: Option<NaiveDate>,
+    pub(super) latest_zs_bi_count: Option<i32>,
+    pub(super) latest_zs_zg: Option<f64>,
+    pub(super) latest_zs_zd: Option<f64>,
+    pub(super) latest_zs_zz: Option<f64>,
+    pub(super) recent_peak_date: Option<NaiveDate>,
+    pub(super) recent_peak_high: Option<f64>,
+    pub(super) post_peak_first_bear_date: Option<NaiveDate>,
+    pub(super) post_peak_first_bear_open: Option<f64>,
+    pub(super) post_peak_first_bear_high: Option<f64>,
+    pub(super) post_peak_first_bear_low: Option<f64>,
+    pub(super) post_peak_first_bear_close: Option<f64>,
+    pub(super) post_peak_first_bear_missing: Option<bool>,
+}
+
+impl CzscStructureRow {
+    pub(super) fn from_snapshot(
+        ts_code: &str,
+        trade_date: NaiveDate,
+        snapshot: super::czsc::CzscSnapshot,
+    ) -> Self {
+        Self {
+            ts_code: ts_code.to_string(),
+            trade_date,
+            source_bar_valid: snapshot.source_bar_valid,
+            status: snapshot.status,
+            available_finished_bi_count: snapshot.available_finished_bi_count as i32,
+            recent_bi_count: snapshot.recent_bi_count as i32,
+            last_bi_direction: snapshot.last_bi_direction,
+            last_bi_start_date: snapshot.last_bi_start_date,
+            last_bi_end_date: snapshot.last_bi_end_date,
+            last_bi_high: snapshot.last_bi_high,
+            last_bi_low: snapshot.last_bi_low,
+            last_bi_mid: snapshot.last_bi_mid,
+            latest_zs_start_date: snapshot.latest_zs_start_date,
+            latest_zs_end_date: snapshot.latest_zs_end_date,
+            latest_zs_bi_count: snapshot.latest_zs_bi_count.map(|count| count as i32),
+            latest_zs_zg: snapshot.latest_zs_zg,
+            latest_zs_zd: snapshot.latest_zs_zd,
+            latest_zs_zz: snapshot.latest_zs_zz,
+            recent_peak_date: snapshot.recent_peak_date,
+            recent_peak_high: snapshot.recent_peak_high,
+            post_peak_first_bear_date: snapshot.post_peak_first_bear_date,
+            post_peak_first_bear_open: snapshot.post_peak_first_bear_open,
+            post_peak_first_bear_high: snapshot.post_peak_first_bear_high,
+            post_peak_first_bear_low: snapshot.post_peak_first_bear_low,
+            post_peak_first_bear_close: snapshot.post_peak_first_bear_close,
+            post_peak_first_bear_missing: snapshot.post_peak_first_bear_missing,
+        }
+    }
 }

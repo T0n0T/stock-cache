@@ -10,6 +10,7 @@ use crate::app::{config::Config, database_state};
 const MACD_CALC_VERSION: &str = "macd_qfq_12_26_9_v1";
 const ROLLING_CALC_VERSION: &str = "rolling_qfq_v1";
 const LEFT_PEAK_CALC_VERSION: &str = "left_peak_qfq_v1";
+const CZSC_STRUCTURE_CALC_VERSION: &str = "czsc_structure_qfq_min6_r7_v1";
 const MONTHLY_MACD_WARMUP_MONTHS: u32 = 36;
 
 const SOURCE_TABLES: &[TableDateSpec] = &[
@@ -54,6 +55,11 @@ const CALC_TABLES: &[CalcTableSpec] = &[
         "stock_daily_left_peak",
         "trade_date",
         Some(LEFT_PEAK_CALC_VERSION),
+    ),
+    CalcTableSpec::new(
+        "stock_daily_czsc_structure",
+        "trade_date",
+        Some(CZSC_STRUCTURE_CALC_VERSION),
     ),
 ];
 

@@ -1,6 +1,7 @@
 pub(super) const MACD_CALC_VERSION: &str = "macd_qfq_12_26_9_v1";
 pub(super) const ROLLING_CALC_VERSION: &str = "rolling_qfq_v1";
 pub(super) const LEFT_PEAK_CALC_VERSION: &str = "left_peak_qfq_v1";
+pub(super) const CZSC_STRUCTURE_CALC_VERSION: &str = "czsc_structure_qfq_min6_r7_v1";
 
 pub(super) const ALPHA12: f64 = 2.0 / (12.0 + 1.0);
 pub(super) const ALPHA26: f64 = 2.0 / (26.0 + 1.0);

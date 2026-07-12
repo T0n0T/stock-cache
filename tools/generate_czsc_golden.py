@@ -129,6 +129,78 @@ def zs_dict(zs: Any) -> dict[str, Any]:
     }
 
 
+def structure_snapshot(
+    czsc: Any,
+    analyzer: Any,
+    valid_bars: list[dict[str, Any]],
+    source_bar_valid: bool,
+) -> dict[str, Any]:
+    finished = list(analyzer.finished_bis) if analyzer is not None else []
+    recent = finished[-7:]
+    last = finished[-1] if finished else None
+    zss = get_zs_seq(czsc, finished)
+    latest_zs = next(
+        (zs for zs in reversed(zss) if len(zs.bis) >= 3 and zs.is_valid()),
+        None,
+    )
+
+    raw_candidates = [raw for bi in recent for raw in bi.raw_bars]
+    peak = max(raw_candidates, key=lambda raw: (raw.high, raw.dt), default=None)
+    bear = None
+    if peak is not None:
+        peak_date = iso_date(peak.dt)
+        bear = next(
+            (
+                bar
+                for bar in valid_bars
+                if bar["trade_date"] > peak_date and bar["close"] < bar["open"]
+            ),
+            None,
+        )
+
+    if not source_bar_valid:
+        status = "invalid_source_bar"
+    elif not finished:
+        status = "no_finished_bi"
+    elif len(finished) < 3:
+        status = "insufficient_bis_for_zs"
+    elif latest_zs is None:
+        status = "no_valid_zs"
+    else:
+        status = "ok"
+
+    last_high = last.high if last is not None else None
+    last_low = last.low if last is not None else None
+    return {
+        "source_bar_valid": source_bar_valid,
+        "status": status,
+        "available_finished_bi_count": len(finished),
+        "recent_bi_count": len(recent),
+        "last_bi_direction": (
+            {"向上": "up", "向下": "down"}[str(last.direction)] if last else None
+        ),
+        "last_bi_start_date": iso_date(last.sdt) if last else None,
+        "last_bi_end_date": iso_date(last.edt) if last else None,
+        "last_bi_high": last_high,
+        "last_bi_low": last_low,
+        "last_bi_mid": (last_high + last_low) / 2 if last else None,
+        "latest_zs_start_date": iso_date(latest_zs.sdt) if latest_zs else None,
+        "latest_zs_end_date": iso_date(latest_zs.edt) if latest_zs else None,
+        "latest_zs_bi_count": len(latest_zs.bis) if latest_zs else None,
+        "latest_zs_zg": latest_zs.zg if latest_zs else None,
+        "latest_zs_zd": latest_zs.zd if latest_zs else None,
+        "latest_zs_zz": latest_zs.zz if latest_zs else None,
+        "recent_peak_date": iso_date(peak.dt) if peak else None,
+        "recent_peak_high": peak.high if peak else None,
+        "post_peak_first_bear_date": bear["trade_date"] if bear else None,
+        "post_peak_first_bear_open": bear["open"] if bear else None,
+        "post_peak_first_bear_high": bear["high"] if bear else None,
+        "post_peak_first_bear_low": bear["low"] if bear else None,
+        "post_peak_first_bear_close": bear["close"] if bear else None,
+        "post_peak_first_bear_missing": None if peak is None else bear is None,
+    }
+
+
 def raw_bar(czsc: Any, bar: dict[str, Any], bar_id: int) -> Any:
     dt = datetime.fromisoformat(bar["trade_date"])
     return czsc.RawBar(
@@ -150,10 +222,12 @@ def expected_days(czsc: Any, bars: list[dict[str, Any]]) -> list[dict[str, Any]]
     previous_bis: list[dict[str, Any]] = []
     removed_last_bis: list[dict[str, Any]] = []
     expected = []
+    valid_bars = []
     valid_id = 0
     for bar in bars:
         source_bar_valid = valid_ohlc(bar)
         if source_bar_valid:
+            valid_bars.append(bar)
             raw = raw_bar(czsc, bar, valid_id)
             valid_id += 1
             if analyzer is None:
@@ -202,6 +276,9 @@ def expected_days(czsc: Any, bars: list[dict[str, Any]]) -> list[dict[str, Any]]
                 "bi_list": bis,
                 "finished_bis": [bi_dict(bi) for bi in finished],
                 "zs_seq": [zs_dict(zs) for zs in get_zs_seq(czsc, finished)],
+                "snapshot": structure_snapshot(
+                    czsc, analyzer, valid_bars, source_bar_valid
+                ),
                 "events": events,
             }
         )

@@ -16,8 +16,12 @@ Rust CLI 源码按职责分层，顶层只保留入口、CLI 参数定义和一�
 
 ```text
 src/
+  lib.rs
   main.rs
   cli.rs
+
+  bin/
+    backfill-czsc-structure.rs
 
   app/
     mod.rs
@@ -42,6 +46,7 @@ src/
 
   calc/
     mod.rs
+    backfill.rs
     constants.rs
     coverage.rs
     source.rs
@@ -52,6 +57,13 @@ src/
     index.rs
     rolling.rs
     left_peak.rs
+    czsc/
+      mod.rs
+      model.rs
+      analyzer.rs
+      structure.rs
+      tests.rs
+      README.md
 ```
 
 模块边界：
@@ -61,6 +73,9 @@ src/
 - `source/` 放源数据缓存流程、Python worker 进程适配和源表写入。
 - `metadata/` 放固化的 Tushare 字段、写入策略和数据集元信息。
 - `calc/` 放本地计算流程；MACD/周期状态、股票计算、指数计算、滚动因子、左侧高点分别拆分。
+- `lib.rs` 只公开两个 binary 的窄入口；共享实现仍保持 crate 内可见。
+- `bin/backfill-czsc-structure.rs` 是批次 E 临时入口，长期主 CLI 不感知该命令。
+- `calc/czsc/` 是不访问数据库的深模块；`calc/backfill.rs` 只负责编排窗口、摘要和专用持久化接缝。
 
 消费者读取计算表、使用 period state 推演盘中长周期指标时，参见 [Data Usage Guide](data-usage-guide.md)。
 
@@ -165,6 +180,22 @@ stock-cache --env-file /path/to/.env write --mode full
 | `full` | `cache` 后执行 `calc` | 是 | 是 |
 
 `calc` 阶段不自动补 Tushare 数据。历史不足时，计算字段写 `NULL` 或结构字段写无效状态，CLI 在 stdout 摘要中给出表级可使用范围。
+
+## Temporary CZSC Backfill Binary
+
+批次 E 提供独立的临时维护 binary，不加入长期 `stock-cache` 命令面，也不增加 `--calc-target`：
+
+```bash
+cargo run --bin backfill-czsc-structure -- --dry-run
+cargo run --bin backfill-czsc-structure -- \
+  --start-date 2026-01-01 \
+  --end-date 2026-06-30 \
+  --max-concurrency 4 \
+  --chunk-size 60 \
+  --force
+```
+
+默认窗口是 `stock_stk_factor_pro` 最新 252 个全市场交易日。工具从每只股票最早本地历史恢复 CZSC 状态，只为统一窗口内实际存在的源行生成快照；默认跳过当前版本已完整日期，只有 `--force` 覆盖。每个 chunk 只事务写入 `stock_daily_czsc_structure`。`--dry-run` 经过同一读取和计算路径，但不调用数据库 writer，并输出目标日数、股票数、源 K 线数、预计行数、status 分布、完成笔/有效 ZS/首阴线比例、耗时和确定性样本。
 
 ## Date Window
 

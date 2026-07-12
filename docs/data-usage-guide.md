@@ -15,6 +15,7 @@
 | 盘中推演板块/指数 MACD | `index_period_indicator_state` | 读取上一完成周期状态，再用当前指数价格递推一次 |
 | 股票滚动因子 | `stock_daily_rolling_factors` | 25/144/220 日均线、区间位置、量能、换手、压缩度 |
 | 左峰结构 | `stock_daily_left_peak` | 左侧压力位、突破结构、第一阴线锚点 |
+| CZSC 结构 | `stock_daily_czsc_structure` | 严格 point-in-time 的完成笔、中枢、近 7 笔峰值和峰值后首根阴线 |
 
 所有计算表都带 `calc_version`。查询时必须显式带上版本，避免未来版本并存时混用口径。
 
@@ -24,6 +25,7 @@
 macd_qfq_12_26_9_v1
 rolling_qfq_v1
 left_peak_qfq_v1
+czsc_structure_qfq_min6_r7_v1
 ```
 
 ## EOD 使用
@@ -53,7 +55,13 @@ select
   r.volume_to_ma20_ratio,
   l.left_peak_date,
   l.left_peak_high,
-  l.is_valid as left_peak_valid
+  l.is_valid as left_peak_valid,
+  c.status as czsc_status,
+  c.last_bi_direction,
+  c.last_bi_mid,
+  c.latest_zs_zz,
+  c.recent_peak_date,
+  c.post_peak_first_bear_date
 from stock_stk_factor_pro s
 join stock_daily_asof_indicators a
   on a.ts_code = s.ts_code
@@ -67,8 +75,14 @@ left join stock_daily_left_peak l
   on l.ts_code = s.ts_code
  and l.trade_date = s.trade_date
  and l.calc_version = 'left_peak_qfq_v1'
+left join stock_daily_czsc_structure c
+  on c.ts_code = s.ts_code
+ and c.trade_date = s.trade_date
+ and c.calc_version = 'czsc_structure_qfq_min6_r7_v1'
 where s.trade_date = date '2026-06-26';
 ```
+
+CZSC 行只在源表存在同一 `(ts_code, trade_date)` 时生成。无效 qfq OHLC 仍有一行，`source_bar_valid=false`、`status=invalid_source_bar`，并沿用此前有效 K 线形成的结构快照。`post_peak_first_bear_missing` 是三态字段：无峰值为 `NULL`，有峰值但尚无阴线为 `true`，已找到阴线为 `false`。
 
 板块/指数示例：
 

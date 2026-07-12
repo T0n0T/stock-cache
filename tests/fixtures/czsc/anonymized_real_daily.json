@@ -1147,6 +1147,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1157,6 +1183,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1167,6 +1219,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1177,6 +1255,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1187,6 +1291,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1197,6 +1327,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1207,6 +1363,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1217,6 +1399,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1227,6 +1435,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1237,6 +1471,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1247,6 +1507,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1257,6 +1543,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1267,6 +1579,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1277,6 +1615,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1287,6 +1651,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1297,6 +1687,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1307,6 +1723,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1317,6 +1759,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1327,6 +1795,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1337,6 +1831,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1347,6 +1867,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1357,6 +1903,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1367,6 +1939,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1377,6 +1975,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1387,6 +2011,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1397,6 +2047,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1407,6 +2083,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1417,6 +2119,32 @@
           "bi_list": [],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": []
         },
         {
@@ -1435,6 +2163,32 @@
           ],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1455,6 +2209,32 @@
           ],
           "finished_bis": [],
           "zs_seq": [],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "no_finished_bi",
+            "available_finished_bi_count": 0,
+            "recent_bi_count": 0,
+            "last_bi_direction": null,
+            "last_bi_start_date": null,
+            "last_bi_end_date": null,
+            "last_bi_high": null,
+            "last_bi_low": null,
+            "last_bi_mid": null,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": null,
+            "recent_peak_high": null,
+            "post_peak_first_bear_date": null,
+            "post_peak_first_bear_open": null,
+            "post_peak_first_bear_high": null,
+            "post_peak_first_bear_low": null,
+            "post_peak_first_bear_close": null,
+            "post_peak_first_bear_missing": null
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1493,6 +2273,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -1538,6 +2344,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1583,6 +2415,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1628,6 +2486,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1666,6 +2550,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -1706,6 +2616,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -1751,6 +2687,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -1797,6 +2759,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 1,
+            "recent_bi_count": 1,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-10",
+            "last_bi_end_date": "2025-12-19",
+            "last_bi_high": 11.29,
+            "last_bi_low": 10.93,
+            "last_bi_mid": 11.11,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1849,6 +2837,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 2,
+            "recent_bi_count": 2,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2025-12-19",
+            "last_bi_end_date": "2025-12-31",
+            "last_bi_high": 11.29,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.165,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -1908,6 +2922,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 2,
+            "recent_bi_count": 2,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2025-12-19",
+            "last_bi_end_date": "2025-12-31",
+            "last_bi_high": 11.29,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.165,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -1967,6 +3007,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "insufficient_bis_for_zs",
+            "available_finished_bi_count": 2,
+            "recent_bi_count": 2,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2025-12-19",
+            "last_bi_end_date": "2025-12-31",
+            "last_bi_high": 11.29,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.165,
+            "latest_zs_start_date": null,
+            "latest_zs_end_date": null,
+            "latest_zs_bi_count": null,
+            "latest_zs_zg": null,
+            "latest_zs_zd": null,
+            "latest_zs_zz": null,
+            "recent_peak_date": "2025-12-19",
+            "recent_peak_high": 11.29,
+            "post_peak_first_bear_date": "2025-12-22",
+            "post_peak_first_bear_open": 11.25,
+            "post_peak_first_bear_high": 11.25,
+            "post_peak_first_bear_low": 11.15,
+            "post_peak_first_bear_close": 11.16,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -2033,6 +3099,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2106,6 +3198,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -2172,6 +3290,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -2240,6 +3384,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2306,6 +3476,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2372,6 +3568,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2438,6 +3660,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2504,6 +3752,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2570,6 +3844,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2636,6 +3936,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2702,6 +4028,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2768,6 +4120,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2834,6 +4212,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2900,6 +4304,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -2973,6 +4403,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -3047,6 +4503,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -3120,6 +4602,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 3,
+            "recent_bi_count": 3,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2025-12-31",
+            "last_bi_end_date": "2026-01-07",
+            "last_bi_high": 11.46,
+            "last_bi_low": 11.04,
+            "last_bi_mid": 11.25,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-07",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -3200,6 +4708,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3280,6 +4814,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3360,6 +4920,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3440,6 +5026,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3520,6 +5132,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3600,6 +5238,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3687,6 +5351,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -3774,6 +5464,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 4,
+            "recent_bi_count": 4,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-01-07",
+            "last_bi_end_date": "2026-01-29",
+            "last_bi_high": 11.46,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.88,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -3877,6 +5593,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -3980,6 +5722,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -4083,6 +5851,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -4193,6 +5987,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -4296,6 +6116,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -4408,6 +6254,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -4512,6 +6384,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -4617,6 +6515,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -4720,6 +6644,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -4823,6 +6773,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -4926,6 +6902,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -5036,6 +7038,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -5147,6 +7175,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 5,
+            "recent_bi_count": 5,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-01-29",
+            "last_bi_end_date": "2026-02-06",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.3,
+            "last_bi_mid": 10.54,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -5264,6 +7318,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 6,
+            "recent_bi_count": 6,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-02-06",
+            "last_bi_end_date": "2026-03-04",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.545,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -5381,6 +7461,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 6,
+            "recent_bi_count": 6,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-02-06",
+            "last_bi_end_date": "2026-03-04",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.545,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -5498,6 +7604,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 6,
+            "recent_bi_count": 6,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-02-06",
+            "last_bi_end_date": "2026-03-04",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.545,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -5615,6 +7747,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 6,
+            "recent_bi_count": 6,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-02-06",
+            "last_bi_end_date": "2026-03-04",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.545,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -5739,6 +7897,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 6,
+            "recent_bi_count": 6,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-02-06",
+            "last_bi_end_date": "2026-03-04",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.545,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -5863,6 +8047,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 6,
+            "recent_bi_count": 6,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-02-06",
+            "last_bi_end_date": "2026-03-04",
+            "last_bi_high": 10.78,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.545,
+            "latest_zs_start_date": "2025-12-10",
+            "latest_zs_end_date": "2026-01-29",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 11.29,
+            "latest_zs_zd": 11.04,
+            "latest_zs_zz": 11.165,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -5994,6 +8204,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 7,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-04",
+            "last_bi_end_date": "2026-03-17",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.510000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-17",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -6132,6 +8368,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 7,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-04",
+            "last_bi_end_date": "2026-03-17",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.510000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-17",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -6270,6 +8532,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 7,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-04",
+            "last_bi_end_date": "2026-03-17",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.31,
+            "last_bi_mid": 10.510000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-17",
+            "latest_zs_bi_count": 3,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -6415,6 +8703,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -6560,6 +8874,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -6705,6 +9045,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -6850,6 +9216,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -6995,6 +9387,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -7140,6 +9558,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -7292,6 +9736,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -7444,6 +9914,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 8,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-03-17",
+            "last_bi_end_date": "2026-03-23",
+            "last_bi_high": 10.71,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.39,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-03-23",
+            "latest_zs_bi_count": 4,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -7603,6 +10099,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -7762,6 +10284,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -7921,6 +10469,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -8080,6 +10654,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -8239,6 +10839,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -8398,6 +11024,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -8557,6 +11209,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -8716,6 +11394,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -8875,6 +11579,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -9041,6 +11771,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -9200,6 +11956,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -9361,6 +12143,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -9520,6 +12328,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -9686,6 +12520,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -9853,6 +12713,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -10019,6 +12905,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -10185,6 +13097,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -10358,6 +13296,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -10531,6 +13495,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -10704,6 +13694,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -10877,6 +13893,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -11050,6 +14092,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -11223,6 +14291,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -11396,6 +14490,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -11569,6 +14689,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-04-24",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.56,
+            "last_bi_mid": 10.760000000000002,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-24",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -11728,6 +14874,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -11889,6 +15061,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -12048,6 +15246,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -12207,6 +15431,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -12366,6 +15616,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -12525,6 +15801,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -12691,6 +15993,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -12858,6 +16186,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -13017,6 +16371,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -13178,6 +16558,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -13344,6 +16750,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -13511,6 +16943,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 9,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-03-23",
+            "last_bi_end_date": "2026-04-02",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.07,
+            "last_bi_mid": 10.515,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-04-02",
+            "latest_zs_bi_count": 5,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -13684,6 +17142,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -13857,6 +17341,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -14030,6 +17540,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -14203,6 +17739,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -14376,6 +17938,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -14549,6 +18137,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -14722,6 +18336,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -14895,6 +18535,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -15068,6 +18734,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -15248,6 +18940,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -15428,6 +19146,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 10,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-04-02",
+            "last_bi_end_date": "2026-05-29",
+            "last_bi_high": 10.96,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.61,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-05-29",
+            "latest_zs_bi_count": 6,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-01-07",
+            "recent_peak_high": 11.46,
+            "post_peak_first_bear_date": "2026-01-08",
+            "post_peak_first_bear_open": 11.28,
+            "post_peak_first_bear_high": 11.29,
+            "post_peak_first_bear_low": 11.13,
+            "post_peak_first_bear_close": 11.15,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -15615,6 +19359,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -15802,6 +19572,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -15996,6 +19792,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -16190,6 +20012,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -16377,6 +20225,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_break",
             "last_bi_removal",
@@ -16566,6 +20440,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -16753,6 +20653,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -16940,6 +20866,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -17127,6 +21079,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -17321,6 +21299,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "last_bi_extension",
             "finished_tail_excluded"
@@ -17516,6 +21520,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 11,
+            "recent_bi_count": 7,
+            "last_bi_direction": "up",
+            "last_bi_start_date": "2026-05-29",
+            "last_bi_end_date": "2026-06-12",
+            "last_bi_high": 11.25,
+            "last_bi_low": 10.26,
+            "last_bi_mid": 10.754999999999999,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-06-12",
+            "latest_zs_bi_count": 7,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]
@@ -17717,6 +21747,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 12,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-06-12",
+            "last_bi_end_date": "2026-07-01",
+            "last_bi_high": 11.25,
+            "last_bi_low": 9.99,
+            "last_bi_mid": 10.620000000000001,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-07-01",
+            "latest_zs_bi_count": 8,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -17918,6 +21974,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 12,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-06-12",
+            "last_bi_end_date": "2026-07-01",
+            "last_bi_high": 11.25,
+            "last_bi_low": 9.99,
+            "last_bi_mid": 10.620000000000001,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-07-01",
+            "latest_zs_bi_count": 8,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -18119,6 +22201,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 12,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-06-12",
+            "last_bi_end_date": "2026-07-01",
+            "last_bi_high": 11.25,
+            "last_bi_low": 9.99,
+            "last_bi_mid": 10.620000000000001,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-07-01",
+            "latest_zs_bi_count": 8,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -18320,6 +22428,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 12,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-06-12",
+            "last_bi_end_date": "2026-07-01",
+            "last_bi_high": 11.25,
+            "last_bi_low": 9.99,
+            "last_bi_mid": 10.620000000000001,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-07-01",
+            "latest_zs_bi_count": 8,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_included"
           ]
@@ -18528,6 +22662,32 @@
               "is_valid": true
             }
           ],
+          "snapshot": {
+            "source_bar_valid": true,
+            "status": "ok",
+            "available_finished_bi_count": 12,
+            "recent_bi_count": 7,
+            "last_bi_direction": "down",
+            "last_bi_start_date": "2026-06-12",
+            "last_bi_end_date": "2026-07-01",
+            "last_bi_high": 11.25,
+            "last_bi_low": 9.99,
+            "last_bi_mid": 10.620000000000001,
+            "latest_zs_start_date": "2026-01-29",
+            "latest_zs_end_date": "2026-07-01",
+            "latest_zs_bi_count": 8,
+            "latest_zs_zg": 10.71,
+            "latest_zs_zd": 10.31,
+            "latest_zs_zz": 10.510000000000002,
+            "recent_peak_date": "2026-06-12",
+            "recent_peak_high": 11.25,
+            "post_peak_first_bear_date": "2026-06-15",
+            "post_peak_first_bear_open": 11.21,
+            "post_peak_first_bear_high": 11.21,
+            "post_peak_first_bear_low": 10.98,
+            "post_peak_first_bear_close": 11.06,
+            "post_peak_first_bear_missing": false
+          },
           "events": [
             "finished_tail_excluded"
           ]

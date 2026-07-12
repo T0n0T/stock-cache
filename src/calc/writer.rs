@@ -7,9 +7,12 @@ use anyhow::Result;
 use chrono::NaiveDate;
 
 use super::{
-    constants::{LEFT_PEAK_CALC_VERSION, MACD_CALC_VERSION, ROLLING_CALC_VERSION},
+    constants::{
+        CZSC_STRUCTURE_CALC_VERSION, LEFT_PEAK_CALC_VERSION, MACD_CALC_VERSION,
+        ROLLING_CALC_VERSION,
+    },
     coverage::has_period_state,
-    model::{ComputedRows, PeriodStateRow},
+    model::{ComputedRows, CzscStructureRow, PeriodStateRow},
 };
 
 const INSERT_PERIOD_STATE_SQL: &str = r#"
@@ -151,6 +154,50 @@ on conflict ("ts_code", "trade_date", "calc_version") do update set
     "a_lt_b" = excluded."a_lt_b",
     "is_valid" = excluded."is_valid",
     "status" = excluded."status"
+"#;
+
+const INSERT_CZSC_STRUCTURE_SQL: &str = r#"
+insert into "stock_daily_czsc_structure" (
+    "ts_code", "trade_date", "source_bar_valid", "status",
+    "available_finished_bi_count", "recent_bi_count",
+    "last_bi_direction", "last_bi_start_date", "last_bi_end_date",
+    "last_bi_high", "last_bi_low", "last_bi_mid",
+    "latest_zs_start_date", "latest_zs_end_date", "latest_zs_bi_count",
+    "latest_zs_zg", "latest_zs_zd", "latest_zs_zz",
+    "recent_peak_date", "recent_peak_high",
+    "post_peak_first_bear_date", "post_peak_first_bear_open",
+    "post_peak_first_bear_high", "post_peak_first_bear_low",
+    "post_peak_first_bear_close", "post_peak_first_bear_missing",
+    "calc_version"
+) values (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+    $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+)
+on conflict ("ts_code", "trade_date", "calc_version") do update set
+    "source_bar_valid" = excluded."source_bar_valid",
+    "status" = excluded."status",
+    "available_finished_bi_count" = excluded."available_finished_bi_count",
+    "recent_bi_count" = excluded."recent_bi_count",
+    "last_bi_direction" = excluded."last_bi_direction",
+    "last_bi_start_date" = excluded."last_bi_start_date",
+    "last_bi_end_date" = excluded."last_bi_end_date",
+    "last_bi_high" = excluded."last_bi_high",
+    "last_bi_low" = excluded."last_bi_low",
+    "last_bi_mid" = excluded."last_bi_mid",
+    "latest_zs_start_date" = excluded."latest_zs_start_date",
+    "latest_zs_end_date" = excluded."latest_zs_end_date",
+    "latest_zs_bi_count" = excluded."latest_zs_bi_count",
+    "latest_zs_zg" = excluded."latest_zs_zg",
+    "latest_zs_zd" = excluded."latest_zs_zd",
+    "latest_zs_zz" = excluded."latest_zs_zz",
+    "recent_peak_date" = excluded."recent_peak_date",
+    "recent_peak_high" = excluded."recent_peak_high",
+    "post_peak_first_bear_date" = excluded."post_peak_first_bear_date",
+    "post_peak_first_bear_open" = excluded."post_peak_first_bear_open",
+    "post_peak_first_bear_high" = excluded."post_peak_first_bear_high",
+    "post_peak_first_bear_low" = excluded."post_peak_first_bear_low",
+    "post_peak_first_bear_close" = excluded."post_peak_first_bear_close",
+    "post_peak_first_bear_missing" = excluded."post_peak_first_bear_missing"
 "#;
 
 pub(super) async fn write_calc_rows(
@@ -573,6 +620,8 @@ pub(super) async fn write_calc_rows(
         started.elapsed().as_secs_f64()
     );
 
+    write_czsc_rows_in_transaction(&transaction, &computed.czsc_rows).await?;
+
     eprintln!("[calc] commit transaction start");
     let started = Instant::now();
     transaction.commit().await?;
@@ -606,7 +655,105 @@ pub(super) async fn write_calc_rows(
             "stock_daily_left_peak".to_string(),
             computed.left_peak_rows.len(),
         ),
+        (
+            "stock_daily_czsc_structure".to_string(),
+            computed.czsc_rows.len(),
+        ),
     ]))
+}
+
+pub(super) async fn write_czsc_rows(
+    client: &mut tokio_postgres::Client,
+    rows: &[CzscStructureRow],
+) -> Result<usize> {
+    let transaction = client.transaction().await?;
+    let written = write_czsc_rows_in_transaction(&transaction, rows).await?;
+    transaction.commit().await?;
+    Ok(written)
+}
+
+async fn write_czsc_rows_in_transaction(
+    transaction: &tokio_postgres::Transaction<'_>,
+    rows: &[CzscStructureRow],
+) -> Result<usize> {
+    let statement = transaction.prepare(INSERT_CZSC_STRUCTURE_SQL).await?;
+    let mut rows = rows.iter().collect::<Vec<_>>();
+    rows.sort_by(|left, right| {
+        left.trade_date
+            .cmp(&right.trade_date)
+            .then_with(|| left.ts_code.cmp(&right.ts_code))
+    });
+    let groups = count_trade_date_groups(&rows, |row| row.trade_date);
+    let started = Instant::now();
+    eprintln!(
+        "[calc] write stock_daily_czsc_structure start rows={} trade_date_groups={}",
+        rows.len(),
+        groups
+    );
+    let mut completed_groups = 0;
+    let mut group_rows = 0;
+    for (index, row) in rows.iter().enumerate() {
+        transaction
+            .execute(
+                &statement,
+                &[
+                    &row.ts_code,
+                    &row.trade_date,
+                    &row.source_bar_valid,
+                    &row.status,
+                    &row.available_finished_bi_count,
+                    &row.recent_bi_count,
+                    &row.last_bi_direction,
+                    &row.last_bi_start_date,
+                    &row.last_bi_end_date,
+                    &row.last_bi_high,
+                    &row.last_bi_low,
+                    &row.last_bi_mid,
+                    &row.latest_zs_start_date,
+                    &row.latest_zs_end_date,
+                    &row.latest_zs_bi_count,
+                    &row.latest_zs_zg,
+                    &row.latest_zs_zd,
+                    &row.latest_zs_zz,
+                    &row.recent_peak_date,
+                    &row.recent_peak_high,
+                    &row.post_peak_first_bear_date,
+                    &row.post_peak_first_bear_open,
+                    &row.post_peak_first_bear_high,
+                    &row.post_peak_first_bear_low,
+                    &row.post_peak_first_bear_close,
+                    &row.post_peak_first_bear_missing,
+                    &CZSC_STRUCTURE_CALC_VERSION,
+                ],
+            )
+            .await?;
+        group_rows += 1;
+        if rows
+            .get(index + 1)
+            .is_none_or(|next| next.trade_date != row.trade_date)
+        {
+            completed_groups += 1;
+            log_calc_date_group_progress(CalcDateGroupProgress {
+                table: "stock_daily_czsc_structure",
+                date_label: "trade_date",
+                date: row.trade_date,
+                period_type: None,
+                group_rows,
+                completed_groups,
+                total_groups: groups,
+                written_rows: index + 1,
+                total_rows: rows.len(),
+                started,
+            });
+            group_rows = 0;
+        }
+    }
+    eprintln!(
+        "[calc] write stock_daily_czsc_structure done rows={} elapsed={:.1}s",
+        rows.len(),
+        started.elapsed().as_secs_f64()
+    );
+    Ok(rows.len())
 }
 
 struct CalcDateGroupProgress<'a> {
@@ -731,6 +878,44 @@ mod tests {
             pending_non_zero_dif_period_rows(&[zero_dif_row], &existing_index_keys).len(),
             0
         );
+    }
+
+    #[test]
+    fn czsc_upsert_updates_every_non_key_snapshot_column() {
+        assert!(INSERT_CZSC_STRUCTURE_SQL
+            .contains(r#"on conflict ("ts_code", "trade_date", "calc_version") do update set"#));
+        for column in [
+            "source_bar_valid",
+            "status",
+            "available_finished_bi_count",
+            "recent_bi_count",
+            "last_bi_direction",
+            "last_bi_start_date",
+            "last_bi_end_date",
+            "last_bi_high",
+            "last_bi_low",
+            "last_bi_mid",
+            "latest_zs_start_date",
+            "latest_zs_end_date",
+            "latest_zs_bi_count",
+            "latest_zs_zg",
+            "latest_zs_zd",
+            "latest_zs_zz",
+            "recent_peak_date",
+            "recent_peak_high",
+            "post_peak_first_bear_date",
+            "post_peak_first_bear_open",
+            "post_peak_first_bear_high",
+            "post_peak_first_bear_low",
+            "post_peak_first_bear_close",
+            "post_peak_first_bear_missing",
+        ] {
+            assert!(
+                INSERT_CZSC_STRUCTURE_SQL.contains(&format!(r#""{column}" = excluded."{column}""#)),
+                "missing update for {column}"
+            );
+        }
+        assert!(INSERT_CZSC_STRUCTURE_SQL.contains("$27"));
     }
 
     fn period_row(ts_code: &str, period_end_date: NaiveDate) -> PeriodStateRow {

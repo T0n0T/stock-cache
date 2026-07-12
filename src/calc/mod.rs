@@ -11,8 +11,10 @@ use tokio_postgres::NoTls;
 
 use crate::app::{config::Config, write::DateWindow};
 
+pub(crate) mod backfill;
 mod constants;
 mod coverage;
+mod czsc;
 mod index;
 mod left_peak;
 mod macd;
@@ -116,6 +118,7 @@ pub async fn run_calc(
                     ("stock_daily_asof_indicators".to_string(), 0),
                     ("stock_daily_rolling_factors".to_string(), 0),
                     ("stock_daily_left_peak".to_string(), 0),
+                    ("stock_daily_czsc_structure".to_string(), 0),
                     ("index_daily_asof_indicators".to_string(), 0),
                 ]),
             ))
@@ -167,9 +170,9 @@ pub async fn run_calc(
                     &index_source_rows,
                     chunk_dates,
                     max_concurrency,
-                );
+                )?;
                 eprintln!(
-                    "[calc] chunk {}/{} compute rows done stock_period_states={} index_period_states={} asof={} rolling={} left_peak={} index_asof={} elapsed={:.1}s",
+                    "[calc] chunk {}/{} compute rows done stock_period_states={} index_period_states={} asof={} rolling={} left_peak={} czsc_structure={} index_asof={} elapsed={:.1}s",
                     chunk_index + 1,
                     chunk_count,
                     computed.period_states.len(),
@@ -177,9 +180,11 @@ pub async fn run_calc(
                     computed.asof_rows.len(),
                     computed.rolling_rows.len(),
                     computed.left_peak_rows.len(),
+                    computed.czsc_rows.len(),
                     computed.index_asof_rows.len(),
                     started.elapsed().as_secs_f64()
                 );
+                log_czsc_distribution(&computed.czsc_rows);
                 eprintln!(
                     "[calc] chunk {}/{} write rows start",
                     chunk_index + 1,
@@ -278,6 +283,10 @@ fn summary(
         "stock_daily_left_peak".to_string(),
         date_range(usable_start(distinct_dates, 360), target_end),
     );
+    usable_ranges.insert(
+        "stock_daily_czsc_structure".to_string(),
+        date_range(target_start, target_end),
+    );
     CalcSummary {
         status: "success",
         mode: "calc",
@@ -312,6 +321,7 @@ fn empty_row_counts() -> BTreeMap<String, usize> {
         ("index_daily_asof_indicators".to_string(), 0),
         ("stock_daily_rolling_factors".to_string(), 0),
         ("stock_daily_left_peak".to_string(), 0),
+        ("stock_daily_czsc_structure".to_string(), 0),
     ])
 }
 
@@ -319,6 +329,34 @@ fn merge_counts(target: &mut BTreeMap<String, usize>, source: &BTreeMap<String, 
     for (table, count) in source {
         *target.entry(table.clone()).or_insert(0) += count;
     }
+}
+
+fn log_czsc_distribution(rows: &[model::CzscStructureRow]) {
+    let mut status_counts = BTreeMap::from([
+        ("invalid_source_bar", 0usize),
+        ("no_finished_bi", 0),
+        ("insufficient_bis_for_zs", 0),
+        ("no_valid_zs", 0),
+        ("ok", 0),
+    ]);
+    let mut finished_bi_rows = 0;
+    let mut valid_zs_rows = 0;
+    let mut first_bear_rows = 0;
+    for row in rows {
+        *status_counts.entry(row.status.as_str()).or_default() += 1;
+        finished_bi_rows += usize::from(row.available_finished_bi_count > 0);
+        valid_zs_rows += usize::from(row.latest_zs_start_date.is_some());
+        first_bear_rows += usize::from(row.post_peak_first_bear_date.is_some());
+    }
+    eprintln!(
+        "[calc] CZSC distribution rows={} statuses={:?} finished_bi_rows={} valid_zs_rows={} first_bear_rows={} invalid_source_rows={}",
+        rows.len(),
+        status_counts,
+        finished_bi_rows,
+        valid_zs_rows,
+        first_bear_rows,
+        status_counts["invalid_source_bar"]
+    );
 }
 
 fn remember_period_state_keys(
@@ -370,5 +408,24 @@ mod tests {
     #[test]
     fn requested_chunk_size_overrides_auto() {
         assert_eq!(resolve_chunk_size(200, Some(45)), 45);
+    }
+
+    #[test]
+    fn schema_contains_czsc_structure_table_contract() {
+        let schema = include_str!("../../deploy/postgres/schema.sql");
+        assert!(schema.contains(r#"create table if not exists "stock_daily_czsc_structure""#));
+        assert!(schema.contains(r#"primary key ("ts_code", "trade_date", "calc_version")"#));
+        assert!(schema.contains(
+            r#"on "stock_daily_czsc_structure" ("trade_date", "calc_version", "ts_code")"#
+        ));
+        for status in [
+            "invalid_source_bar",
+            "no_finished_bi",
+            "insufficient_bis_for_zs",
+            "no_valid_zs",
+            "ok",
+        ] {
+            assert!(schema.contains(status));
+        }
     }
 }

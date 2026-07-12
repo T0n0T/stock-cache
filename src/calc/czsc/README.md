@@ -1,8 +1,8 @@
 # CZSC source and golden baseline
 
-This directory records the upstream source for a future, minimal CZSC port. Batch A
-contains documentation and test fixtures only; it does not contain an analyzer or
-database integration.
+This directory contains the minimal CZSC analyzer and structure derivation used by
+stock-cache. It remains a pure-computation module: database integration lives in
+the surrounding calc layer.
 
 ## Pinned source
 
@@ -37,7 +37,7 @@ The Batch A baseline was prepared from these files at the pinned commit:
 
 ## Planned minimum port
 
-Later batches may port only the deterministic daily-price structure path:
+The port includes only the deterministic daily-price structure path:
 
 - raw and inclusion-removed K-line representations with source-index mapping;
 - inclusion removal, fractals, BI creation, last-BI extension and removal;

@@ -6,12 +6,12 @@
 
 ## Initialization
 
-第一版假设目标数据库为空。
+第一版不提供通用 schema migration，但 `init-db` 可以安全重复执行固定 schema 初始化。
 
-- `init-db` 执行固定 schema 初始化。
+- `init-db` 使用 `create table/index if not exists` 创建缺失对象。
 - 不设计旧 schema 升级迁移。
 - 不建 `schema_migrations`。
-- 如果目标库存在同名表且结构冲突，`init-db` 应失败并提示使用空库或手动处理。
+- 已存在对象不会被重建、改列或删除；`init-db` 不负责修复同名对象的结构差异，结构验证仍需人工或契约检查。
 - `init-db` 不执行破坏性删除。
 
 ## Global Rules
@@ -427,6 +427,36 @@ calc_version
 ```sql
 primary key (ts_code, trade_date, calc_version)
 ```
+
+### stock_daily_czsc_structure
+
+用途：保存基于前复权 OHLC 的严格 point-in-time CZSC 结构快照。每个源行情主键都有一个计算结论；无效 OHLC 也写行，但不推进分析器。
+
+主要字段组：
+
+```text
+source_bar_valid
+status
+available_finished_bi_count
+recent_bi_count
+
+last_bi_direction/start_date/end_date/high/low/mid
+latest_zs_start_date/end_date/bi_count/zg/zd/zz
+recent_peak_date/high
+post_peak_first_bear_date/open/high/low/close/missing
+calc_version
+```
+
+`last_bi_*`、`latest_zs_*`、`recent_peak_*` 和 bear OHLC 分别成组为空或成组有值。`post_peak_first_bear_missing` 为三态：没有峰值时为 `NULL`；有峰值但尚无阴线时为 `true` 且 bear 组为空；已经找到时为 `false` 且 bear 组完整。
+
+主键与主要读取索引：
+
+```sql
+primary key (ts_code, trade_date, calc_version)
+create index on stock_daily_czsc_structure (trade_date, calc_version, ts_code)
+```
+
+第一阶段标准 calc 与同 chunk 的其他计算表在同一事务写入该表，但现有 coverage 完整性判断暂不依赖该表，避免新表为空令所有历史日期自动变为 pending。
 
 ## stock-select DB-native Contract
 

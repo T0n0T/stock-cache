@@ -1,7 +1,7 @@
 -- Generated from schemas/tushare-fields.yaml by tools/generate_schema_sql.py.
 -- Do not edit by hand.
 
-create table "stock_basic" (
+create table if not exists "stock_basic" (
     "ts_code" text not null,
     "symbol" text,
     "name" text,
@@ -22,7 +22,7 @@ create table "stock_basic" (
     primary key ("ts_code")
 );
 
-create table "stock_stk_factor_pro" (
+create table if not exists "stock_stk_factor_pro" (
     "ts_code" text not null,
     "trade_date" date not null,
     "open" double precision,
@@ -287,7 +287,7 @@ create table "stock_stk_factor_pro" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "stock_moneyflow_ths" (
+create table if not exists "stock_moneyflow_ths" (
     "trade_date" date not null,
     "ts_code" text not null,
     "name" text,
@@ -304,7 +304,7 @@ create table "stock_moneyflow_ths" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "index_idx_factor_pro" (
+create table if not exists "index_idx_factor_pro" (
     "ts_code" text not null,
     "trade_date" date not null,
     "open" double precision,
@@ -397,7 +397,7 @@ create table "index_idx_factor_pro" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "index_ths" (
+create table if not exists "index_ths" (
     "ts_code" text not null,
     "name" text,
     "count" integer,
@@ -407,7 +407,7 @@ create table "index_ths" (
     primary key ("ts_code")
 );
 
-create table "index_ths_daily" (
+create table if not exists "index_ths_daily" (
     "ts_code" text not null,
     "trade_date" date not null,
     "open" double precision,
@@ -425,7 +425,7 @@ create table "index_ths_daily" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "index_moneyflow_cnt_ths" (
+create table if not exists "index_moneyflow_cnt_ths" (
     "trade_date" date not null,
     "ts_code" text not null,
     "name" text,
@@ -441,7 +441,7 @@ create table "index_moneyflow_cnt_ths" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "index_ths_member" (
+create table if not exists "index_ths_member" (
     "ts_code" text not null,
     "con_code" text not null,
     "con_name" text,
@@ -452,10 +452,10 @@ create table "index_ths_member" (
     primary key ("ts_code", "con_code")
 );
 
-create index "index_ths_member_con_code_idx" on "index_ths_member" ("con_code");
-create index "index_ths_member_ts_code_idx" on "index_ths_member" ("ts_code");
+create index if not exists "index_ths_member_con_code_idx" on "index_ths_member" ("con_code");
+create index if not exists "index_ths_member_ts_code_idx" on "index_ths_member" ("ts_code");
 
-create table "index_limit_cpt_list" (
+create table if not exists "index_limit_cpt_list" (
     "ts_code" text not null,
     "name" text,
     "trade_date" date not null,
@@ -467,9 +467,9 @@ create table "index_limit_cpt_list" (
     "rank" integer
 );
 
-create index "index_limit_cpt_list_trade_date_idx" on "index_limit_cpt_list" ("trade_date");
+create index if not exists "index_limit_cpt_list_trade_date_idx" on "index_limit_cpt_list" ("trade_date");
 
-create table "stock_limit_list_ths" (
+create table if not exists "stock_limit_list_ths" (
     "trade_date" date not null,
     "ts_code" text not null,
     "name" text,
@@ -497,7 +497,7 @@ create table "stock_limit_list_ths" (
     primary key ("trade_date", "ts_code")
 );
 
-create table "stock_period_indicator_state" (
+create table if not exists "stock_period_indicator_state" (
     "ts_code" text not null,
     "period_type" text not null,
     "period_start_date" date,
@@ -514,13 +514,13 @@ create table "stock_period_indicator_state" (
     primary key ("ts_code", "period_type", "period_end_date", "calc_version")
 );
 
-create index "stock_period_indicator_state_lookup_idx"
+create index if not exists "stock_period_indicator_state_lookup_idx"
     on "stock_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
 
-create index "stock_period_indicator_state_period_end_date_idx"
+create index if not exists "stock_period_indicator_state_period_end_date_idx"
     on "stock_period_indicator_state" ("period_end_date");
 
-create table "index_period_indicator_state" (
+create table if not exists "index_period_indicator_state" (
     "ts_code" text not null,
     "period_type" text not null,
     "period_start_date" date,
@@ -537,13 +537,13 @@ create table "index_period_indicator_state" (
     primary key ("ts_code", "period_type", "period_end_date", "calc_version")
 );
 
-create index "index_period_indicator_state_lookup_idx"
+create index if not exists "index_period_indicator_state_lookup_idx"
     on "index_period_indicator_state" ("ts_code", "period_type", "period_end_date" desc);
 
-create index "index_period_indicator_state_period_end_date_idx"
+create index if not exists "index_period_indicator_state_period_end_date_idx"
     on "index_period_indicator_state" ("period_end_date");
 
-create table "stock_daily_asof_indicators" (
+create table if not exists "stock_daily_asof_indicators" (
     "ts_code" text not null,
     "trade_date" date not null,
     "daily_dif_asof" double precision,
@@ -565,10 +565,10 @@ create table "stock_daily_asof_indicators" (
     primary key ("ts_code", "trade_date", "calc_version")
 );
 
-create index "stock_daily_asof_indicators_trade_date_idx"
+create index if not exists "stock_daily_asof_indicators_trade_date_idx"
     on "stock_daily_asof_indicators" ("trade_date");
 
-create table "index_daily_asof_indicators" (
+create table if not exists "index_daily_asof_indicators" (
     "ts_code" text not null,
     "trade_date" date not null,
     "daily_dif_asof" double precision,
@@ -590,10 +590,10 @@ create table "index_daily_asof_indicators" (
     primary key ("ts_code", "trade_date", "calc_version")
 );
 
-create index "index_daily_asof_indicators_trade_date_idx"
+create index if not exists "index_daily_asof_indicators_trade_date_idx"
     on "index_daily_asof_indicators" ("trade_date");
 
-create table "stock_daily_rolling_factors" (
+create table if not exists "stock_daily_rolling_factors" (
     "ts_code" text not null,
     "trade_date" date not null,
     "ma25_qfq" double precision,
@@ -620,10 +620,10 @@ create table "stock_daily_rolling_factors" (
     primary key ("ts_code", "trade_date", "calc_version")
 );
 
-create index "stock_daily_rolling_factors_trade_date_idx"
+create index if not exists "stock_daily_rolling_factors_trade_date_idx"
     on "stock_daily_rolling_factors" ("trade_date");
 
-create table "stock_daily_left_peak" (
+create table if not exists "stock_daily_left_peak" (
     "ts_code" text not null,
     "trade_date" date not null,
     "left_peak_date" date,
@@ -653,5 +653,92 @@ create table "stock_daily_left_peak" (
     primary key ("ts_code", "trade_date", "calc_version")
 );
 
-create index "stock_daily_left_peak_trade_date_idx"
+create index if not exists "stock_daily_left_peak_trade_date_idx"
     on "stock_daily_left_peak" ("trade_date");
+
+create table if not exists "stock_daily_czsc_structure" (
+    "ts_code" text not null,
+    "trade_date" date not null,
+    "source_bar_valid" boolean not null,
+    "status" text not null,
+    "available_finished_bi_count" integer not null,
+    "recent_bi_count" integer not null,
+    "last_bi_direction" text,
+    "last_bi_start_date" date,
+    "last_bi_end_date" date,
+    "last_bi_high" double precision,
+    "last_bi_low" double precision,
+    "last_bi_mid" double precision,
+    "latest_zs_start_date" date,
+    "latest_zs_end_date" date,
+    "latest_zs_bi_count" integer,
+    "latest_zs_zg" double precision,
+    "latest_zs_zd" double precision,
+    "latest_zs_zz" double precision,
+    "recent_peak_date" date,
+    "recent_peak_high" double precision,
+    "post_peak_first_bear_date" date,
+    "post_peak_first_bear_open" double precision,
+    "post_peak_first_bear_high" double precision,
+    "post_peak_first_bear_low" double precision,
+    "post_peak_first_bear_close" double precision,
+    "post_peak_first_bear_missing" boolean,
+    "calc_version" text not null,
+    check ("status" in (
+        'invalid_source_bar',
+        'no_finished_bi',
+        'insufficient_bis_for_zs',
+        'no_valid_zs',
+        'ok'
+    )),
+    check ("last_bi_direction" is null or "last_bi_direction" in ('up', 'down')),
+    check ("available_finished_bi_count" between 0 and 50),
+    check ("recent_bi_count" between 0 and 7),
+    check ("recent_bi_count" <= "available_finished_bi_count"),
+    check (("status" = 'invalid_source_bar') = (not "source_bar_valid")),
+    check (
+        ("last_bi_direction" is null and "last_bi_start_date" is null
+            and "last_bi_end_date" is null and "last_bi_high" is null
+            and "last_bi_low" is null and "last_bi_mid" is null)
+        or
+        ("last_bi_direction" is not null and "last_bi_start_date" is not null
+            and "last_bi_end_date" is not null and "last_bi_high" is not null
+            and "last_bi_low" is not null and "last_bi_mid" is not null)
+    ),
+    check (
+        ("latest_zs_start_date" is null and "latest_zs_end_date" is null
+            and "latest_zs_bi_count" is null and "latest_zs_zg" is null
+            and "latest_zs_zd" is null and "latest_zs_zz" is null)
+        or
+        ("latest_zs_start_date" is not null and "latest_zs_end_date" is not null
+            and "latest_zs_bi_count" is not null and "latest_zs_bi_count" >= 3
+            and "latest_zs_zg" is not null and "latest_zs_zd" is not null
+            and "latest_zs_zz" is not null)
+    ),
+    check (
+        ("recent_peak_date" is null and "recent_peak_high" is null)
+        or ("recent_peak_date" is not null and "recent_peak_high" is not null)
+    ),
+    check (
+        ("recent_peak_date" is null and "post_peak_first_bear_missing" is null
+            and "post_peak_first_bear_date" is null and "post_peak_first_bear_open" is null
+            and "post_peak_first_bear_high" is null and "post_peak_first_bear_low" is null
+            and "post_peak_first_bear_close" is null)
+        or
+        ("recent_peak_date" is not null and "post_peak_first_bear_missing" is true
+            and "post_peak_first_bear_date" is null and "post_peak_first_bear_open" is null
+            and "post_peak_first_bear_high" is null and "post_peak_first_bear_low" is null
+            and "post_peak_first_bear_close" is null)
+        or
+        ("recent_peak_date" is not null and "post_peak_first_bear_missing" is false
+            and "post_peak_first_bear_date" is not null and "post_peak_first_bear_open" is not null
+            and "post_peak_first_bear_high" is not null and "post_peak_first_bear_low" is not null
+            and "post_peak_first_bear_close" is not null)
+    ),
+    check ("last_bi_high" is null or "last_bi_high" >= "last_bi_low"),
+    check ("latest_zs_zg" is null or "latest_zs_zg" >= "latest_zs_zd"),
+    primary key ("ts_code", "trade_date", "calc_version")
+);
+
+create index if not exists "stock_daily_czsc_structure_trade_date_version_code_idx"
+    on "stock_daily_czsc_structure" ("trade_date", "calc_version", "ts_code");

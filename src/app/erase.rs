@@ -18,6 +18,10 @@ pub struct EraseTarget {
 
 const ERASE_TARGETS: &[EraseTarget] = &[
     EraseTarget {
+        table: "stock_daily_czsc_structure",
+        date_column: "trade_date",
+    },
+    EraseTarget {
         table: "stock_daily_left_peak",
         date_column: "trade_date",
     },
@@ -202,6 +206,7 @@ mod tests {
         assert_eq!(
             targets,
             vec![
+                ("stock_daily_czsc_structure", "trade_date"),
                 ("stock_daily_left_peak", "trade_date"),
                 ("stock_daily_rolling_factors", "trade_date"),
                 ("stock_daily_asof_indicators", "trade_date"),

@@ -172,6 +172,93 @@ create table "stock_daily_left_peak" (
 
 create index "stock_daily_left_peak_trade_date_idx"
     on "stock_daily_left_peak" ("trade_date");
+
+create table "stock_daily_czsc_structure" (
+    "ts_code" text not null,
+    "trade_date" date not null,
+    "source_bar_valid" boolean not null,
+    "status" text not null,
+    "available_finished_bi_count" integer not null,
+    "recent_bi_count" integer not null,
+    "last_bi_direction" text,
+    "last_bi_start_date" date,
+    "last_bi_end_date" date,
+    "last_bi_high" double precision,
+    "last_bi_low" double precision,
+    "last_bi_mid" double precision,
+    "latest_zs_start_date" date,
+    "latest_zs_end_date" date,
+    "latest_zs_bi_count" integer,
+    "latest_zs_zg" double precision,
+    "latest_zs_zd" double precision,
+    "latest_zs_zz" double precision,
+    "recent_peak_date" date,
+    "recent_peak_high" double precision,
+    "post_peak_first_bear_date" date,
+    "post_peak_first_bear_open" double precision,
+    "post_peak_first_bear_high" double precision,
+    "post_peak_first_bear_low" double precision,
+    "post_peak_first_bear_close" double precision,
+    "post_peak_first_bear_missing" boolean,
+    "calc_version" text not null,
+    check ("status" in (
+        'invalid_source_bar',
+        'no_finished_bi',
+        'insufficient_bis_for_zs',
+        'no_valid_zs',
+        'ok'
+    )),
+    check ("last_bi_direction" is null or "last_bi_direction" in ('up', 'down')),
+    check ("available_finished_bi_count" between 0 and 50),
+    check ("recent_bi_count" between 0 and 7),
+    check ("recent_bi_count" <= "available_finished_bi_count"),
+    check (("status" = 'invalid_source_bar') = (not "source_bar_valid")),
+    check (
+        ("last_bi_direction" is null and "last_bi_start_date" is null
+            and "last_bi_end_date" is null and "last_bi_high" is null
+            and "last_bi_low" is null and "last_bi_mid" is null)
+        or
+        ("last_bi_direction" is not null and "last_bi_start_date" is not null
+            and "last_bi_end_date" is not null and "last_bi_high" is not null
+            and "last_bi_low" is not null and "last_bi_mid" is not null)
+    ),
+    check (
+        ("latest_zs_start_date" is null and "latest_zs_end_date" is null
+            and "latest_zs_bi_count" is null and "latest_zs_zg" is null
+            and "latest_zs_zd" is null and "latest_zs_zz" is null)
+        or
+        ("latest_zs_start_date" is not null and "latest_zs_end_date" is not null
+            and "latest_zs_bi_count" is not null and "latest_zs_bi_count" >= 3
+            and "latest_zs_zg" is not null and "latest_zs_zd" is not null
+            and "latest_zs_zz" is not null)
+    ),
+    check (
+        ("recent_peak_date" is null and "recent_peak_high" is null)
+        or ("recent_peak_date" is not null and "recent_peak_high" is not null)
+    ),
+    check (
+        ("recent_peak_date" is null and "post_peak_first_bear_missing" is null
+            and "post_peak_first_bear_date" is null and "post_peak_first_bear_open" is null
+            and "post_peak_first_bear_high" is null and "post_peak_first_bear_low" is null
+            and "post_peak_first_bear_close" is null)
+        or
+        ("recent_peak_date" is not null and "post_peak_first_bear_missing" is true
+            and "post_peak_first_bear_date" is null and "post_peak_first_bear_open" is null
+            and "post_peak_first_bear_high" is null and "post_peak_first_bear_low" is null
+            and "post_peak_first_bear_close" is null)
+        or
+        ("recent_peak_date" is not null and "post_peak_first_bear_missing" is false
+            and "post_peak_first_bear_date" is not null and "post_peak_first_bear_open" is not null
+            and "post_peak_first_bear_high" is not null and "post_peak_first_bear_low" is not null
+            and "post_peak_first_bear_close" is not null)
+    ),
+    check ("last_bi_high" is null or "last_bi_high" >= "last_bi_low"),
+    check ("latest_zs_zg" is null or "latest_zs_zg" >= "latest_zs_zd"),
+    primary key ("ts_code", "trade_date", "calc_version")
+);
+
+create index "stock_daily_czsc_structure_trade_date_version_code_idx"
+    on "stock_daily_czsc_structure" ("trade_date", "calc_version", "ts_code");
 """.strip()
 
 
@@ -252,6 +339,12 @@ def render_source_table(dataset_id: str, dataset: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def make_initialization_idempotent(sql: str) -> str:
+    return sql.replace('create table "', 'create table if not exists "').replace(
+        'create index "', 'create index if not exists "'
+    )
+
+
 def render(schema: dict[str, Any]) -> str:
     datasets = schema["datasets"]
     sections = [
@@ -263,7 +356,7 @@ def render(schema: dict[str, Any]) -> str:
         sections.append(render_source_table(str(dataset_id), dataset))
         sections.append("")
     sections.append(CALC_TABLES_SQL)
-    return "\n".join(sections).rstrip() + "\n"
+    return make_initialization_idempotent("\n".join(sections)).rstrip() + "\n"
 
 
 def main() -> int:
