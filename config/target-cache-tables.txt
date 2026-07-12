@@ -1,0 +1,9 @@
+# Target cache source tables written by write --mode cache/full target cache stage.
+# Add stock_moneyflow_ths back here after Tushare moneyflow_ths recovers.
+stock_stk_factor_pro
+stock_limit_list_ths
+stock_moneyflow_ths
+index_limit_cpt_list
+index_idx_factor_pro
+index_ths_daily
+index_moneyflow_cnt_ths

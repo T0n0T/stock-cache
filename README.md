@@ -15,6 +15,7 @@ It is intentionally not an analysis or recommendation tool. It does not produce 
 ```text
 deploy/postgres/schema.sql      PostgreSQL schema used by init-db
 config/default-indexes.csv      enabled market indexes for index_idx_factor_pro
+config/target-cache-tables.txt  enabled target-cache source tables
 python/tushare_worker.py        thin Tushare SDK worker process
 schemas/tushare-fields.yaml     source of truth for Tushare dataset metadata
 src/                            Rust CLI implementation

@@ -422,6 +422,7 @@ mod tests {
             postgres_dsn: "postgres://example".to_string(),
             tushare_token: "token".to_string(),
             index_list_path: "config/default-indexes.csv".to_string(),
+            target_cache_tables_path: "config/target-cache-tables.txt".to_string(),
             default_lookback_trading_days: 90,
             max_concurrency: 4,
             cache_warmup_concurrency: 1,

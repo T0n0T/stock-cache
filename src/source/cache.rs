@@ -27,6 +27,11 @@ const DAILY_CACHE_DATASETS: &[&str] = &[
     "stock_limit_list_ths",
     "index_limit_cpt_list",
 ];
+const TARGET_CACHE_SPECIAL_TABLES: &[&str] = &[
+    "index_idx_factor_pro",
+    "index_ths_daily",
+    "index_moneyflow_cnt_ths",
+];
 const THS_MEMBER_REQUEST_DELAY_MS: u64 = 150;
 const CODE_REQUEST_DELAY_MS: u64 = 150;
 
@@ -63,12 +68,14 @@ pub async fn run_cache_for_trade_dates(
     let mut row_counts = BTreeMap::new();
     let total_dates = dates.len();
 
-    let index_codes = if dates.is_empty() {
+    let target_cache_tables = load_target_cache_tables(&config.target_cache_tables_path)?;
+    let index_codes = if dates.is_empty() || !target_cache_tables.index_idx_factor_pro {
         Vec::new()
     } else {
         enabled_index_codes(&config.index_list_path)?
     };
-    let target_plan = load_target_cache_plan(&client, dates, &index_codes).await?;
+    let target_plan =
+        load_target_cache_plan(&client, dates, &index_codes, &target_cache_tables).await?;
 
     if !refresh && target_plan.is_complete() {
         if !dates.is_empty() {
@@ -422,21 +429,24 @@ async fn load_target_cache_plan(
     client: &tokio_postgres::Client,
     dates: &[NaiveDate],
     index_codes: &[String],
+    tables: &TargetCacheTables,
 ) -> Result<TargetCachePlan> {
-    let coverage = load_target_existing_coverage(client, dates).await?;
+    let coverage = load_target_existing_coverage(client, dates, tables).await?;
     Ok(target_cache_plan_from_coverage(
         dates,
         index_codes,
         &coverage,
+        tables,
     ))
 }
 
 async fn load_target_existing_coverage(
     client: &tokio_postgres::Client,
     dates: &[NaiveDate],
+    tables: &TargetCacheTables,
 ) -> Result<TargetExistingCoverage> {
     let mut coverage = TargetExistingCoverage::default();
-    for dataset_id in DAILY_CACHE_DATASETS {
+    for dataset_id in &tables.daily_datasets {
         let dataset = required_dataset(dataset_id)?;
         coverage.daily_dataset_dates.insert(
             dataset.id,
@@ -444,17 +454,23 @@ async fn load_target_existing_coverage(
         );
     }
 
-    let index_dataset = required_dataset("index_idx_factor_pro")?;
-    coverage.index_factor_codes_by_date =
-        existing_ts_codes_by_date_in_window(client, index_dataset.id, dates).await?;
+    if tables.index_idx_factor_pro {
+        let index_dataset = required_dataset("index_idx_factor_pro")?;
+        coverage.index_factor_codes_by_date =
+            existing_ts_codes_by_date_in_window(client, index_dataset.id, dates).await?;
+    }
 
-    let index_ths_daily = required_dataset("index_ths_daily")?;
-    coverage.index_ths_daily_dates =
-        existing_trade_dates_in_window(client, index_ths_daily.id, dates).await?;
+    if tables.index_ths_daily {
+        let index_ths_daily = required_dataset("index_ths_daily")?;
+        coverage.index_ths_daily_dates =
+            existing_trade_dates_in_window(client, index_ths_daily.id, dates).await?;
+    }
 
-    let moneyflow_cnt = required_dataset("index_moneyflow_cnt_ths")?;
-    coverage.index_moneyflow_dates =
-        existing_trade_dates_in_window(client, moneyflow_cnt.id, dates).await?;
+    if tables.index_moneyflow_cnt_ths {
+        let moneyflow_cnt = required_dataset("index_moneyflow_cnt_ths")?;
+        coverage.index_moneyflow_dates =
+            existing_trade_dates_in_window(client, moneyflow_cnt.id, dates).await?;
+    }
 
     Ok(coverage)
 }
@@ -799,10 +815,31 @@ struct TargetExistingCoverage {
     index_moneyflow_dates: HashSet<NaiveDate>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct TargetCacheTables {
+    daily_datasets: Vec<&'static str>,
+    index_idx_factor_pro: bool,
+    index_ths_daily: bool,
+    index_moneyflow_cnt_ths: bool,
+}
+
+impl TargetCacheTables {
+    #[cfg(test)]
+    fn all_supported() -> Self {
+        Self {
+            daily_datasets: DAILY_CACHE_DATASETS.to_vec(),
+            index_idx_factor_pro: true,
+            index_ths_daily: true,
+            index_moneyflow_cnt_ths: true,
+        }
+    }
+}
+
 fn target_cache_plan_from_coverage(
     dates: &[NaiveDate],
     index_codes: &[String],
     coverage: &TargetExistingCoverage,
+    tables: &TargetCacheTables,
 ) -> TargetCachePlan {
     let work_items = dates
         .iter()
@@ -817,7 +854,8 @@ fn target_cache_plan_from_coverage(
             TargetCacheTradeDatePlan {
                 date_index,
                 trade_date,
-                missing_daily_datasets: DAILY_CACHE_DATASETS
+                missing_daily_datasets: tables
+                    .daily_datasets
                     .iter()
                     .copied()
                     .filter(|dataset_id| {
@@ -827,13 +865,19 @@ fn target_cache_plan_from_coverage(
                             .is_some_and(|covered_dates| covered_dates.contains(&trade_date))
                     })
                     .collect(),
-                missing_index_codes: index_codes
-                    .iter()
-                    .filter(|ts_code| !existing_index_codes.contains(*ts_code))
-                    .cloned()
-                    .collect(),
-                missing_index_ths_daily: !coverage.index_ths_daily_dates.contains(&trade_date),
-                missing_index_moneyflow: !coverage.index_moneyflow_dates.contains(&trade_date),
+                missing_index_codes: if tables.index_idx_factor_pro {
+                    index_codes
+                        .iter()
+                        .filter(|ts_code| !existing_index_codes.contains(*ts_code))
+                        .cloned()
+                        .collect()
+                } else {
+                    Vec::new()
+                },
+                missing_index_ths_daily: tables.index_ths_daily
+                    && !coverage.index_ths_daily_dates.contains(&trade_date),
+                missing_index_moneyflow: tables.index_moneyflow_cnt_ths
+                    && !coverage.index_moneyflow_dates.contains(&trade_date),
             }
         })
         .filter(TargetCacheTradeDatePlan::has_work)
@@ -933,6 +977,54 @@ fn enabled_index_codes(path: &str) -> Result<Vec<String>> {
         }
     }
     Ok(codes)
+}
+
+fn load_target_cache_tables(path: &str) -> Result<TargetCacheTables> {
+    let contents = fs::read_to_string(path)
+        .with_context(|| format!("failed to read TARGET_CACHE_TABLES_PATH {path}"))?;
+    let mut tables = TargetCacheTables {
+        daily_datasets: Vec::new(),
+        index_idx_factor_pro: false,
+        index_ths_daily: false,
+        index_moneyflow_cnt_ths: false,
+    };
+    let mut seen = HashSet::new();
+    for (line_number, raw_line) in contents.lines().enumerate() {
+        let table = raw_line
+            .split_once('#')
+            .map_or(raw_line, |(before_comment, _)| before_comment)
+            .trim();
+        if table.is_empty() || !seen.insert(table.to_string()) {
+            continue;
+        }
+        if DAILY_CACHE_DATASETS.contains(&table) {
+            tables
+                .daily_datasets
+                .push(canonical_target_cache_table(table)?);
+        } else if TARGET_CACHE_SPECIAL_TABLES.contains(&table) {
+            match table {
+                "index_idx_factor_pro" => tables.index_idx_factor_pro = true,
+                "index_ths_daily" => tables.index_ths_daily = true,
+                "index_moneyflow_cnt_ths" => tables.index_moneyflow_cnt_ths = true,
+                _ => unreachable!("checked TARGET_CACHE_SPECIAL_TABLES"),
+            }
+        } else {
+            return Err(anyhow!(
+                "unsupported target cache table {table} at {path}:{}",
+                line_number + 1
+            ));
+        }
+    }
+    Ok(tables)
+}
+
+fn canonical_target_cache_table(table: &str) -> Result<&'static str> {
+    DAILY_CACHE_DATASETS
+        .iter()
+        .copied()
+        .chain(TARGET_CACHE_SPECIAL_TABLES.iter().copied())
+        .find(|supported| *supported == table)
+        .ok_or_else(|| anyhow!("unsupported target cache table {table}"))
 }
 
 async fn existing_trade_dates_in_window(
@@ -1124,6 +1216,40 @@ mod tests {
     }
 
     #[test]
+    fn parses_target_cache_tables_file_with_comments_and_deduplication() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        fs::write(
+            file.path(),
+            "# target cache tables\nstock_stk_factor_pro\n\nindex_ths_daily # inline comment\nstock_stk_factor_pro\n",
+        )
+        .unwrap();
+
+        let tables = load_target_cache_tables(file.path().to_str().unwrap()).unwrap();
+
+        assert_eq!(
+            tables,
+            TargetCacheTables {
+                daily_datasets: vec!["stock_stk_factor_pro"],
+                index_idx_factor_pro: false,
+                index_ths_daily: true,
+                index_moneyflow_cnt_ths: false,
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_unknown_target_cache_table() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        fs::write(file.path(), "stock_basic\n").unwrap();
+
+        let error = load_target_cache_tables(file.path().to_str().unwrap())
+            .unwrap_err()
+            .to_string();
+
+        assert!(error.contains("unsupported target cache table stock_basic"));
+    }
+
+    #[test]
     fn target_plan_is_complete_when_all_daily_sources_have_coverage() {
         let dates = ["20250401", "20250402"]
             .into_iter()
@@ -1143,7 +1269,12 @@ mod tests {
             index_moneyflow_dates: dates.iter().copied().collect(),
         };
 
-        let plan = target_cache_plan_from_coverage(&dates, &index_codes, &coverage);
+        let plan = target_cache_plan_from_coverage(
+            &dates,
+            &index_codes,
+            &coverage,
+            &TargetCacheTables::all_supported(),
+        );
 
         assert!(plan.is_complete());
         assert_eq!(plan.total_dates, 2);
@@ -1174,7 +1305,12 @@ mod tests {
             index_moneyflow_dates: dates.iter().copied().collect(),
         };
 
-        let plan = target_cache_plan_from_coverage(&dates, &index_codes, &coverage);
+        let plan = target_cache_plan_from_coverage(
+            &dates,
+            &index_codes,
+            &coverage,
+            &TargetCacheTables::all_supported(),
+        );
 
         assert_eq!(plan.total_dates, 2);
         assert_eq!(plan.daily_dataset_request_count(), 1);
@@ -1192,6 +1328,28 @@ mod tests {
                 missing_index_moneyflow: false,
             }]
         );
+    }
+
+    #[test]
+    fn target_plan_uses_configured_target_cache_tables() {
+        let date = parse_date_text("20260709").unwrap();
+        let coverage = TargetExistingCoverage::default();
+        let tables = TargetCacheTables {
+            daily_datasets: vec!["stock_stk_factor_pro"],
+            index_idx_factor_pro: false,
+            index_ths_daily: false,
+            index_moneyflow_cnt_ths: false,
+        };
+
+        let plan = target_cache_plan_from_coverage(&[date], &[], &coverage, &tables);
+
+        assert_eq!(plan.work_items.len(), 1);
+        assert_eq!(
+            plan.work_items[0].missing_daily_datasets,
+            vec!["stock_stk_factor_pro"]
+        );
+        assert!(!plan.work_items[0].missing_index_ths_daily);
+        assert!(!plan.work_items[0].missing_index_moneyflow);
     }
 
     #[test]

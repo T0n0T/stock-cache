@@ -2,12 +2,14 @@ use std::{collections::HashMap, env, fs, path::Path};
 
 use anyhow::{anyhow, Context, Result};
 const DEFAULT_INDEX_LIST_PATH: &str = "config/default-indexes.csv";
+const DEFAULT_TARGET_CACHE_TABLES_PATH: &str = "config/target-cache-tables.txt";
 
 #[derive(Debug, Clone)]
 pub struct Config {
     pub postgres_dsn: String,
     pub tushare_token: String,
     pub index_list_path: String,
+    pub target_cache_tables_path: String,
     pub default_lookback_trading_days: u32,
     pub max_concurrency: u32,
     pub cache_warmup_concurrency: usize,
@@ -87,11 +89,14 @@ impl Config {
         };
         let index_list_path = value("INDEX_LIST_PATH", env_file)
             .unwrap_or_else(|| DEFAULT_INDEX_LIST_PATH.to_string());
+        let target_cache_tables_path = value("TARGET_CACHE_TABLES_PATH", env_file)
+            .unwrap_or_else(|| DEFAULT_TARGET_CACHE_TABLES_PATH.to_string());
 
         Ok(Self {
             postgres_dsn,
             tushare_token,
             index_list_path,
+            target_cache_tables_path,
             default_lookback_trading_days: parse_or_default(
                 "DEFAULT_LOOKBACK_TRADING_DAYS",
                 env_file,
@@ -120,6 +125,10 @@ impl Config {
         println!();
         println!("  Paths");
         println!("    INDEX_LIST_PATH: {}", self.index_list_path);
+        println!(
+            "    TARGET_CACHE_TABLES_PATH: {}",
+            self.target_cache_tables_path
+        );
         println!();
         println!("  Runtime");
         println!(

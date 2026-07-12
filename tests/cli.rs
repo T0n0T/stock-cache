@@ -11,7 +11,7 @@ fn config_show_reads_env_file_and_prints_effective_values() {
     let env_file = NamedTempFile::new().unwrap();
     std::fs::write(
         env_file.path(),
-        "POSTGRES_DSN=postgres://env-file\nTUSHARE_TOKEN=secret-token\nMAX_CONCURRENCY=7\nCACHE_WARMUP_CONCURRENCY=3\nCALC_CHUNK_SIZE=33\n",
+        "POSTGRES_DSN=postgres://env-file\nTUSHARE_TOKEN=secret-token\nTARGET_CACHE_TABLES_PATH=config/custom-target-cache-tables.txt\nMAX_CONCURRENCY=7\nCACHE_WARMUP_CONCURRENCY=3\nCALC_CHUNK_SIZE=33\n",
     )
     .unwrap();
 
@@ -28,6 +28,9 @@ fn config_show_reads_env_file_and_prints_effective_values() {
         .stdout(predicate::str::contains("TUSHARE_TOKEN: set"))
         .stdout(predicate::str::contains("MAX_CONCURRENCY: 7"))
         .stdout(predicate::str::contains("CACHE_WARMUP_CONCURRENCY: 3"))
+        .stdout(predicate::str::contains(
+            "TARGET_CACHE_TABLES_PATH: config/custom-target-cache-tables.txt",
+        ))
         .stdout(predicate::str::contains("CALC_CHUNK_SIZE: 33"))
         .stdout(predicate::str::contains("postgres://env-file").not())
         .stdout(predicate::str::contains("secret-token").not());

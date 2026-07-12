@@ -338,6 +338,7 @@ index_idx_factor_pro
 | `POSTGRES_DSN` | yes | none | PostgreSQL 连接字符串 |
 | `TUSHARE_TOKEN` | yes | none | Tushare token |
 | `INDEX_LIST_PATH` | no | `config/default-indexes.csv` | `index_idx_factor_pro` 指数清单 |
+| `TARGET_CACHE_TABLES_PATH` | no | `config/target-cache-tables.txt` | target cache 阶段要写入的源表清单，一行一个表名，支持 `#` 注释 |
 | `DEFAULT_LOOKBACK_TRADING_DAYS` | no | `90` | 默认近期交易日窗口 |
 | `MAX_CONCURRENCY` | no | `4` | 默认并发上限 |
 | `CACHE_WARMUP_CONCURRENCY` | no | `1` | full 模式补 calc warmup source 时的并发 worker 数；空库大范围 warmup 可调高，注意 Tushare 限流 |
