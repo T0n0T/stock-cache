@@ -1,0 +1,5725 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "source_czsc_commit": "9ab62854f6bfab8515115b942baf4deb0f06185c",
+    "source_czsc_version": "1.0.0-rc.8",
+    "source_license": "Apache-2.0",
+    "min_bi_len": 6,
+    "max_bi_num": 50,
+    "price_mode": "qfq",
+    "source_note": "Deterministic handcrafted OHLC scenarios."
+  },
+  "cases": [
+    {
+      "id": "monotone_up",
+      "origin": "handcrafted",
+      "covers": [
+        "monotone_up"
+      ],
+      "bars": [
+        {
+          "trade_date": "2024-01-02",
+          "open": 9.875,
+          "high": 10.3,
+          "low": 9.575,
+          "close": 10.0
+        },
+        {
+          "trade_date": "2024-01-03",
+          "open": 10.375,
+          "high": 10.8,
+          "low": 10.075,
+          "close": 10.5
+        },
+        {
+          "trade_date": "2024-01-04",
+          "open": 10.875,
+          "high": 11.3,
+          "low": 10.575,
+          "close": 11.0
+        },
+        {
+          "trade_date": "2024-01-05",
+          "open": 11.375,
+          "high": 11.8,
+          "low": 11.075,
+          "close": 11.5
+        },
+        {
+          "trade_date": "2024-01-08",
+          "open": 11.875,
+          "high": 12.3,
+          "low": 11.575,
+          "close": 12.0
+        },
+        {
+          "trade_date": "2024-01-09",
+          "open": 12.375,
+          "high": 12.8,
+          "low": 12.075,
+          "close": 12.5
+        },
+        {
+          "trade_date": "2024-01-10",
+          "open": 12.875,
+          "high": 13.3,
+          "low": 12.575,
+          "close": 13.0
+        },
+        {
+          "trade_date": "2024-01-11",
+          "open": 13.375,
+          "high": 13.8,
+          "low": 13.075,
+          "close": 13.5
+        },
+        {
+          "trade_date": "2024-01-12",
+          "open": 13.875,
+          "high": 14.3,
+          "low": 13.575,
+          "close": 14.0
+        },
+        {
+          "trade_date": "2024-01-15",
+          "open": 14.375,
+          "high": 14.8,
+          "low": 14.075,
+          "close": 14.5
+        },
+        {
+          "trade_date": "2024-01-16",
+          "open": 14.875,
+          "high": 15.3,
+          "low": 14.575,
+          "close": 15.0
+        },
+        {
+          "trade_date": "2024-01-17",
+          "open": 15.375,
+          "high": 15.8,
+          "low": 15.075,
+          "close": 15.5
+        },
+        {
+          "trade_date": "2024-01-18",
+          "open": 15.875,
+          "high": 16.3,
+          "low": 15.575,
+          "close": 16.0
+        },
+        {
+          "trade_date": "2024-01-19",
+          "open": 16.375,
+          "high": 16.8,
+          "low": 16.075,
+          "close": 16.5
+        },
+        {
+          "trade_date": "2024-01-22",
+          "open": 16.875,
+          "high": 17.3,
+          "low": 16.575,
+          "close": 17.0
+        },
+        {
+          "trade_date": "2024-01-23",
+          "open": 17.375,
+          "high": 17.8,
+          "low": 17.075,
+          "close": 17.5
+        },
+        {
+          "trade_date": "2024-01-24",
+          "open": 17.875,
+          "high": 18.3,
+          "low": 17.575,
+          "close": 18.0
+        },
+        {
+          "trade_date": "2024-01-25",
+          "open": 18.375,
+          "high": 18.8,
+          "low": 18.075,
+          "close": 18.5
+        },
+        {
+          "trade_date": "2024-01-26",
+          "open": 18.875,
+          "high": 19.3,
+          "low": 18.575,
+          "close": 19.0
+        },
+        {
+          "trade_date": "2024-01-29",
+          "open": 19.375,
+          "high": 19.8,
+          "low": 19.075,
+          "close": 19.5
+        }
+      ],
+      "expected": [
+        {
+          "trade_date": "2024-01-02",
+          "source_bar_valid": true,
+          "bars_ubi_count": 1,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-03",
+          "source_bar_valid": true,
+          "bars_ubi_count": 2,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-04",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-05",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-08",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-09",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-10",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-11",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-12",
+          "source_bar_valid": true,
+          "bars_ubi_count": 9,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-15",
+          "source_bar_valid": true,
+          "bars_ubi_count": 10,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-16",
+          "source_bar_valid": true,
+          "bars_ubi_count": 11,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-17",
+          "source_bar_valid": true,
+          "bars_ubi_count": 12,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-18",
+          "source_bar_valid": true,
+          "bars_ubi_count": 13,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-19",
+          "source_bar_valid": true,
+          "bars_ubi_count": 14,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-22",
+          "source_bar_valid": true,
+          "bars_ubi_count": 15,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-23",
+          "source_bar_valid": true,
+          "bars_ubi_count": 16,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-24",
+          "source_bar_valid": true,
+          "bars_ubi_count": 17,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-25",
+          "source_bar_valid": true,
+          "bars_ubi_count": 18,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-26",
+          "source_bar_valid": true,
+          "bars_ubi_count": 19,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-29",
+          "source_bar_valid": true,
+          "bars_ubi_count": 20,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        }
+      ]
+    },
+    {
+      "id": "monotone_down",
+      "origin": "handcrafted",
+      "covers": [
+        "monotone_down"
+      ],
+      "bars": [
+        {
+          "trade_date": "2024-01-02",
+          "open": 20.125,
+          "high": 20.425,
+          "low": 19.7,
+          "close": 20.0
+        },
+        {
+          "trade_date": "2024-01-03",
+          "open": 19.625,
+          "high": 19.925,
+          "low": 19.2,
+          "close": 19.5
+        },
+        {
+          "trade_date": "2024-01-04",
+          "open": 19.125,
+          "high": 19.425,
+          "low": 18.7,
+          "close": 19.0
+        },
+        {
+          "trade_date": "2024-01-05",
+          "open": 18.625,
+          "high": 18.925,
+          "low": 18.2,
+          "close": 18.5
+        },
+        {
+          "trade_date": "2024-01-08",
+          "open": 18.125,
+          "high": 18.425,
+          "low": 17.7,
+          "close": 18.0
+        },
+        {
+          "trade_date": "2024-01-09",
+          "open": 17.625,
+          "high": 17.925,
+          "low": 17.2,
+          "close": 17.5
+        },
+        {
+          "trade_date": "2024-01-10",
+          "open": 17.125,
+          "high": 17.425,
+          "low": 16.7,
+          "close": 17.0
+        },
+        {
+          "trade_date": "2024-01-11",
+          "open": 16.625,
+          "high": 16.925,
+          "low": 16.2,
+          "close": 16.5
+        },
+        {
+          "trade_date": "2024-01-12",
+          "open": 16.125,
+          "high": 16.425,
+          "low": 15.7,
+          "close": 16.0
+        },
+        {
+          "trade_date": "2024-01-15",
+          "open": 15.625,
+          "high": 15.925,
+          "low": 15.2,
+          "close": 15.5
+        },
+        {
+          "trade_date": "2024-01-16",
+          "open": 15.125,
+          "high": 15.425,
+          "low": 14.7,
+          "close": 15.0
+        },
+        {
+          "trade_date": "2024-01-17",
+          "open": 14.625,
+          "high": 14.925,
+          "low": 14.2,
+          "close": 14.5
+        },
+        {
+          "trade_date": "2024-01-18",
+          "open": 14.125,
+          "high": 14.425,
+          "low": 13.7,
+          "close": 14.0
+        },
+        {
+          "trade_date": "2024-01-19",
+          "open": 13.625,
+          "high": 13.925,
+          "low": 13.2,
+          "close": 13.5
+        },
+        {
+          "trade_date": "2024-01-22",
+          "open": 13.125,
+          "high": 13.425,
+          "low": 12.7,
+          "close": 13.0
+        },
+        {
+          "trade_date": "2024-01-23",
+          "open": 12.625,
+          "high": 12.925,
+          "low": 12.2,
+          "close": 12.5
+        },
+        {
+          "trade_date": "2024-01-24",
+          "open": 12.125,
+          "high": 12.425,
+          "low": 11.7,
+          "close": 12.0
+        },
+        {
+          "trade_date": "2024-01-25",
+          "open": 11.625,
+          "high": 11.925,
+          "low": 11.2,
+          "close": 11.5
+        },
+        {
+          "trade_date": "2024-01-26",
+          "open": 11.125,
+          "high": 11.425,
+          "low": 10.7,
+          "close": 11.0
+        },
+        {
+          "trade_date": "2024-01-29",
+          "open": 10.625,
+          "high": 10.925,
+          "low": 10.2,
+          "close": 10.5
+        }
+      ],
+      "expected": [
+        {
+          "trade_date": "2024-01-02",
+          "source_bar_valid": true,
+          "bars_ubi_count": 1,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-03",
+          "source_bar_valid": true,
+          "bars_ubi_count": 2,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-04",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-05",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-08",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-09",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-10",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-11",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-12",
+          "source_bar_valid": true,
+          "bars_ubi_count": 9,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-15",
+          "source_bar_valid": true,
+          "bars_ubi_count": 10,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-16",
+          "source_bar_valid": true,
+          "bars_ubi_count": 11,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-17",
+          "source_bar_valid": true,
+          "bars_ubi_count": 12,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-18",
+          "source_bar_valid": true,
+          "bars_ubi_count": 13,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-19",
+          "source_bar_valid": true,
+          "bars_ubi_count": 14,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-22",
+          "source_bar_valid": true,
+          "bars_ubi_count": 15,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-23",
+          "source_bar_valid": true,
+          "bars_ubi_count": 16,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-24",
+          "source_bar_valid": true,
+          "bars_ubi_count": 17,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-25",
+          "source_bar_valid": true,
+          "bars_ubi_count": 18,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-26",
+          "source_bar_valid": true,
+          "bars_ubi_count": 19,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-29",
+          "source_bar_valid": true,
+          "bars_ubi_count": 20,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        }
+      ]
+    },
+    {
+      "id": "swing_lifecycle",
+      "origin": "handcrafted",
+      "covers": [
+        "wide_oscillation",
+        "bar_inclusion",
+        "gap",
+        "resume_after_suspension",
+        "tied_high",
+        "doji",
+        "invalid_ohlc",
+        "last_bi_extension",
+        "last_bi_break",
+        "last_bi_removal"
+      ],
+      "bars": [
+        {
+          "trade_date": "2024-01-02",
+          "open": 10.18,
+          "high": 10.63,
+          "low": 9.55,
+          "close": 10.0
+        },
+        {
+          "trade_date": "2024-01-03",
+          "open": 10.7371,
+          "high": 11.3071,
+          "low": 10.2871,
+          "close": 10.8571
+        },
+        {
+          "trade_date": "2024-01-04",
+          "open": 11.5943,
+          "high": 12.1643,
+          "low": 11.1443,
+          "close": 11.7143
+        },
+        {
+          "trade_date": "2024-01-05",
+          "open": 12.7514,
+          "high": 13.2014,
+          "low": 12.1214,
+          "close": 12.5714
+        },
+        {
+          "trade_date": "2024-01-08",
+          "open": 13.3086,
+          "high": 13.8786,
+          "low": 12.8586,
+          "close": 13.4286
+        },
+        {
+          "trade_date": "2024-01-09",
+          "open": 14.1657,
+          "high": 14.7357,
+          "low": 13.7157,
+          "close": 14.2857
+        },
+        {
+          "trade_date": "2024-01-10",
+          "open": 15.3229,
+          "high": 15.7729,
+          "low": 14.6929,
+          "close": 15.1429
+        },
+        {
+          "trade_date": "2024-01-11",
+          "open": 15.88,
+          "high": 16.45,
+          "low": 15.43,
+          "close": 16.0
+        },
+        {
+          "trade_date": "2024-01-12",
+          "open": 14.88,
+          "high": 15.45,
+          "low": 14.43,
+          "close": 15.0
+        },
+        {
+          "trade_date": "2024-01-15",
+          "open": 14.18,
+          "high": 14.63,
+          "low": 13.55,
+          "close": 14.0
+        },
+        {
+          "trade_date": "2024-01-16",
+          "open": 12.88,
+          "high": 13.45,
+          "low": 12.43,
+          "close": 13.0
+        },
+        {
+          "trade_date": "2024-01-17",
+          "open": 11.88,
+          "high": 12.45,
+          "low": 11.43,
+          "close": 12.0
+        },
+        {
+          "trade_date": "2024-01-18",
+          "open": 11.2,
+          "high": 16.8,
+          "low": 8.8,
+          "close": 14.9
+        },
+        {
+          "trade_date": "2024-01-19",
+          "open": 12.0,
+          "high": 15.8,
+          "low": 9.6,
+          "close": 13.0
+        },
+        {
+          "trade_date": "2024-01-22",
+          "open": 8.88,
+          "high": 9.45,
+          "low": 8.43,
+          "close": 9.0
+        },
+        {
+          "trade_date": "2024-01-23",
+          "open": 10.3229,
+          "high": 10.7729,
+          "low": 9.6929,
+          "close": 10.1429
+        },
+        {
+          "trade_date": "2024-01-24",
+          "open": 11.1657,
+          "high": 11.7357,
+          "low": 10.7157,
+          "close": 11.2857
+        },
+        {
+          "trade_date": "2024-01-25",
+          "open": 12.3086,
+          "high": 12.8786,
+          "low": 11.8586,
+          "close": 12.4286
+        },
+        {
+          "trade_date": "2024-01-26",
+          "open": 13.7514,
+          "high": 14.2014,
+          "low": 13.1214,
+          "close": 13.5714
+        },
+        {
+          "trade_date": "2024-01-29",
+          "open": 14.5943,
+          "high": 15.1643,
+          "low": 14.1443,
+          "close": 14.7143
+        },
+        {
+          "trade_date": "2024-01-30",
+          "open": 15.7371,
+          "high": 16.3071,
+          "low": 15.2871,
+          "close": 15.8571
+        },
+        {
+          "trade_date": "2024-01-31",
+          "open": 17.18,
+          "high": 17.63,
+          "low": 16.55,
+          "close": 17.0
+        },
+        {
+          "trade_date": "2024-02-01",
+          "open": 15.5943,
+          "high": 16.1643,
+          "low": 15.1443,
+          "close": 15.7143
+        },
+        {
+          "trade_date": "2024-02-02",
+          "open": 14.3086,
+          "high": 14.8786,
+          "low": 13.8586,
+          "close": 14.4286
+        },
+        {
+          "trade_date": "2024-02-05",
+          "open": 13.3229,
+          "high": 13.7729,
+          "low": 12.6929,
+          "close": 13.1429
+        },
+        {
+          "trade_date": "2024-02-06",
+          "open": 11.7371,
+          "high": 12.3071,
+          "low": 11.2871,
+          "close": 11.8571
+        },
+        {
+          "trade_date": "2024-02-07",
+          "open": 10.4514,
+          "high": 11.0214,
+          "low": 10.0014,
+          "close": 10.5714
+        },
+        {
+          "trade_date": "2024-02-08",
+          "open": 9.4657,
+          "high": 9.9157,
+          "low": 8.8357,
+          "close": 9.2857
+        },
+        {
+          "trade_date": "2024-02-09",
+          "open": 7.88,
+          "high": 8.45,
+          "low": 7.43,
+          "close": 8.0
+        },
+        {
+          "trade_date": "2024-02-12",
+          "open": 9.3086,
+          "high": 9.8786,
+          "low": 8.8586,
+          "close": 9.4286
+        },
+        {
+          "trade_date": "2024-02-13",
+          "open": 11.0371,
+          "high": 11.4871,
+          "low": 10.4071,
+          "close": 10.8571
+        },
+        {
+          "trade_date": "2024-02-14",
+          "open": 12.1657,
+          "high": 12.7357,
+          "low": 11.7157,
+          "close": 12.2857
+        },
+        {
+          "trade_date": "2024-02-15",
+          "open": 13.5943,
+          "high": 14.1643,
+          "low": 13.1443,
+          "close": 13.7143
+        },
+        {
+          "trade_date": "2024-02-16",
+          "open": 15.3229,
+          "high": 15.7729,
+          "low": 14.6929,
+          "close": 15.1429
+        },
+        {
+          "trade_date": "2024-02-19",
+          "open": 16.4514,
+          "high": 17.0214,
+          "low": 16.0014,
+          "close": 16.5714
+        },
+        {
+          "trade_date": "2024-02-20",
+          "open": 17.88,
+          "high": 18.45,
+          "low": 17.43,
+          "close": 18.0
+        },
+        {
+          "trade_date": "2024-02-21",
+          "open": 16.6086,
+          "high": 17.0586,
+          "low": 15.9786,
+          "close": 16.4286
+        },
+        {
+          "trade_date": "2024-02-22",
+          "open": 14.7371,
+          "high": 15.3071,
+          "low": 14.2871,
+          "close": 14.8571
+        },
+        {
+          "trade_date": "2024-03-08",
+          "open": 18.8,
+          "high": 19.4,
+          "low": 18.5,
+          "close": 19.1
+        },
+        {
+          "trade_date": "2024-03-11",
+          "open": 20.2,
+          "high": 21.0,
+          "low": 20.0,
+          "close": 20.7
+        },
+        {
+          "trade_date": "2024-03-12",
+          "open": 20.5,
+          "high": 21.0,
+          "low": 19.9,
+          "close": 20.1
+        },
+        {
+          "trade_date": "2024-03-13",
+          "open": 20.4,
+          "high": 20.8,
+          "low": 20.0,
+          "close": 20.4
+        },
+        {
+          "trade_date": "2024-03-14",
+          "open": 19.8,
+          "high": 19.7,
+          "low": 19.2,
+          "close": 19.5
+        },
+        {
+          "trade_date": "2024-03-15",
+          "open": 8.5943,
+          "high": 9.1643,
+          "low": 8.1443,
+          "close": 8.7143
+        },
+        {
+          "trade_date": "2024-03-18",
+          "open": 10.3086,
+          "high": 10.8786,
+          "low": 9.8586,
+          "close": 10.4286
+        },
+        {
+          "trade_date": "2024-03-19",
+          "open": 12.3229,
+          "high": 12.7729,
+          "low": 11.6929,
+          "close": 12.1429
+        },
+        {
+          "trade_date": "2024-03-20",
+          "open": 13.7371,
+          "high": 14.3071,
+          "low": 13.2871,
+          "close": 13.8571
+        },
+        {
+          "trade_date": "2024-03-21",
+          "open": 15.4514,
+          "high": 16.0214,
+          "low": 15.0014,
+          "close": 15.5714
+        },
+        {
+          "trade_date": "2024-03-22",
+          "open": 17.4657,
+          "high": 17.9157,
+          "low": 16.8357,
+          "close": 17.2857
+        },
+        {
+          "trade_date": "2024-03-25",
+          "open": 18.88,
+          "high": 19.45,
+          "low": 18.43,
+          "close": 19.0
+        },
+        {
+          "trade_date": "2024-03-26",
+          "open": 17.7371,
+          "high": 18.3071,
+          "low": 17.2871,
+          "close": 17.8571
+        },
+        {
+          "trade_date": "2024-03-27",
+          "open": 16.8943,
+          "high": 17.3443,
+          "low": 16.2643,
+          "close": 16.7143
+        },
+        {
+          "trade_date": "2024-03-28",
+          "open": 15.4514,
+          "high": 16.0214,
+          "low": 15.0014,
+          "close": 15.5714
+        },
+        {
+          "trade_date": "2024-03-29",
+          "open": 14.3086,
+          "high": 14.8786,
+          "low": 13.8586,
+          "close": 14.4286
+        },
+        {
+          "trade_date": "2024-04-01",
+          "open": 13.4657,
+          "high": 13.9157,
+          "low": 12.8357,
+          "close": 13.2857
+        },
+        {
+          "trade_date": "2024-04-02",
+          "open": 12.0229,
+          "high": 12.5929,
+          "low": 11.5729,
+          "close": 12.1429
+        },
+        {
+          "trade_date": "2024-04-03",
+          "open": 10.88,
+          "high": 11.45,
+          "low": 10.43,
+          "close": 11.0
+        },
+        {
+          "trade_date": "2024-04-04",
+          "open": 12.4657,
+          "high": 12.9157,
+          "low": 11.8357,
+          "close": 12.2857
+        },
+        {
+          "trade_date": "2024-04-05",
+          "open": 13.4514,
+          "high": 14.0214,
+          "low": 13.0014,
+          "close": 13.5714
+        },
+        {
+          "trade_date": "2024-04-08",
+          "open": 14.7371,
+          "high": 15.3071,
+          "low": 14.2871,
+          "close": 14.8571
+        },
+        {
+          "trade_date": "2024-04-09",
+          "open": 16.3229,
+          "high": 16.7729,
+          "low": 15.6929,
+          "close": 16.1429
+        },
+        {
+          "trade_date": "2024-04-10",
+          "open": 17.3086,
+          "high": 17.8786,
+          "low": 16.8586,
+          "close": 17.4286
+        },
+        {
+          "trade_date": "2024-04-11",
+          "open": 18.5943,
+          "high": 19.1643,
+          "low": 18.1443,
+          "close": 18.7143
+        },
+        {
+          "trade_date": "2024-04-12",
+          "open": 20.18,
+          "high": 20.63,
+          "low": 19.55,
+          "close": 20.0
+        },
+        {
+          "trade_date": "2024-04-15",
+          "open": 18.4514,
+          "high": 19.0214,
+          "low": 18.0014,
+          "close": 18.5714
+        },
+        {
+          "trade_date": "2024-04-16",
+          "open": 17.0229,
+          "high": 17.5929,
+          "low": 16.5729,
+          "close": 17.1429
+        },
+        {
+          "trade_date": "2024-04-17",
+          "open": 15.8943,
+          "high": 16.3443,
+          "low": 15.2643,
+          "close": 15.7143
+        },
+        {
+          "trade_date": "2024-04-18",
+          "open": 14.1657,
+          "high": 14.7357,
+          "low": 13.7157,
+          "close": 14.2857
+        },
+        {
+          "trade_date": "2024-04-19",
+          "open": 12.7371,
+          "high": 13.3071,
+          "low": 12.2871,
+          "close": 12.8571
+        },
+        {
+          "trade_date": "2024-04-22",
+          "open": 11.6086,
+          "high": 12.0586,
+          "low": 10.9786,
+          "close": 11.4286
+        },
+        {
+          "trade_date": "2024-04-23",
+          "open": 9.88,
+          "high": 10.45,
+          "low": 9.43,
+          "close": 10.0
+        },
+        {
+          "trade_date": "2024-04-24",
+          "open": 11.4514,
+          "high": 12.0214,
+          "low": 11.0014,
+          "close": 11.5714
+        },
+        {
+          "trade_date": "2024-04-25",
+          "open": 13.3229,
+          "high": 13.7729,
+          "low": 12.6929,
+          "close": 13.1429
+        },
+        {
+          "trade_date": "2024-04-26",
+          "open": 14.5943,
+          "high": 15.1643,
+          "low": 14.1443,
+          "close": 14.7143
+        },
+        {
+          "trade_date": "2024-04-29",
+          "open": 16.1657,
+          "high": 16.7357,
+          "low": 15.7157,
+          "close": 16.2857
+        },
+        {
+          "trade_date": "2024-04-30",
+          "open": 18.0371,
+          "high": 18.4871,
+          "low": 17.4071,
+          "close": 17.8571
+        },
+        {
+          "trade_date": "2024-05-01",
+          "open": 19.3086,
+          "high": 19.8786,
+          "low": 18.8586,
+          "close": 19.4286
+        },
+        {
+          "trade_date": "2024-05-02",
+          "open": 20.88,
+          "high": 21.45,
+          "low": 20.43,
+          "close": 21.0
+        }
+      ],
+      "expected": [
+        {
+          "trade_date": "2024-01-02",
+          "source_bar_valid": true,
+          "bars_ubi_count": 1,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-03",
+          "source_bar_valid": true,
+          "bars_ubi_count": 2,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-04",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-05",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-08",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-09",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-10",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-11",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-12",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-15",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-16",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-17",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-18",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": []
+        },
+        {
+          "trade_date": "2024-01-19",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-18",
+              "high": 16.45,
+              "low": 8.8
+            }
+          ],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-01-22",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 0,
+          "bi_list": [],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": [
+            "last_bi_break",
+            "last_bi_removal"
+          ]
+        },
+        {
+          "trade_date": "2024-01-23",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": [
+            "last_bi_extension",
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-01-24",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [],
+          "zs_seq": [],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-01-25",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-01-26",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-01-29",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-01-30",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-01-31",
+          "source_bar_valid": true,
+          "bars_ubi_count": 9,
+          "bi_list_count": 1,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-01",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-02-02",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "bi_count": 1,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-02-05",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-06",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-07",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-08",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-09",
+          "source_bar_valid": true,
+          "bars_ubi_count": 9,
+          "bi_list_count": 2,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-12",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-02-13",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-31",
+              "bi_count": 2,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-02-14",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-15",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-16",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-19",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-20",
+          "source_bar_valid": true,
+          "bars_ubi_count": 9,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-02-21",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-02-20",
+              "high": 18.45,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-02-22",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-02-20",
+              "high": 18.45,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-03-08",
+          "source_bar_valid": true,
+          "bars_ubi_count": 12,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "last_bi_break",
+            "last_bi_removal",
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-11",
+          "source_bar_valid": true,
+          "bars_ubi_count": 13,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-12",
+          "source_bar_valid": true,
+          "bars_ubi_count": 13,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-13",
+          "source_bar_valid": true,
+          "bars_ubi_count": 13,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-14",
+          "source_bar_valid": false,
+          "bars_ubi_count": 13,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": []
+        },
+        {
+          "trade_date": "2024-03-15",
+          "source_bar_valid": true,
+          "bars_ubi_count": 3,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "last_bi_extension",
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-03-18",
+          "source_bar_valid": true,
+          "bars_ubi_count": 4,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_excluded"
+          ]
+        },
+        {
+          "trade_date": "2024-03-19",
+          "source_bar_valid": true,
+          "bars_ubi_count": 5,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-20",
+          "source_bar_valid": true,
+          "bars_ubi_count": 6,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-21",
+          "source_bar_valid": true,
+          "bars_ubi_count": 7,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-22",
+          "source_bar_valid": true,
+          "bars_ubi_count": 8,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-25",
+          "source_bar_valid": true,
+          "bars_ubi_count": 9,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-26",
+          "source_bar_valid": true,
+          "bars_ubi_count": 10,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-27",
+          "source_bar_valid": true,
+          "bars_ubi_count": 11,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-28",
+          "source_bar_valid": true,
+          "bars_ubi_count": 12,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-03-29",
+          "source_bar_valid": true,
+          "bars_ubi_count": 13,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-01",
+          "source_bar_valid": true,
+          "bars_ubi_count": 14,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-02",
+          "source_bar_valid": true,
+          "bars_ubi_count": 15,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-03",
+          "source_bar_valid": true,
+          "bars_ubi_count": 16,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-04",
+          "source_bar_valid": true,
+          "bars_ubi_count": 17,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-05",
+          "source_bar_valid": true,
+          "bars_ubi_count": 18,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-08",
+          "source_bar_valid": true,
+          "bars_ubi_count": 19,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-09",
+          "source_bar_valid": true,
+          "bars_ubi_count": 20,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-10",
+          "source_bar_valid": true,
+          "bars_ubi_count": 21,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-11",
+          "source_bar_valid": true,
+          "bars_ubi_count": 22,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-12",
+          "source_bar_valid": true,
+          "bars_ubi_count": 23,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-15",
+          "source_bar_valid": true,
+          "bars_ubi_count": 24,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-16",
+          "source_bar_valid": true,
+          "bars_ubi_count": 25,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-17",
+          "source_bar_valid": true,
+          "bars_ubi_count": 26,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-18",
+          "source_bar_valid": true,
+          "bars_ubi_count": 27,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-19",
+          "source_bar_valid": true,
+          "bars_ubi_count": 28,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-22",
+          "source_bar_valid": true,
+          "bars_ubi_count": 29,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-23",
+          "source_bar_valid": true,
+          "bars_ubi_count": 30,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-24",
+          "source_bar_valid": true,
+          "bars_ubi_count": 31,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-25",
+          "source_bar_valid": true,
+          "bars_ubi_count": 32,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-26",
+          "source_bar_valid": true,
+          "bars_ubi_count": 33,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-29",
+          "source_bar_valid": true,
+          "bars_ubi_count": 34,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-04-30",
+          "source_bar_valid": true,
+          "bars_ubi_count": 35,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-05-01",
+          "source_bar_valid": true,
+          "bars_ubi_count": 36,
+          "bi_list_count": 4,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-02-09",
+              "end_date": "2024-03-12",
+              "high": 21.0,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-03-12",
+              "bi_count": 4,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "finished_tail_included"
+          ]
+        },
+        {
+          "trade_date": "2024-05-02",
+          "source_bar_valid": true,
+          "bars_ubi_count": 48,
+          "bi_list_count": 3,
+          "bi_list": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "finished_bis": [
+            {
+              "direction": "down",
+              "start_date": "2024-01-11",
+              "end_date": "2024-01-22",
+              "high": 16.45,
+              "low": 8.43
+            },
+            {
+              "direction": "up",
+              "start_date": "2024-01-22",
+              "end_date": "2024-01-31",
+              "high": 17.63,
+              "low": 8.43
+            },
+            {
+              "direction": "down",
+              "start_date": "2024-01-31",
+              "end_date": "2024-02-09",
+              "high": 17.63,
+              "low": 7.43
+            }
+          ],
+          "zs_seq": [
+            {
+              "start_date": "2024-01-11",
+              "end_date": "2024-02-09",
+              "bi_count": 3,
+              "zg": 16.45,
+              "zd": 8.43,
+              "zz": 12.44,
+              "is_valid": true
+            }
+          ],
+          "events": [
+            "last_bi_break",
+            "last_bi_removal",
+            "finished_tail_included"
+          ]
+        }
+      ]
+    }
+  ]
+}
