@@ -71,6 +71,8 @@ class V3CliTests(unittest.TestCase):
             self.assertEqual(written["written_rows"], 2)
             status = self.run_cli("status", "--database", str(database))
             self.assertEqual(status["tables"]["source_daily_bars"], 2)
+            with duckdb.connect(str(database), read_only=True) as connection:
+                self.assertIsNone(connection.execute("SELECT turnover_rate FROM source_daily_bars WHERE trade_date = DATE '2025-01-02'").fetchone()[0])
 
             replacement = root / "replacement.jsonl"
             self.write_jsonl(replacement, [self.source_row("2025-01-02", close=99)])
@@ -130,6 +132,7 @@ class V3CliTests(unittest.TestCase):
                 "--calculator",
                 str(ROOT / "target" / "debug" / "v3-calc"),
             )
+            self.assertEqual(result["strategy"], "replace-batch-keys")
             self.assertEqual(result["written_rows"]["calc_daily_indicators"], len(rows))
             with duckdb.connect(str(database), read_only=True) as connection:
                 self.assertEqual(connection.execute("SELECT COUNT(*) FROM calc_daily_czsc_structure").fetchone()[0], len(rows))

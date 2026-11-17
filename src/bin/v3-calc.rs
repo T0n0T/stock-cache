@@ -202,6 +202,7 @@ fn persist_calculation(
     rendered: &[u8],
     extra_scope: &BTreeMap<String, String>,
 ) -> Result<()> {
+    let aggregate_by_table = requested_changed_from.is_none();
     let mut groups: BTreeMap<(String, String, String, String, String), Vec<Value>> =
         BTreeMap::new();
     for (line_number, line) in rendered.split(|byte| *byte == b'\n').enumerate() {
@@ -235,7 +236,11 @@ fn persist_calculation(
                 table.to_string(),
                 source_dataset.to_string(),
                 calc_version.to_string(),
-                ts_code.to_string(),
+                if aggregate_by_table {
+                    String::new()
+                } else {
+                    ts_code.to_string()
+                },
                 row.get("period_type")
                     .and_then(Value::as_str)
                     .unwrap_or_default()
@@ -264,18 +269,17 @@ fn persist_calculation(
             } else {
                 "trade_date"
             };
-            let changed_from = requested_changed_from.or_else(|| {
-                rows.iter()
-                    .filter_map(|row| row.get(date_key).and_then(Value::as_str))
-                    .filter_map(|date| parse_date(date).ok())
-                    .min()
-            });
-            let checkpoints = duckdb::load_indicator_checkpoints(
-                connection,
-                &source_dataset,
-                &ts_code,
-                &calc_version,
-            )?;
+            let changed_from = requested_changed_from;
+            let checkpoints = if ts_code.is_empty() {
+                Vec::new()
+            } else {
+                duckdb::load_indicator_checkpoints(
+                    connection,
+                    &source_dataset,
+                    &ts_code,
+                    &calc_version,
+                )?
+            };
             let recompute_from = changed_from
                 .and_then(|changed| {
                     checkpoint::plan_recompute(changed, calendar, &checkpoints).ok()
@@ -321,8 +325,10 @@ fn persist_calculation(
             let mut scope = BTreeMap::from([
                 ("source_dataset".to_string(), source_dataset),
                 ("calc_version".to_string(), calc_version),
-                ("ts_code".to_string(), ts_code),
             ]);
+            if !ts_code.is_empty() {
+                scope.insert("ts_code".to_string(), ts_code);
+            }
             if !period_type.is_empty() {
                 scope.insert("period_type".to_string(), period_type);
             }
@@ -339,7 +345,11 @@ fn persist_calculation(
                 connection,
                 &table,
                 &path,
-                "replace-dates",
+                if aggregate_by_table {
+                    "replace-batch-keys"
+                } else {
+                    "replace-dates"
+                },
                 &dates,
                 &scope,
                 &[],

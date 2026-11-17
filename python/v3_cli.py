@@ -175,7 +175,7 @@ def command_compute(args: argparse.Namespace) -> int:
 
     # The calculator itself owns the Rust writer in write mode.  Python only
     # parses the emitted envelopes to produce a compact command summary.
-    print(json.dumps({"status": "ok", "strategy": "replace-dates", "input_tables": table_counts, "written_rows": table_counts}))
+    print(json.dumps({"status": "ok", "strategy": "replace-batch-keys", "input_tables": table_counts, "written_rows": table_counts}))
     return 0
 
 

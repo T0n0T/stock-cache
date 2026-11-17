@@ -59,6 +59,7 @@ fn rust_writer_handles_append_replace_delete_and_checkpoint() {
     );
     duckdb::with_connection(database.to_str().unwrap(), |connection| {
         duckdb::create_schema(connection)?;
+        duckdb::create_schema(connection)?;
         assert_eq!(
             duckdb::write_jsonl(
                 connection,
@@ -194,6 +195,70 @@ fn calc_replace_requires_scope_and_rolls_back_bad_batch() {
 
     duckdb::with_connection(database.to_str().unwrap(), |connection| {
         assert_eq!(duckdb::table_count(connection, "calc_daily_indicators")?, 1);
+        Ok(())
+    })
+    .unwrap();
+}
+
+#[test]
+fn batch_key_replacement_only_replaces_staged_instrument_keys() {
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("cache.duckdb");
+    let make_row = |ts_code: &str, period_count: i64| {
+        indicator_row(json!({
+            "source_dataset": "dataset-a",
+            "ts_code": ts_code,
+            "trade_date": "2025-01-02",
+            "daily_macd_period_count": period_count,
+            "calc_version": "v3-test"
+        }))
+    };
+    let initial = jsonl_file(
+        directory.path(),
+        "initial.jsonl",
+        &[make_row("000001.SZ", 1), make_row("000002.SZ", 1)],
+    );
+    let replacement = jsonl_file(
+        directory.path(),
+        "replacement.jsonl",
+        &[make_row("000001.SZ", 2)],
+    );
+
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        assert_eq!(
+            duckdb::write_jsonl(
+                connection,
+                "calc_daily_indicators",
+                &initial,
+                "append",
+                &[],
+                &BTreeMap::new(),
+                &[],
+            )?,
+            2
+        );
+        assert_eq!(
+            duckdb::write_jsonl(
+                connection,
+                "calc_daily_indicators",
+                &replacement,
+                "replace-batch-keys",
+                &[],
+                &BTreeMap::new(),
+                &[],
+            )?,
+            1
+        );
+        assert_eq!(duckdb::table_count(connection, "calc_daily_indicators")?, 2);
+
+        let mut query = connection.query(
+            "SELECT daily_macd_period_count FROM calc_daily_indicators WHERE ts_code = '000001.SZ'",
+            duckdb_neo::Parameters::None,
+        )?;
+        let chunk = query.next_chunk()?.unwrap();
+        let values = chunk.get_vector_at::<i64>(0)?.reader()?;
+        assert_eq!(values.get(0)?.copied(), Some(2));
         Ok(())
     })
     .unwrap();
