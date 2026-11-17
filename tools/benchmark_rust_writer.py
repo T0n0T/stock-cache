@@ -72,8 +72,8 @@ def measure(binary: str, workload: str, rows_per_day: int, root: Path) -> dict[s
     database = root / f"{workload}.duckdb"
     run(binary, database, ["init"])
     if base:
-        run(binary, database, ["write", "--table", "source_daily_bars", "--input", str(base_path), "--strategy", "append"])
-    command = ["write", "--table", "source_daily_bars", "--input", str(batch_path), "--strategy", strategy]
+        run(binary, database, ["import", "--table", "source_daily_bars", "--input", str(base_path), "--strategy", "append"])
+    command = ["import", "--table", "source_daily_bars", "--input", str(batch_path), "--strategy", strategy]
     if dates:
         command.extend(["--dates", ",".join(value.isoformat() for value in dates)])
     started = time.perf_counter()

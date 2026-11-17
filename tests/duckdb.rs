@@ -341,3 +341,60 @@ fn rust_writer_creates_and_writes_generated_tushare_source_table() {
     })
     .unwrap();
 }
+
+#[test]
+fn reference_snapshot_replacement_removes_obsolete_keys_and_rolls_back_failure() {
+    let directory = tempdir().unwrap();
+    let first = jsonl_file(
+        directory.path(),
+        "snapshot.jsonl",
+        &[
+            json!({"ts_code":"000001.SZ"}),
+            json!({"ts_code":"000002.SZ"}),
+        ],
+    );
+    let next = jsonl_file(
+        directory.path(),
+        "next.jsonl",
+        &[json!({"ts_code":"000003.SZ"})],
+    );
+    let bad = jsonl_file(directory.path(), "bad.jsonl", &[json!({"ts_code":null})]);
+    duckdb::with_connection(":memory:", |connection| {
+        duckdb::create_schema(connection)?;
+        for path in [&first, &next] {
+            duckdb::write_jsonl(
+                connection,
+                "stock_basic",
+                path,
+                "replace-all",
+                &[],
+                &BTreeMap::new(),
+                &[],
+            )?;
+        }
+        assert_eq!(duckdb::table_count(connection, "stock_basic")?, 1);
+        assert!(duckdb::write_jsonl(
+            connection,
+            "stock_basic",
+            &bad,
+            "replace-all",
+            &[],
+            &BTreeMap::new(),
+            &[]
+        )
+        .is_err());
+        assert_eq!(duckdb::table_count(connection, "stock_basic")?, 1);
+        assert!(duckdb::write_jsonl(
+            connection,
+            "source_daily_bars",
+            &first,
+            "replace-all",
+            &[],
+            &BTreeMap::new(),
+            &[]
+        )
+        .is_err());
+        Ok(())
+    })
+    .unwrap();
+}

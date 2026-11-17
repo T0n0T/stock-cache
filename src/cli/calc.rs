@@ -46,6 +46,10 @@ pub(crate) struct Args {
     write: bool,
     #[arg(long = "scope")]
     scope: Vec<String>,
+    #[arg(skip)]
+    output_from: Option<NaiveDate>,
+    #[arg(skip)]
+    output_to: Option<NaiveDate>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -505,27 +509,32 @@ fn calculate_group<W: Write>(
         let rolling_row = &rolling_values[index];
         let left_peak_row = &left_peak_values[index];
         emit(
+            args,
             output,
             "calc_daily_indicators",
             indicator_row(dataset, ts_code, bar.trade_date, args, macd_row, kdj_row),
         )?;
         emit(
+            args,
             output,
             "calc_daily_czsc_structure",
             czsc_row_value(dataset, ts_code, bar.trade_date, args, czsc_row),
         )?;
         emit(
+            args,
             output,
             "calc_daily_rolling_factors",
             rolling_row_value(dataset, ts_code, args, rolling_row),
         )?;
         emit(
+            args,
             output,
             "calc_daily_left_peak",
             left_peak_row_value(dataset, ts_code, args, left_peak_row),
         )?;
         if let Some(daily) = macd_row.daily {
             emit(
+                args,
                 output,
                 "calc_indicator_state",
                 state_row(StateRowInput {
@@ -561,6 +570,7 @@ fn calculate_group<W: Write>(
             macd::PeriodType::Monthly => "monthly",
         };
         emit(
+            args,
             output,
             "calc_indicator_state",
             state_row(StateRowInput {
@@ -578,12 +588,24 @@ fn calculate_group<W: Write>(
         )?;
     }
     for row in period_bar_rows(dataset, ts_code, args, calendar, bars) {
-        emit(output, "calc_period_bars", row)?;
+        emit(args, output, "calc_period_bars", row)?;
     }
     Ok(())
 }
 
-fn emit<W: Write>(output: &mut W, table: &'static str, row: Value) -> Result<()> {
+fn emit<W: Write>(args: &Args, output: &mut W, table: &'static str, row: Value) -> Result<()> {
+    let date = row
+        .get("trade_date")
+        .or_else(|| row.get("period_end_date"))
+        .and_then(Value::as_str)
+        .map(parse_date)
+        .transpose()?;
+    if date.is_some_and(|date| {
+        args.output_from.is_some_and(|from| date < from)
+            || args.output_to.is_some_and(|to| date > to)
+    }) {
+        return Ok(());
+    }
     serde_json::to_writer(&mut *output, &OutputRow { table, row })?;
     output.write_all(b"\n")?;
     Ok(())
@@ -850,4 +872,31 @@ fn parse_number(value: Option<&Value>) -> Result<Option<f64>> {
         Some(Value::String(value)) => Ok(Some(value.trim().parse()?)),
         Some(other) => bail!("expected numeric value or null, got {other}"),
     }
+}
+
+/// Calculate a bounded instrument batch from cached history, emitting only the target slice.
+pub(crate) fn run_cached(
+    input: &Path,
+    calendar: &Path,
+    database: &Path,
+    output: &Path,
+    from: NaiveDate,
+    to: NaiveDate,
+    price_basis: &str,
+) -> Result<()> {
+    run(Args {
+        input: input.to_string_lossy().into_owned(),
+        calendar: calendar.to_path_buf(),
+        source_dataset: None,
+        changed_from: None,
+        calc_version: "v3-macd-kdj-czsc-1".into(),
+        price_basis: price_basis.into(),
+        kdj_window: 9,
+        output: output.to_string_lossy().into_owned(),
+        database: Some(database.to_path_buf()),
+        write: true,
+        scope: vec![],
+        output_from: Some(from),
+        output_to: Some(to),
+    })
 }

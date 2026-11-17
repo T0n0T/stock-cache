@@ -75,7 +75,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
         run_json(
             "stock-cache",
             &[
-                "write",
+                "import",
                 "--database",
                 database,
                 "--table",
@@ -94,7 +94,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     run(
         "stock-cache",
         &[
-            "write",
+            "import",
             "--database",
             database,
             "--table",
@@ -139,7 +139,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     run(
         "stock-cache",
         &[
-            "write",
+            "import",
             "--database",
             database,
             "--table",
@@ -155,7 +155,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     run(
         "stock-cache",
         &[
-            "write",
+            "import",
             "--database",
             database,
             "--table",
@@ -263,4 +263,32 @@ fn v3_calc_cli_persists_calculation_tables() {
         Ok(())
     })
     .unwrap();
+}
+
+#[test]
+fn init_db_and_status_use_dotenv_database_without_database_argument() {
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("runtime/cache.duckdb");
+    std::fs::write(
+        directory.path().join(".env"),
+        format!("DUCKDB_PATH='{}'\n", database.display()),
+    )
+    .unwrap();
+    for command in ["init-db", "status"] {
+        let output = Command::cargo_bin("stock-cache")
+            .unwrap()
+            .current_dir(directory.path())
+            .env_remove("DUCKDB_PATH")
+            .arg(command)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(summary["database"], database.to_str().unwrap());
+    }
+    assert!(database.is_file());
 }

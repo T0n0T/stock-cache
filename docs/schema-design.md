@@ -57,3 +57,14 @@ v3 只使用 DuckDB 本地副本。来源表保持 Tushare 接口的一接口一
 主指标是从输入交给 Rust writer 到提交和 checkpoint 完成的 wall time，报告逻辑行数、输入 MiB、rows/s、中位数和 P95。另行报告从 API 请求开始到 DuckDB 提交完成的端到端时间，并拆分 HTTP/解码、JSONL 序列化、数据库写入。端到端计时不包含 MACD/KDJ/CZSC 计算；计算批次另行从源读取开始计时到计算结果提交结束。
 
 最近一周真实拉取（2026-11-09 至 2026-11-13）为 27,864 fetched rows、27,452 written logical rows：HTTP/解码中位 4,521.7 ms，序列化 5,696.2 ms，DuckDB 写入与 checkpoint 1,059.4 ms，命令内部总计 11,378.3 ms，含进程启动 wall time 11,592.6 ms。对应端到端中位吞吐约 489.9 fetched rows/s，writer 约 5,260.4 written rows/s。
+
+## 缓存调度辅助表
+
+| 表 | 字段 | 用途 |
+|---|---|---|
+| `cache_trade_calendar` | `trade_date DATE PRIMARY KEY` | SSE 开市日；包含用于判断周/月是否完成的未来交易日 |
+| `cache_fetch_coverage` | `dataset VARCHAR, trade_date DATE, code VARCHAR, row_count BIGINT` | 主键为前三列；记录每次成功日期请求的实际去重写入行数，指数按代码独立记录 |
+
+空响应的 `row_count=0` 保留请求覆盖；股票行情为空时不记录成功。复用历史覆盖前
+会与实际来源表行数核对，删改来源导致计数变化时，full 会重新补齐，calc 则拒绝
+以不完整历史计算。两表由 DuckDB schema 初始化统一建立，不属于六张因子计算表。

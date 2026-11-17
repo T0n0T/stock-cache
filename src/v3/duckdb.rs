@@ -490,7 +490,7 @@ pub fn write_jsonl(
 ) -> Result<i64> {
     if !matches!(
         strategy,
-        "append" | "replace-dates" | "replace-keys" | "replace-batch-keys"
+        "append" | "replace-dates" | "replace-keys" | "replace-batch-keys" | "replace-all"
     ) {
         bail!("unknown v3 write strategy: {strategy}");
     }
@@ -498,6 +498,13 @@ pub fn write_jsonl(
         bail!("replace-keys requires at least one logical key");
     }
     let cols = table_columns(table)?;
+    if strategy == "replace-all"
+        && !dataset(table).is_some_and(|metadata| {
+            matches!(metadata.write_strategy, WriteStrategy::ReplaceAll { .. })
+        })
+    {
+        bail!("replace-all is only allowed for reference snapshot tables");
+    }
     let key_cols = table_keys(table)?;
     for column in scope.keys() {
         if !cols.iter().any(|known| known == column) {
@@ -548,6 +555,8 @@ pub fn write_jsonl(
             if already_exists {
                 bail!("append batch contains a logical key already present in target");
             }
+        } else if strategy == "replace-all" {
+            connection.execute(format!("DELETE FROM {}", ident(table)), Parameters::None)?;
         } else if strategy == "replace-batch-keys" {
             let key_match = key_cols
                 .iter()
@@ -693,6 +702,8 @@ fn json_literal(value: &Value, ty: &str) -> String {
 }
 
 const SCHEMA_SQL: &str = r#"
+CREATE TABLE IF NOT EXISTS cache_trade_calendar (trade_date DATE PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS cache_fetch_coverage (dataset VARCHAR, trade_date DATE, code VARCHAR, row_count BIGINT NOT NULL CHECK (row_count >= 0), PRIMARY KEY(dataset, trade_date, code));
 CREATE TABLE IF NOT EXISTS source_daily_bars (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, trade_date DATE NOT NULL, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, vol DOUBLE, amount DOUBLE, turnover_rate DOUBLE, price_basis VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, trade_date));
 CREATE TABLE IF NOT EXISTS calc_period_bars (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, period_type VARCHAR NOT NULL, period_start_date DATE NOT NULL, period_end_date DATE NOT NULL, price_basis VARCHAR NOT NULL, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, vol DOUBLE, amount DOUBLE, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, period_type, period_end_date, calc_version));
 CREATE TABLE IF NOT EXISTS calc_indicator_state (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, period_type VARCHAR NOT NULL, period_start_date DATE NOT NULL, period_end_date DATE NOT NULL, macd_ema12 DOUBLE, macd_ema26 DOUBLE, macd_dea DOUBLE, macd_period_count BIGINT, kdj_k DOUBLE, kdj_d DOUBLE, kdj_period_count BIGINT, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, period_type, period_end_date, calc_version));

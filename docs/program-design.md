@@ -37,7 +37,7 @@ cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- fetch --database ./runtime/stock-cache.duckdb \
   --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
-cargo run --bin stock-cache -- write --database ./runtime/stock-cache.duckdb \
+cargo run --bin stock-cache -- import --database ./runtime/stock-cache.duckdb \
   --table source_daily_bars --input bars.jsonl --strategy append
 cargo run --bin stock-cache -- calc --input bars-with-warmup.jsonl --calendar trade_cal.txt \
   --database ./runtime/stock-cache.duckdb --write
@@ -81,3 +81,27 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 使用真实 `stock_stk_factor_pro` 数据，日期为 2026-11-09 至 2026-11-13，共 27,452 行、5,575 个标的。输入只有这五个交易日，没有额外 warmup 行；单独计算命令耗时 1.63 秒。`stock-cache calc --write` 同时计算并写入六张计算表，输出 159,544 行、约 136.7 MiB；干净计算表首次填入耗时 19.73 秒，两次同批次替换分别耗时 20.06 和 20.29 秒，三轮中位数 20.06 秒，峰值 RSS 约 1.39 GiB。计算表最终行数为：`calc_period_bars` 11,142、`calc_indicator_state` 38,594，其余四张日表各 27,452。
 
 单独计算与计算加写入的差值约 18–20 秒，但包含结果解析、按表暂存、DuckDB 替换/checkpoint 和最终输出，不能视作纯数据库写耗时。该路径当前仍会在内存中保留全量渲染结果；本轮峰值内存显示后续应优先把计算结果流式写入按表暂存文件，降低批量回补的内存占用。此零 warmup 运行只用于性能测量，MACD 等滚动指标从给定五日样本起算，不代表长历史基准值。
+
+## 兼容的市场缓存主入口
+
+`stock-cache write --mode full --lookback-trading-days 1` 恢复 v2 的主流程语义：
+用交易日历选择截至上海当前日期的最近一个交易日，更新该日配置中的来源表；
+为股票、配置指数、同花顺指数三类计算来源补齐此前 36 个月缺失历史，计算并
+写入目标日期六类结果。非交易日选择最近交易日；当日数据尚未发布时明确失败。
+交易日历请求延伸到目标日期之后 40 个自然日，禁止把输入截断日当成周/月收盘日。
+
+`--start-date/--end-date` 与 `--lookback-trading-days` 互斥。`--mode cache` 仅缓存
+目标日期，`--mode calc` 仅使用已有来源和已缓存日历计算。默认数据库为
+`runtime/stock-cache.duckdb`，支持 `DUCKDB_PATH`、`--database`；加载 `.env` 或
+`--env-file`，环境变量优先。`INDEX_LIST_PATH` 和 `TARGET_CACHE_TABLES_PATH`
+可覆盖内置配置。JSONL 导入改用 `import` 子命令。
+
+来源表按请求日期及指数代码替换；历史覆盖由 `cache_fetch_coverage` 记录，
+包括已成功获取的空响应，避免每天重复请求。目标日期始终刷新。计算按标的批次
+从 DuckDB 读取全部已缓存历史；股票使用前复权 OHLC，指数使用原始 OHLC。
+预热仅参与计算，输出在写入前按目标日期过滤，避免把全量历史结果留在内存。
+`--chunk-size` 控制标的批次，`--max-concurrency` 控制 HTTP 并发。
+`--force-recalc` 在 full 模式额外刷新历史；计算本身每次都会重算目标切片。
+首轮 MACD 沿用 v2 的 36 个月有限预热口径，不能视为上市以来的精确基线。
+每批来源与计算结果使用 writer 事务；跨 HTTP 和各计算批次不构成单一事务，失败
+不会报告成功，已完成的来源缓存可供重试复用。

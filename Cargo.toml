@@ -16,6 +16,7 @@ duckdb-neo = "0.20000.2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tempfile = "3.10"
 tokio = { version = "1.38", features = ["io-util", "macros", "rt-multi-thread", "time", "net"] }
 
 [build-dependencies]
@@ -25,4 +26,3 @@ libduckdb-sys = { version = "=1.20000.2", default-features = false, features = [
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"
-tempfile = "3.10"
