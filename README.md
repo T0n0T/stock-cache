@@ -11,10 +11,10 @@ schemas/tushare-fields.yaml  Tushare dataset metadata and DuckDB field types
 src/source/tushare_http.rs    Rust reqwest transport
 src/v3/duckdb.rs              DuckDB schema, staging writer, and checkpoint I/O
 src/v3/{macd,kdj,rolling,left_peak,czsc}.rs  calculation kernels
-src/bin/v3-db.rs              init/status/fetch/write CLI
-src/bin/v3-calc.rs            calculation CLI with direct DuckDB persistence
-docs/v3-program-design.md     runtime and write strategy
-docs/v3-schema-design.md     table and performance design
+src/bin/stock-cache-db.rs     init/status/fetch/write CLI
+src/bin/stock-cache-calc.rs   calculation CLI with direct DuckDB persistence
+docs/program-design.md        runtime and write strategy
+docs/schema-design.md         table and performance design
 docs/data-usage-guide.md      DuckDB consumer queries
 ```
 
@@ -22,15 +22,15 @@ docs/data-usage-guide.md      DuckDB consumer queries
 
 ```bash
 cargo build --bins
-cargo run --bin v3-db -- init --database ./runtime/stock-cache-v3.duckdb
-cargo run --bin v3-db -- status --database ./runtime/stock-cache-v3.duckdb
+cargo run --bin stock-cache-db -- init --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache-db -- status --database ./runtime/stock-cache.duckdb
 ```
 
 Fetch a generated Tushare dataset and write it as one transaction:
 
 ```bash
-TUSHARE_TOKEN='...' cargo run --bin v3-db -- fetch \
-  --database ./runtime/stock-cache-v3.duckdb \
+TUSHARE_TOKEN='...' cargo run --bin stock-cache-db -- fetch \
+  --database ./runtime/stock-cache.duckdb \
   --dataset stock_stk_factor_pro \
   --params '{"trade_date":"20261113"}'
 ```
@@ -38,15 +38,15 @@ TUSHARE_TOKEN='...' cargo run --bin v3-db -- fetch \
 Write an existing JSONL batch with an explicit strategy:
 
 ```bash
-cargo run --bin v3-db -- write --database ./runtime/stock-cache-v3.duckdb \
+cargo run --bin stock-cache-db -- write --database ./runtime/stock-cache.duckdb \
   --table source_daily_bars --input bars.jsonl --strategy append
 ```
 
 Compute and persist v3 tables:
 
 ```bash
-cargo run --bin v3-calc --input bars-with-warmup.jsonl \
-  --calendar trade_cal.txt --database ./runtime/stock-cache-v3.duckdb --write
+cargo run --bin stock-cache-calc --input bars-with-warmup.jsonl \
+  --calendar trade_cal.txt --database ./runtime/stock-cache.duckdb --write
 ```
 
 ## Write strategies

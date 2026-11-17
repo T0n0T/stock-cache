@@ -1,20 +1,20 @@
 ---
 name: stock-cache
-description: Operate the Rust v3 Tushare and DuckDB CLI in this repository.
+description: Operate the Rust Tushare and DuckDB CLI in this repository.
 ---
 
-# Stock Cache v3
+# Stock Cache
 
-The active path is Rust v3 with a local DuckDB file. Use the binaries directly for maintenance; the Python wrapper only forwards arguments and summarizes JSON output.
+The production path is Rust with a local DuckDB file. Use the binaries directly for maintenance.
 
 ## Commands
 
 ```bash
-cargo run --bin v3-db -- init --database ./runtime/stock-cache-v3.duckdb
-cargo run --bin v3-db -- status --database ./runtime/stock-cache-v3.duckdb
-cargo run --bin v3-db -- fetch --database ./runtime/stock-cache-v3.duckdb --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
-cargo run --bin v3-db -- write --database ./runtime/stock-cache-v3.duckdb --table source_daily_bars --input bars.jsonl --strategy append
-cargo run --bin v3-calc --input bars.jsonl --calendar trade_cal.txt --database ./runtime/stock-cache-v3.duckdb --write
+cargo run --bin stock-cache-db -- init --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache-db -- status --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache-db -- fetch --database ./runtime/stock-cache.duckdb --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
+cargo run --bin stock-cache-db -- write --database ./runtime/stock-cache.duckdb --table source_daily_bars --input bars.jsonl --strategy append
+cargo run --bin stock-cache-calc --input bars.jsonl --calendar trade_cal.txt --database ./runtime/stock-cache.duckdb --write
 ```
 
 Set `TUSHARE_TOKEN` for API fetches. `TUSHARE_ENDPOINT`, timeout, retry, and concurrency settings are optional.

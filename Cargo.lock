@@ -1255,6 +1255,7 @@ dependencies = [
  "chrono",
  "clap",
  "duckdb-neo",
+ "libduckdb-sys",
  "predicates",
  "reqwest",
  "serde",

@@ -1,4 +1,4 @@
-//! Official Rust-owned v3 DuckDB CLI.
+//! Rust-owned DuckDB command-line interface.
 
 use std::{collections::BTreeMap, fs, io::Read, path::PathBuf, time::Instant};
 
@@ -10,7 +10,7 @@ use stock_cache::v3::duckdb;
 use stock_cache::{TushareHttpClient, TushareHttpConfig};
 
 #[derive(Debug, Parser)]
-#[command(name = "stock-cache-v3-db")]
+#[command(name = "stock-cache-db")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -68,7 +68,7 @@ fn fetch_dataset(database: &str, dataset_id: &str, raw_params: &str) -> Result<(
     })?;
     let http_ms = http_started.elapsed().as_secs_f64() * 1000.0;
     let temp = std::env::temp_dir().join(format!(
-        "stock-cache-v3-fetch-{}-{}.jsonl",
+        "stock-cache-fetch-{}-{}.jsonl",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -226,7 +226,7 @@ fn main() -> Result<()> {
         } => {
             let stdin_path = if input.as_os_str() == "-" {
                 let path = std::env::temp_dir().join(format!(
-                    "stock-cache-v3-stdin-{}-{}.jsonl",
+                    "stock-cache-stdin-{}-{}.jsonl",
                     std::process::id(),
                     std::time::SystemTime::now()
                         .duration_since(std::time::UNIX_EPOCH)

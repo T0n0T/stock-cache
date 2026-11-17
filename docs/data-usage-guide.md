@@ -1,6 +1,6 @@
 # v3 DuckDB 使用指南
 
-v3 的来源表沿用 Tushare 接口名，计算表使用 `calc_` 前缀。所有表位于同一个 DuckDB 文件；表结构由 `docs/v3-schema-design.md` 和 Rust schema 初始化代码共同定义。
+计算来源表沿用 Tushare 接口名，计算结果表使用 `calc_` 前缀。所有表位于同一个 DuckDB 文件；表结构由 `docs/schema-design.md` 和 Rust schema 初始化代码共同定义。
 
 ## 表选择
 
@@ -107,4 +107,4 @@ from calc_indicator_state
 group by source_dataset, period_type;
 ```
 
-DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补时先准备包含 warmup 历史的 JSONL，再使用 `v3-calc --changed-from ... --write`。
+DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补时先准备包含 warmup 历史的 JSONL，再使用 `stock-cache-calc --changed-from ... --write`。

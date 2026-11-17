@@ -51,15 +51,16 @@ fn source_row(trade_date: &str, close: f64) -> Value {
 #[test]
 fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     let directory = tempdir().unwrap();
-    let database = directory.path().join("v3.duckdb");
+    let database = directory.path().join("stock-cache.duckdb");
     let database = database.to_str().unwrap();
 
     assert_eq!(
-        run_json("v3-db", &["init", "--database", database])["status"],
+        run_json("stock-cache-db", &["init", "--database", database])["status"],
         "ok"
     );
     assert_eq!(
-        run_json("v3-db", &["status", "--database", database])["tables"]["source_daily_bars"],
+        run_json("stock-cache-db", &["status", "--database", database])["tables"]
+            ["source_daily_bars"],
         0
     );
 
@@ -73,7 +74,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     );
     assert_eq!(
         run_json(
-            "v3-db",
+            "stock-cache-db",
             &[
                 "write",
                 "--database",
@@ -92,7 +93,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     let replacement = directory.path().join("replacement.jsonl");
     write_jsonl(&replacement, &[source_row("2025-01-02", 99.0)]);
     run(
-        "v3-db",
+        "stock-cache-db",
         &[
             "write",
             "--database",
@@ -137,7 +138,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     let empty = directory.path().join("empty.jsonl");
     File::create(&empty).unwrap();
     run(
-        "v3-db",
+        "stock-cache-db",
         &[
             "write",
             "--database",
@@ -153,7 +154,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
         ],
     );
     run(
-        "v3-db",
+        "stock-cache-db",
         &[
             "write",
             "--database",
@@ -169,7 +170,8 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
         ],
     );
     assert_eq!(
-        run_json("v3-db", &["status", "--database", database])["tables"]["source_daily_bars"],
+        run_json("stock-cache-db", &["status", "--database", database])["tables"]
+            ["source_daily_bars"],
         0
     );
 }
@@ -177,7 +179,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
 #[test]
 fn v3_calc_cli_persists_calculation_tables() {
     let directory = tempdir().unwrap();
-    let database = directory.path().join("v3.duckdb");
+    let database = directory.path().join("stock-cache.duckdb");
     let bars_path = directory.path().join("bars.jsonl");
     let calendar_path = directory.path().join("calendar.txt");
     let output_path = directory.path().join("calculated.jsonl");
@@ -214,7 +216,7 @@ fn v3_calc_cli_persists_calculation_tables() {
     .unwrap();
 
     run(
-        "v3-calc",
+        "stock-cache-calc",
         &[
             "--input",
             bars_path.to_str().unwrap(),

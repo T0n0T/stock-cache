@@ -2,7 +2,7 @@ use std::{env, fs, path::PathBuf};
 
 fn main() {
     // duckdb-neo links the downloaded v2 C API dynamically by default.  The
-    // dependency build script exposes the directory through the `links` metadata;
+    // direct build dependency exposes its include directory via `links` metadata;
     // copy the library beside Cargo's profile directory and add an origin-relative
     // rpath so the Rust CLI works without a shell-specific LD_LIBRARY_PATH.
     let Some(out_dir) = env::var_os("OUT_DIR") else {
@@ -19,6 +19,7 @@ fn main() {
         "libduckdb.so"
     };
     let source = env::var_os("DEP_DUCKDB_LIB_DIR")
+        .or_else(|| env::var_os("DEP_DUCKDB_INCLUDE"))
         .map(PathBuf::from)
         .map(|dir| dir.join(library_name))
         .filter(|path| path.is_file())
@@ -45,4 +46,5 @@ fn main() {
         println!("cargo:rustc-link-arg=-Wl,-rpath,@loader_path");
     }
     println!("cargo:rerun-if-env-changed=DEP_DUCKDB_LIB_DIR");
+    println!("cargo:rerun-if-env-changed=DEP_DUCKDB_INCLUDE");
 }

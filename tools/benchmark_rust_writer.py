@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure the Rust duckdb-neo v3 writer for the three write workloads."""
+"""Measure the Rust DuckDB writer across representative write workloads."""
 
 from __future__ import annotations
 
@@ -84,14 +84,14 @@ def measure(binary: str, workload: str, rows_per_day: int, root: Path) -> dict[s
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--binary", default="target/release/v3-db")
+    parser.add_argument("--binary", default="target/release/stock-cache-db")
     parser.add_argument("--rows-per-day", type=int, default=50)
     parser.add_argument("--runs", type=int, default=5)
-    default_output = Path(__file__).resolve().parents[1] / "target" / "v3-rust-writer-benchmark.json"
+    default_output = Path(__file__).resolve().parents[1] / "target" / "stock-cache-writer-benchmark.json"
     parser.add_argument("--output", type=Path, default=default_output)
     args = parser.parse_args()
     trials: list[dict[str, object]] = []
-    with tempfile.TemporaryDirectory(prefix="stock-cache-v3-bench-") as directory:
+    with tempfile.TemporaryDirectory(prefix="stock-cache-bench-") as directory:
         root = Path(directory)
         for workload in ("daily_append", "daily_replace", "90d_replace", "full_build"):
             for run_number in range(1, args.runs + 1):

@@ -1,4 +1,4 @@
-//! JSONL bridge for the v3 calculation kernels.
+//! JSONL bridge for the calculation kernels.
 //!
 //! This binary owns the calculation boundary and emits table-tagged JSONL rows.
 //! With `--database --write` it also persists those rows through the Rust
@@ -20,7 +20,7 @@ use serde_json::{json, Value};
 use stock_cache::v3::{checkpoint, czsc, duckdb, kdj, left_peak, macd, rolling};
 
 #[derive(Debug, Parser)]
-#[command(name = "v3-calc")]
+#[command(name = "stock-cache-calc")]
 struct Args {
     #[arg(long, default_value = "-")]
     input: String,
@@ -250,7 +250,7 @@ fn persist_calculation(
             .push(row);
     }
     let temp_root = std::env::temp_dir().join(format!(
-        "stock-cache-v3-calc-{}-{}",
+        "stock-cache-calc-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

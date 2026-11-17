@@ -2,6 +2,15 @@
 name = "stock-cache"
 version = "0.1.0"
 edition = "2021"
+autobins = false
+
+[[bin]]
+name = "stock-cache-db"
+path = "src/bin/stock-cache-db.rs"
+
+[[bin]]
+name = "stock-cache-calc"
+path = "src/bin/stock-cache-calc.rs"
 
 [dependencies]
 anyhow = "1.0"
@@ -12,6 +21,10 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.38", features = ["io-util", "macros", "rt-multi-thread", "time", "net"] }
+
+[build-dependencies]
+# Stage the native library only after its download/build has completed.
+libduckdb-sys = { version = "=1.20000.2", default-features = false, features = ["capi-v2", "download-lib"] }
 
 [dev-dependencies]
 assert_cmd = "2.0"
