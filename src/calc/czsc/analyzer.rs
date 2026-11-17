@@ -6,7 +6,7 @@ use super::{
 };
 
 #[derive(Debug)]
-pub(in crate::calc) struct CzscAnalyzer {
+pub(crate) struct CzscAnalyzer {
     config: CzscConfig,
     last_source_date: Option<chrono::NaiveDate>,
     raw_bars: Vec<CzscBar>,
@@ -15,7 +15,7 @@ pub(in crate::calc) struct CzscAnalyzer {
 }
 
 impl CzscAnalyzer {
-    pub(in crate::calc) fn new(config: CzscConfig) -> Self {
+    pub(crate) fn new(config: CzscConfig) -> Self {
         Self {
             config,
             last_source_date: None,
@@ -36,7 +36,7 @@ impl CzscAnalyzer {
         Ok(())
     }
 
-    pub(in crate::calc) fn process(&mut self, source: CzscSourceBar) -> Result<CzscSnapshot> {
+    pub(crate) fn process(&mut self, source: CzscSourceBar) -> Result<CzscSnapshot> {
         self.check_source_date(source.trade_date)?;
         let valid = source.valid_bar();
         if let Some(bar) = valid {

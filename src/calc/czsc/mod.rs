@@ -2,8 +2,10 @@ mod analyzer;
 mod model;
 mod structure;
 
-pub(super) use analyzer::CzscAnalyzer;
-pub(super) use model::{CzscConfig, CzscSnapshot, CzscSourceBar};
+pub(crate) use analyzer::CzscAnalyzer;
+#[cfg(test)]
+pub(crate) use model::CzscSnapshot;
+pub(crate) use model::{CzscConfig, CzscSourceBar};
 
 #[cfg(test)]
 pub(super) use model::CzscBar;

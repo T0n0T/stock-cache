@@ -1,9 +1,9 @@
 use chrono::NaiveDate;
 
 #[derive(Debug, Clone, Copy)]
-pub(in crate::calc) struct CzscConfig {
-    pub(in crate::calc) min_bi_len: usize,
-    pub(in crate::calc) max_bi_num: usize,
+pub(crate) struct CzscConfig {
+    pub(crate) min_bi_len: usize,
+    pub(crate) max_bi_num: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -16,12 +16,12 @@ pub(in crate::calc) struct CzscBar {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(in crate::calc) struct CzscSourceBar {
-    pub(in crate::calc) trade_date: NaiveDate,
-    pub(in crate::calc) open: Option<f64>,
-    pub(in crate::calc) high: Option<f64>,
-    pub(in crate::calc) low: Option<f64>,
-    pub(in crate::calc) close: Option<f64>,
+pub(crate) struct CzscSourceBar {
+    pub(crate) trade_date: NaiveDate,
+    pub(crate) open: Option<f64>,
+    pub(crate) high: Option<f64>,
+    pub(crate) low: Option<f64>,
+    pub(crate) close: Option<f64>,
 }
 
 impl CzscSourceBar {
@@ -38,31 +38,31 @@ impl CzscSourceBar {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub(in crate::calc) struct CzscSnapshot {
-    pub(in crate::calc) source_bar_valid: bool,
-    pub(in crate::calc) status: String,
-    pub(in crate::calc) available_finished_bi_count: usize,
-    pub(in crate::calc) recent_bi_count: usize,
-    pub(in crate::calc) last_bi_direction: Option<String>,
-    pub(in crate::calc) last_bi_start_date: Option<NaiveDate>,
-    pub(in crate::calc) last_bi_end_date: Option<NaiveDate>,
-    pub(in crate::calc) last_bi_high: Option<f64>,
-    pub(in crate::calc) last_bi_low: Option<f64>,
-    pub(in crate::calc) last_bi_mid: Option<f64>,
-    pub(in crate::calc) latest_zs_start_date: Option<NaiveDate>,
-    pub(in crate::calc) latest_zs_end_date: Option<NaiveDate>,
-    pub(in crate::calc) latest_zs_bi_count: Option<usize>,
-    pub(in crate::calc) latest_zs_zg: Option<f64>,
-    pub(in crate::calc) latest_zs_zd: Option<f64>,
-    pub(in crate::calc) latest_zs_zz: Option<f64>,
-    pub(in crate::calc) recent_peak_date: Option<NaiveDate>,
-    pub(in crate::calc) recent_peak_high: Option<f64>,
-    pub(in crate::calc) post_peak_first_bear_date: Option<NaiveDate>,
-    pub(in crate::calc) post_peak_first_bear_open: Option<f64>,
-    pub(in crate::calc) post_peak_first_bear_high: Option<f64>,
-    pub(in crate::calc) post_peak_first_bear_low: Option<f64>,
-    pub(in crate::calc) post_peak_first_bear_close: Option<f64>,
-    pub(in crate::calc) post_peak_first_bear_missing: Option<bool>,
+pub(crate) struct CzscSnapshot {
+    pub(crate) source_bar_valid: bool,
+    pub(crate) status: String,
+    pub(crate) available_finished_bi_count: usize,
+    pub(crate) recent_bi_count: usize,
+    pub(crate) last_bi_direction: Option<String>,
+    pub(crate) last_bi_start_date: Option<NaiveDate>,
+    pub(crate) last_bi_end_date: Option<NaiveDate>,
+    pub(crate) last_bi_high: Option<f64>,
+    pub(crate) last_bi_low: Option<f64>,
+    pub(crate) last_bi_mid: Option<f64>,
+    pub(crate) latest_zs_start_date: Option<NaiveDate>,
+    pub(crate) latest_zs_end_date: Option<NaiveDate>,
+    pub(crate) latest_zs_bi_count: Option<usize>,
+    pub(crate) latest_zs_zg: Option<f64>,
+    pub(crate) latest_zs_zd: Option<f64>,
+    pub(crate) latest_zs_zz: Option<f64>,
+    pub(crate) recent_peak_date: Option<NaiveDate>,
+    pub(crate) recent_peak_high: Option<f64>,
+    pub(crate) post_peak_first_bear_date: Option<NaiveDate>,
+    pub(crate) post_peak_first_bear_open: Option<f64>,
+    pub(crate) post_peak_first_bear_high: Option<f64>,
+    pub(crate) post_peak_first_bear_low: Option<f64>,
+    pub(crate) post_peak_first_bear_close: Option<f64>,
+    pub(crate) post_peak_first_bear_missing: Option<bool>,
 }
 
 impl CzscBar {

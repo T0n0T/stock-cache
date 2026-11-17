@@ -1,0 +1,278 @@
+use std::{collections::BTreeMap, fs::File, io::Write};
+
+use serde_json::json;
+use stock_cache::v3::duckdb;
+use tempfile::tempdir;
+
+fn jsonl_file(
+    directory: &std::path::Path,
+    name: &str,
+    rows: &[serde_json::Value],
+) -> std::path::PathBuf {
+    let path = directory.join(name);
+    let mut file = File::create(&path).unwrap();
+    for row in rows {
+        serde_json::to_writer(&mut file, row).unwrap();
+        file.write_all(b"\n").unwrap();
+    }
+    path
+}
+
+fn source_row(date: &str, close: f64) -> serde_json::Value {
+    json!({
+        "source_dataset": "source_daily_bars",
+        "ts_code": "000001.SZ",
+        "trade_date": date,
+        "open": close - 0.5,
+        "high": close + 0.5,
+        "low": close - 1.0,
+        "close": close,
+        "vol": 100.0,
+        "amount": 1000.0,
+        "turnover_rate": 1.0,
+        "price_basis": "qfq"
+    })
+}
+
+fn indicator_row(value: serde_json::Value) -> serde_json::Value {
+    let mut row = serde_json::Map::new();
+    for column in duckdb::table_columns("calc_daily_indicators").unwrap() {
+        row.insert(column, serde_json::Value::Null);
+    }
+    if let serde_json::Value::Object(values) = value {
+        row.extend(values);
+    }
+    serde_json::Value::Object(row)
+}
+
+#[test]
+fn rust_writer_handles_append_replace_delete_and_checkpoint() {
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("cache.duckdb");
+    let first = jsonl_file(
+        directory.path(),
+        "first.jsonl",
+        &[
+            source_row("2025-01-02", 10.0),
+            source_row("2025-01-03", 11.0),
+        ],
+    );
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        assert_eq!(
+            duckdb::write_jsonl(
+                connection,
+                "source_daily_bars",
+                &first,
+                "append",
+                &[],
+                &BTreeMap::new(),
+                &[],
+            )?,
+            2
+        );
+        Ok(())
+    })
+    .unwrap();
+
+    let duplicate = jsonl_file(
+        directory.path(),
+        "duplicate.jsonl",
+        &[source_row("2025-01-02", 99.0)],
+    );
+    let duplicate_result = duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        duckdb::write_jsonl(
+            connection,
+            "source_daily_bars",
+            &duplicate,
+            "append",
+            &[],
+            &BTreeMap::new(),
+            &[],
+        )
+    });
+    assert!(duplicate_result.is_err());
+
+    let empty = jsonl_file(directory.path(), "empty.jsonl", &[]);
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        let scope = BTreeMap::new();
+        assert_eq!(
+            duckdb::write_jsonl(
+                connection,
+                "source_daily_bars",
+                &empty,
+                "replace-dates",
+                &["2025-01-02".to_string()],
+                &scope,
+                &[],
+            )?,
+            0
+        );
+        duckdb::checkpoint(connection)
+    })
+    .unwrap();
+
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        assert_eq!(duckdb::table_count(connection, "source_daily_bars")?, 1);
+        Ok(())
+    })
+    .unwrap();
+}
+
+#[test]
+fn calc_replace_requires_scope_and_rolls_back_bad_batch() {
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("cache.duckdb");
+    let row = indicator_row(json!({
+        "source_dataset": "dataset-a",
+        "ts_code": "000001.SZ",
+        "trade_date": "2025-01-02",
+        "daily_macd_period_count": 1,
+        "calc_version": "v3-test"
+    }));
+    let input = jsonl_file(directory.path(), "indicator.jsonl", &[row]);
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        assert_eq!(
+            duckdb::write_jsonl(
+                connection,
+                "calc_daily_indicators",
+                &input,
+                "append",
+                &[],
+                &BTreeMap::new(),
+                &[],
+            )?,
+            1
+        );
+        Ok(())
+    })
+    .unwrap();
+
+    let missing_scope = duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        let empty = jsonl_file(directory.path(), "empty-calc.jsonl", &[]);
+        duckdb::write_jsonl(
+            connection,
+            "calc_daily_indicators",
+            &empty,
+            "replace-dates",
+            &["2025-01-02".to_string()],
+            &BTreeMap::from([(String::from("source_dataset"), String::from("dataset-a"))]),
+            &[],
+        )
+    });
+    assert!(missing_scope.is_err());
+
+    let invalid = jsonl_file(
+        directory.path(),
+        "invalid.jsonl",
+        &[indicator_row(json!({
+            "source_dataset": "dataset-a",
+            "ts_code": "000001.SZ",
+            "trade_date": "2025-01-02",
+            "daily_macd_period_count": -1,
+            "calc_version": "v3-test"
+        }))],
+    );
+    let mut scope = BTreeMap::new();
+    scope.insert("source_dataset".to_string(), "dataset-a".to_string());
+    scope.insert("calc_version".to_string(), "v3-test".to_string());
+    let invalid_result = duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::write_jsonl(
+            connection,
+            "calc_daily_indicators",
+            &invalid,
+            "replace-dates",
+            &["2025-01-02".to_string()],
+            &scope,
+            &[],
+        )
+    });
+    assert!(invalid_result.is_err());
+
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        assert_eq!(duckdb::table_count(connection, "calc_daily_indicators")?, 1);
+        Ok(())
+    })
+    .unwrap();
+}
+
+#[test]
+fn rust_writer_reads_indicator_checkpoints() {
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("checkpoint.duckdb");
+    let input = jsonl_file(
+        directory.path(),
+        "state.jsonl",
+        &[json!({
+            "source_dataset": "demo",
+            "ts_code": "000001.SZ",
+            "period_type": "daily",
+            "period_start_date": "2025-01-02",
+            "period_end_date": "2025-01-02",
+            "macd_ema12": 10.0,
+            "macd_ema26": 9.0,
+            "macd_dea": 0.5,
+            "macd_period_count": 12,
+            "kdj_k": 55.0,
+            "kdj_d": 50.0,
+            "kdj_period_count": 8,
+            "calc_version": "v3-test"
+        })],
+    );
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        duckdb::write_jsonl(
+            connection,
+            "calc_indicator_state",
+            &input,
+            "append",
+            &[],
+            &BTreeMap::new(),
+            &[],
+        )?;
+        let rows = duckdb::load_indicator_checkpoints(connection, "demo", "000001.SZ", "v3-test")?;
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].period_type, "daily");
+        assert_eq!(rows[0].period_end_date.to_string(), "2025-01-02");
+        assert_eq!(rows[0].macd_period_count, Some(12));
+        Ok(())
+    })
+    .unwrap();
+}
+
+#[test]
+fn rust_writer_creates_and_writes_generated_tushare_source_table() {
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("source.duckdb");
+    let mut row = serde_json::Map::new();
+    for column in duckdb::table_columns("stock_basic").unwrap() {
+        row.insert(column, serde_json::Value::Null);
+    }
+    row.insert("ts_code".to_string(), json!("000001.SZ"));
+    let input = jsonl_file(
+        directory.path(),
+        "stock-basic.jsonl",
+        &[serde_json::Value::Object(row)],
+    );
+    duckdb::with_connection(database.to_str().unwrap(), |connection| {
+        duckdb::create_schema(connection)?;
+        assert_eq!(
+            duckdb::write_jsonl(
+                connection,
+                "stock_basic",
+                &input,
+                "append",
+                &[],
+                &BTreeMap::new(),
+                &[],
+            )?,
+            1
+        );
+        assert_eq!(duckdb::table_count(connection, "stock_basic")?, 1);
+        Ok(())
+    })
+    .unwrap();
+}

@@ -1,0 +1,76 @@
+# v3 程序设计
+
+v3 是独立的 Rust + DuckDB 路径。Tushare HTTP 拉取、JSON 解码、批量写入、MACD/KDJ/rolling/left-peak/CZSC 计算和结果落库均由 Rust 完成；仓库不再维护旧数据库后端或兼容写入路径。
+
+## 程序边界
+
+```text
+Rust reqwest Tushare transport
+        |
+        v
+v3-db / v3-calc (Rust) ---- DuckDB file
+        |
+        +-- source tables
+        +-- calc tables and checkpoints
+```
+
+`python/v3_cli.py` 只负责发现 Rust 二进制、传递参数和打印摘要，不打开数据库。`duckdb-neo` 提供 DuckDB v2 C API binding。
+
+## Rust writer
+
+`src/v3/duckdb.rs` 对每个批次使用一条连接和一个事务：
+
+1. 用 `read_json_auto(..., format='newline_delimited')` 将 JSONL 载入临时 staging 表；
+2. 按目标表逻辑键保留批次最后一行；
+3. `append` 检查目标表中不存在重复逻辑键；
+4. `replace-dates` 删除显式日期切片后整体插入，空批次可以表达确认空日；
+5. `replace-keys` 只处理调用方给出的完整键；
+6. 成功提交后执行 `CHECKPOINT`，异常回滚。
+
+对应策略为：日常新增使用 `append`，历史补全使用按日期分块的 `replace-dates`，单日修订也使用单日期 `replace-dates`；需要精确删改时使用 `replace-keys`。生产路径不逐行 upsert。
+
+## CLI
+
+```bash
+cargo run --bin v3-db -- init --database ./runtime/stock-cache-v3.duckdb
+cargo run --bin v3-db -- status --database ./runtime/stock-cache-v3.duckdb
+cargo run --bin v3-db -- fetch --database ./runtime/stock-cache-v3.duckdb \
+  --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
+cargo run --bin v3-db -- write --database ./runtime/stock-cache-v3.duckdb \
+  --table source_daily_bars --input bars.jsonl --strategy append
+cargo run --bin v3-calc --input bars-with-warmup.jsonl --calendar trade_cal.txt \
+  --database ./runtime/stock-cache-v3.duckdb --write
+```
+
+源数据修订时，以 `--changed-from` 指定起点并提供足够 warmup；计算器根据 checkpoint 规划受影响日期，再由 Rust writer 整体替换结果切片。
+
+## 计算正确性
+
+MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9 DEA，首个有效收盘作种子。周/月周期按交易日历闭合；未完成周期只产生 as-of 预览，不推进完成状态。KDJ 使用 N=9 和 1/3 平滑；rolling、left-peak、CZSC 均按 point-in-time 输入计算。
+
+测试覆盖 EMA 黄金值、跨年周/月、节假日、停牌和空值、源数据修订后的 checkpoint 重算、未来数据不改变既有 as-of，以及周/月预览不重复累计。
+
+## 最近一周真实拉取指标
+
+数据集为 `stock_stk_factor_pro`，日期为 2026-11-09 至 2026-11-13，5/5 请求成功，拉取 27,864 行，按逻辑键去重后写入 27,453 行，JSONL 输入 140.59 MiB。
+
+| 阶段 | 中位数 | P95 |
+| --- | ---: | ---: |
+| HTTP 请求与 JSON 解码 | 4,521.7 ms | 4,680.4 ms |
+| JSONL 序列化 | 5,696.2 ms | 5,778.7 ms |
+| DuckDB 写入与 checkpoint | 1,059.4 ms | 1,194.3 ms |
+| `fetch` 命令内部总耗时 | 11,378.3 ms | 11,556.5 ms |
+| 含进程启动 wall time | 11,592.6 ms | 11,780.5 ms |
+
+因此此前所说的约 11 秒包含抓取、解码、序列化、DuckDB 写入和 checkpoint，**不包含 MACD/KDJ/CZSC 计算**。端到端中位吞吐约 489.9 fetched rows/s，DuckDB 写入约 5,260.4 written rows/s；来源批次中的重复逻辑键解释了两者的行数差异。
+
+## 写入性能测量
+
+基准工具 `tools/benchmark_v3_rust_writer.py` 默认把 JSON 写到 `target/` 下的临时目录，不把生成报告放入仓库。报告至少区分：
+
+- writer-only wall time、逻辑行数和 rows/s；
+- fetch 端到端时间，拆分 HTTP/解码、序列化、写入/checkpoint；
+- 每日追加、历史日期替换、单日替换和空库初建；
+- 冷启动与同进程重复运行，分别给中位数和 P95。
+
+真实周拉取的汇总指标保留在本文，原始 JSON/Markdown 报告属于本地生成物，不纳入提交。

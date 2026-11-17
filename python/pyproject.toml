@@ -1,8 +1,19 @@
 [project]
-name = "stock-cache-worker"
+name = "stock-cache-v3-cli"
 version = "0.1.0"
 requires-python = ">=3.11,<3.14"
-dependencies = [
+dependencies = []
+
+[dependency-groups]
+test = [
+    "duckdb>=1.4",
+]
+benchmark = [
+    "duckdb>=1.4",
+    "pyarrow>=20",
+]
+tooling = [
+    "PyYAML>=6",
     "pandas>=2.0",
     "tushare==1.4.29",
 ]

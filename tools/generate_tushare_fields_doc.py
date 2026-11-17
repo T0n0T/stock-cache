@@ -96,11 +96,11 @@ def render_doc(schema: dict[str, Any]) -> str:
         for mismatch in dataset.get("doc_mismatch", []) or []:
             lines.append(f"- Doc mismatch: {mismatch}")
         lines.append("")
-        lines.append("| Field | PostgreSQL type | Nullable | Source format | Description |")
+        lines.append("| Field | DuckDB type | Nullable | Source format | Description |")
         lines.append("| --- | --- | --- | --- | --- |")
         for raw_field in fields:
             field = require_mapping(raw_field, f"datasets.{dataset_id}.fields[]")
-            required_keys = {"name", "pg_type", "nullable", "description"}
+            required_keys = {"name", "duckdb_type", "nullable", "description"}
             missing = sorted(required_keys - field.keys())
             if missing:
                 raise SystemExit(f"{dataset_id}.{field.get('name', '<unknown>')} missing keys: {missing}")
@@ -108,7 +108,7 @@ def render_doc(schema: dict[str, Any]) -> str:
             nullable = "yes" if field["nullable"] else "no"
             lines.append(
                 "| "
-                f"`{field['name']}` | `{field['pg_type']}` | {nullable} | {source_format} | {field['description']} |"
+                f"`{field['name']}` | `{field['duckdb_type']}` | {nullable} | {source_format} | {field['description']} |"
             )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"

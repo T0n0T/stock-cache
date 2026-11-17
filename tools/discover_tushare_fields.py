@@ -2,7 +2,7 @@
 """Discover Tushare SDK return fields for stock-cache source datasets.
 
 This is a development helper only. It is not used by the Rust CLI runtime and
-never writes to PostgreSQL.
+is a development-time field inspection utility.
 """
 
 from __future__ import annotations
