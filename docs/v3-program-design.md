@@ -14,7 +14,7 @@ v3-db / v3-calc (Rust) ---- DuckDB file
         +-- calc tables and checkpoints
 ```
 
-`python/v3_cli.py` 只负责发现 Rust 二进制、传递参数和打印摘要，不打开数据库。`duckdb-neo` 提供 DuckDB v2 C API binding。
+Rust CLI 是运行和消费 v3 的唯一命令入口；`tools/*.py` 只承担字段发现、metadata/文档生成和基准辅助，不进入生产数据路径。`duckdb-neo` 提供 DuckDB v2 C API binding。
 
 ## Rust writer
 

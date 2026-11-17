@@ -2,7 +2,7 @@
 
 `stock-cache` is a Rust-owned Tushare ingestion, DuckDB storage, and local factor calculation tool. The active development target is v3 and it uses a local DuckDB file.
 
-The Rust binaries own HTTP requests, JSON decoding, batch writes, MACD/KDJ/rolling/left-peak/CZSC calculations, and DuckDB transactions. `python/v3_cli.py` is an optional thin process wrapper and does not open DuckDB.
+The Rust binaries own HTTP requests, JSON decoding, batch writes, MACD/KDJ/rolling/left-peak/CZSC calculations, and DuckDB transactions.
 
 ## Layout
 
@@ -49,8 +49,6 @@ cargo run --bin v3-calc --input bars-with-warmup.jsonl \
   --calendar trade_cal.txt --database ./runtime/stock-cache-v3.duckdb --write
 ```
 
-Use `uv run --project python python python/v3_cli.py ...` only when a Python process wrapper is useful.
-
 ## Write strategies
 
 - Daily append: `append` for a new logical-key range.
@@ -65,7 +63,6 @@ The writer loads a JSONL batch into DuckDB staging, deduplicates by logical key,
 cargo fmt --check
 cargo test --all-targets
 cargo clippy --all-targets -- -D warnings
-uv run --project python --group test python/test_v3_cli.py
 git diff --check
 ```
 
