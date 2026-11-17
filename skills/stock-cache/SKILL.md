@@ -10,11 +10,11 @@ The production path is Rust with a local DuckDB file. Use the binaries directly 
 ## Commands
 
 ```bash
-cargo run --bin stock-cache-db -- init --database ./runtime/stock-cache.duckdb
-cargo run --bin stock-cache-db -- status --database ./runtime/stock-cache.duckdb
-cargo run --bin stock-cache-db -- fetch --database ./runtime/stock-cache.duckdb --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
-cargo run --bin stock-cache-db -- write --database ./runtime/stock-cache.duckdb --table source_daily_bars --input bars.jsonl --strategy append
-cargo run --bin stock-cache-calc --input bars.jsonl --calendar trade_cal.txt --database ./runtime/stock-cache.duckdb --write
+cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache -- fetch --database ./runtime/stock-cache.duckdb --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
+cargo run --bin stock-cache -- write --database ./runtime/stock-cache.duckdb --table source_daily_bars --input bars.jsonl --strategy append
+cargo run --bin stock-cache -- calc --input bars.jsonl --calendar trade_cal.txt --database ./runtime/stock-cache.duckdb --write
 ```
 
 Set `TUSHARE_TOKEN` for API fetches. `TUSHARE_ENDPOINT`, timeout, retry, and concurrency settings are optional.

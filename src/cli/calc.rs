@@ -1,6 +1,6 @@
 //! JSONL bridge for the calculation kernels.
 //!
-//! This binary owns the calculation boundary and emits table-tagged JSONL rows.
+//! This subcommand owns the calculation boundary and emits table-tagged JSONL rows.
 //! With `--database --write` it also persists those rows through the Rust
 //! `duckdb-neo` writer; without that flag it remains a protocol-only bridge.
 
@@ -13,15 +13,14 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use chrono::{Datelike, NaiveDate};
-use clap::Parser;
+use clap::Args as ClapArgs;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use stock_cache::v3::{checkpoint, czsc, duckdb, kdj, left_peak, macd, rolling};
 
-#[derive(Debug, Parser)]
-#[command(name = "stock-cache-calc")]
-struct Args {
+#[derive(Debug, ClapArgs)]
+pub(crate) struct Args {
     #[arg(long, default_value = "-")]
     input: String,
     #[arg(long)]
@@ -83,8 +82,7 @@ struct OutputRow {
     row: Value,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
+pub(crate) fn run(args: Args) -> Result<()> {
     let calendar = read_calendar(&args.calendar)?;
     let bars = read_input(&args)?;
     let mut groups: BTreeMap<(String, String), Vec<Bar>> = BTreeMap::new();

@@ -84,7 +84,7 @@ def measure(binary: str, workload: str, rows_per_day: int, root: Path) -> dict[s
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--binary", default="target/release/stock-cache-db")
+    parser.add_argument("--binary", default="target/release/stock-cache")
     parser.add_argument("--rows-per-day", type=int, default=50)
     parser.add_argument("--runs", type=int, default=5)
     default_output = Path(__file__).resolve().parents[1] / "target" / "stock-cache-writer-benchmark.json"

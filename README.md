@@ -11,8 +11,8 @@ schemas/tushare-fields.yaml  Tushare dataset metadata and DuckDB field types
 src/source/tushare_http.rs    Rust reqwest transport
 src/v3/duckdb.rs              DuckDB schema, staging writer, and checkpoint I/O
 src/v3/{macd,kdj,rolling,left_peak,czsc}.rs  calculation kernels
-src/bin/stock-cache-db.rs     init/status/fetch/write CLI
-src/bin/stock-cache-calc.rs   calculation CLI with direct DuckDB persistence
+src/main.rs                  unified init/status/fetch/write/calc CLI
+src/cli/calc.rs              calculation subcommand with DuckDB persistence
 docs/program-design.md        runtime and write strategy
 docs/schema-design.md         table and performance design
 docs/data-usage-guide.md      DuckDB consumer queries
@@ -22,14 +22,14 @@ docs/data-usage-guide.md      DuckDB consumer queries
 
 ```bash
 cargo build --bins
-cargo run --bin stock-cache-db -- init --database ./runtime/stock-cache.duckdb
-cargo run --bin stock-cache-db -- status --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
 ```
 
 Fetch a generated Tushare dataset and write it as one transaction:
 
 ```bash
-TUSHARE_TOKEN='...' cargo run --bin stock-cache-db -- fetch \
+TUSHARE_TOKEN='...' cargo run --bin stock-cache -- fetch \
   --database ./runtime/stock-cache.duckdb \
   --dataset stock_stk_factor_pro \
   --params '{"trade_date":"20261113"}'
@@ -38,14 +38,14 @@ TUSHARE_TOKEN='...' cargo run --bin stock-cache-db -- fetch \
 Write an existing JSONL batch with an explicit strategy:
 
 ```bash
-cargo run --bin stock-cache-db -- write --database ./runtime/stock-cache.duckdb \
+cargo run --bin stock-cache -- write --database ./runtime/stock-cache.duckdb \
   --table source_daily_bars --input bars.jsonl --strategy append
 ```
 
 Compute and persist v3 tables:
 
 ```bash
-cargo run --bin stock-cache-calc --input bars-with-warmup.jsonl \
+cargo run --bin stock-cache -- calc --input bars-with-warmup.jsonl \
   --calendar trade_cal.txt --database ./runtime/stock-cache.duckdb --write
 ```
 

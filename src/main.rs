@@ -1,5 +1,7 @@
 //! Rust-owned DuckDB command-line interface.
 
+mod cli;
+
 use std::{collections::BTreeMap, fs, io::Read, path::PathBuf, time::Instant};
 
 use anyhow::{bail, Result};
@@ -10,7 +12,7 @@ use stock_cache::v3::duckdb;
 use stock_cache::{TushareHttpClient, TushareHttpConfig};
 
 #[derive(Debug, Parser)]
-#[command(name = "stock-cache-db")]
+#[command(name = "stock-cache")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -18,6 +20,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Compute indicators and optionally persist calculation tables.
+    Calc(cli::calc::Args),
     Init {
         #[arg(long)]
         database: String,
@@ -167,6 +171,7 @@ fn parse_scope(values: &[String]) -> Result<BTreeMap<String, String>> {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
+        Command::Calc(args) => cli::calc::run(args),
         Command::Init { database } => duckdb::with_connection(&database, |connection| {
             duckdb::create_schema(connection)?;
             duckdb::checkpoint(connection)?;

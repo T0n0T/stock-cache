@@ -8,7 +8,7 @@ v3 是独立的 Rust + DuckDB 路径。Tushare HTTP 拉取、JSON 解码、批�
 Rust reqwest Tushare transport
         |
         v
-stock-cache-db / stock-cache-calc (Rust) ---- DuckDB file
+stock-cache (Rust) ---- DuckDB file
         |
         +-- source tables
         +-- calc tables and checkpoints
@@ -33,13 +33,13 @@ Rust CLI 是运行和消费 v3 的唯一命令入口；`tools/*.py` 只承担字
 ## CLI
 
 ```bash
-cargo run --bin stock-cache-db -- init --database ./runtime/stock-cache.duckdb
-cargo run --bin stock-cache-db -- status --database ./runtime/stock-cache.duckdb
-cargo run --bin stock-cache-db -- fetch --database ./runtime/stock-cache.duckdb \
+cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
+cargo run --bin stock-cache -- fetch --database ./runtime/stock-cache.duckdb \
   --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
-cargo run --bin stock-cache-db -- write --database ./runtime/stock-cache.duckdb \
+cargo run --bin stock-cache -- write --database ./runtime/stock-cache.duckdb \
   --table source_daily_bars --input bars.jsonl --strategy append
-cargo run --bin stock-cache-calc --input bars-with-warmup.jsonl --calendar trade_cal.txt \
+cargo run --bin stock-cache -- calc --input bars-with-warmup.jsonl --calendar trade_cal.txt \
   --database ./runtime/stock-cache.duckdb --write
 ```
 
@@ -78,6 +78,6 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 
 ## 五日计算与计算表写入
 
-使用真实 `stock_stk_factor_pro` 数据，日期为 2026-11-09 至 2026-11-13，共 27,452 行、5,575 个标的。输入只有这五个交易日，没有额外 warmup 行；单独计算命令耗时 1.63 秒。`stock-cache-calc --write` 同时计算并写入六张计算表，输出 159,544 行、约 136.7 MiB；干净计算表首次填入耗时 19.73 秒，两次同批次替换分别耗时 20.06 和 20.29 秒，三轮中位数 20.06 秒，峰值 RSS 约 1.39 GiB。计算表最终行数为：`calc_period_bars` 11,142、`calc_indicator_state` 38,594，其余四张日表各 27,452。
+使用真实 `stock_stk_factor_pro` 数据，日期为 2026-11-09 至 2026-11-13，共 27,452 行、5,575 个标的。输入只有这五个交易日，没有额外 warmup 行；单独计算命令耗时 1.63 秒。`stock-cache calc --write` 同时计算并写入六张计算表，输出 159,544 行、约 136.7 MiB；干净计算表首次填入耗时 19.73 秒，两次同批次替换分别耗时 20.06 和 20.29 秒，三轮中位数 20.06 秒，峰值 RSS 约 1.39 GiB。计算表最终行数为：`calc_period_bars` 11,142、`calc_indicator_state` 38,594，其余四张日表各 27,452。
 
 单独计算与计算加写入的差值约 18–20 秒，但包含结果解析、按表暂存、DuckDB 替换/checkpoint 和最终输出，不能视作纯数据库写耗时。该路径当前仍会在内存中保留全量渲染结果；本轮峰值内存显示后续应优先把计算结果流式写入按表暂存文件，降低批量回补的内存占用。此零 warmup 运行只用于性能测量，MACD 等滚动指标从给定五日样本起算，不代表长历史基准值。

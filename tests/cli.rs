@@ -55,12 +55,11 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     let database = database.to_str().unwrap();
 
     assert_eq!(
-        run_json("stock-cache-db", &["init", "--database", database])["status"],
+        run_json("stock-cache", &["init", "--database", database])["status"],
         "ok"
     );
     assert_eq!(
-        run_json("stock-cache-db", &["status", "--database", database])["tables"]
-            ["source_daily_bars"],
+        run_json("stock-cache", &["status", "--database", database])["tables"]["source_daily_bars"],
         0
     );
 
@@ -74,7 +73,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     );
     assert_eq!(
         run_json(
-            "stock-cache-db",
+            "stock-cache",
             &[
                 "write",
                 "--database",
@@ -93,7 +92,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     let replacement = directory.path().join("replacement.jsonl");
     write_jsonl(&replacement, &[source_row("2025-01-02", 99.0)]);
     run(
-        "stock-cache-db",
+        "stock-cache",
         &[
             "write",
             "--database",
@@ -138,7 +137,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
     let empty = directory.path().join("empty.jsonl");
     File::create(&empty).unwrap();
     run(
-        "stock-cache-db",
+        "stock-cache",
         &[
             "write",
             "--database",
@@ -154,7 +153,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
         ],
     );
     run(
-        "stock-cache-db",
+        "stock-cache",
         &[
             "write",
             "--database",
@@ -170,8 +169,7 @@ fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
         ],
     );
     assert_eq!(
-        run_json("stock-cache-db", &["status", "--database", database])["tables"]
-            ["source_daily_bars"],
+        run_json("stock-cache", &["status", "--database", database])["tables"]["source_daily_bars"],
         0
     );
 }
@@ -216,8 +214,9 @@ fn v3_calc_cli_persists_calculation_tables() {
     .unwrap();
 
     run(
-        "stock-cache-calc",
+        "stock-cache",
         &[
+            "calc",
             "--input",
             bars_path.to_str().unwrap(),
             "--calendar",
