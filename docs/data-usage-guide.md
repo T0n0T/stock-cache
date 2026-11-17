@@ -107,4 +107,4 @@ from calc_indicator_state
 group by source_dataset, period_type;
 ```
 
-DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补时先准备包含 warmup 历史的 JSONL，再使用 `stock-cache calc --changed-from ... --write`。
+DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补使用 `stock-cache write --mode full --start-date YYYY-MM-DD --end-date YYYY-MM-DD`，由工具自动补齐预热历史。擦除日期数据使用 `erase --start-date ... --end-date ...`。

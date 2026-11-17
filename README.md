@@ -51,7 +51,8 @@ Writes use Rust batch staging and transactions; failure leaves completed source
 batches reusable for a retry. A workflow is not one transaction across all HTTP
 requests and calculation batches.
 
-`import` is the low-level JSONL writer; `fetch` and `calc` remain diagnostic tools.
+The public commands are `init` (`init-db` alias), `status`, `write`, and `erase`.
+Calculation and HTTP fetching are internal stages of `write`.
 
 ## Quick start
 
@@ -61,28 +62,17 @@ cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
 ```
 
-Fetch a generated Tushare dataset and write it as one transaction:
+Erase an inclusive date window:
 
 ```bash
-TUSHARE_TOKEN='...' cargo run --bin stock-cache -- fetch \
-  --database ./runtime/stock-cache.duckdb \
-  --dataset stock_stk_factor_pro \
-  --params '{"trade_date":"20261113"}'
+stock-cache erase --start-date 2026-11-09 --end-date 2026-11-13
 ```
 
-Write an existing JSONL batch with an explicit strategy:
-
-```bash
-cargo run --bin stock-cache -- import --database ./runtime/stock-cache.duckdb \
-  --table source_daily_bars --input bars.jsonl --strategy append
-```
-
-Compute and persist v3 tables:
-
-```bash
-cargo run --bin stock-cache -- calc --input bars-with-warmup.jsonl \
-  --calendar trade_cal.txt --database ./runtime/stock-cache.duckdb --write
-```
+Erasure removes dated source rows, calculation rows (period tables by period end),
+and request coverage in one transaction. It preserves reference snapshots and the
+trading calendar. Dates are required; there is no implicit full-database erasure.
+Later calculation dates remain stored, matching v2; recalculate through the latest
+cached date after correcting history, because rolling results may depend on it.
 
 ## Write strategies
 
@@ -102,3 +92,10 @@ git diff --check
 ```
 
 See the v3 documents for calculation semantics, warmup rules, measured ingestion boundaries, and consumer SQL.
+
+The writer benchmark uses a developer example, not the product CLI:
+
+```bash
+cargo build --release --example writer-benchmark
+python3 tools/benchmark_rust_writer.py
+```

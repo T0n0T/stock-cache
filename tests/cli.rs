@@ -1,269 +1,6 @@
-use std::{fs::File, io::Write, path::Path, process::Output};
-
 use assert_cmd::Command;
-use chrono::{Datelike, Duration, NaiveDate};
-use serde_json::{json, Value};
-use stock_cache::v3::duckdb;
+use serde_json::Value;
 use tempfile::tempdir;
-
-fn run(binary: &str, args: &[&str]) -> Output {
-    let output = Command::cargo_bin(binary)
-        .unwrap()
-        .args(args)
-        .output()
-        .unwrap();
-    assert!(
-        output.status.success(),
-        "{binary} {args:?} failed:\n{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    output
-}
-
-fn run_json(binary: &str, args: &[&str]) -> Value {
-    let output = run(binary, args);
-    serde_json::from_slice(&output.stdout).unwrap()
-}
-
-fn write_jsonl(path: &Path, rows: &[Value]) {
-    let mut file = File::create(path).unwrap();
-    for row in rows {
-        serde_json::to_writer(&mut file, row).unwrap();
-        file.write_all(b"\n").unwrap();
-    }
-}
-
-fn source_row(trade_date: &str, close: f64) -> Value {
-    json!({
-        "source_dataset": "source_daily_bars",
-        "ts_code": "000001.SZ",
-        "trade_date": trade_date,
-        "open": close - 0.5,
-        "high": close + 0.5,
-        "low": close - 1.0,
-        "close": close,
-        "vol": 100.0,
-        "amount": 1000.0,
-        "price_basis": "qfq"
-    })
-}
-
-#[test]
-fn v3_db_cli_is_idempotent_and_applies_source_write_strategies() {
-    let directory = tempdir().unwrap();
-    let database = directory.path().join("stock-cache.duckdb");
-    let database = database.to_str().unwrap();
-
-    assert_eq!(
-        run_json("stock-cache", &["init", "--database", database])["status"],
-        "ok"
-    );
-    assert_eq!(
-        run_json("stock-cache", &["status", "--database", database])["tables"]["source_daily_bars"],
-        0
-    );
-
-    let source = directory.path().join("source.jsonl");
-    write_jsonl(
-        &source,
-        &[
-            source_row("2025-01-02", 10.0),
-            source_row("2025-01-03", 11.0),
-        ],
-    );
-    assert_eq!(
-        run_json(
-            "stock-cache",
-            &[
-                "import",
-                "--database",
-                database,
-                "--table",
-                "source_daily_bars",
-                "--input",
-                source.to_str().unwrap(),
-                "--strategy",
-                "append",
-            ],
-        )["written_rows"],
-        2
-    );
-
-    let replacement = directory.path().join("replacement.jsonl");
-    write_jsonl(&replacement, &[source_row("2025-01-02", 99.0)]);
-    run(
-        "stock-cache",
-        &[
-            "import",
-            "--database",
-            database,
-            "--table",
-            "source_daily_bars",
-            "--input",
-            replacement.to_str().unwrap(),
-            "--strategy",
-            "replace-dates",
-            "--dates",
-            "2025-01-02",
-        ],
-    );
-
-    duckdb::with_connection(database, |connection| {
-        let mut query = connection.query(
-            "SELECT close, turnover_rate FROM source_daily_bars WHERE trade_date = DATE '2025-01-02'",
-            duckdb_neo::Parameters::None,
-        )?;
-        let chunk = query.next_chunk()?.unwrap();
-        assert_eq!(
-            chunk
-                .get_vector_at::<f64>(0)?
-                .reader()?
-                .get(0)?
-                .copied(),
-            Some(99.0)
-        );
-        assert_eq!(
-            chunk
-                .get_vector_at::<f64>(1)?
-                .reader()?
-                .get(0)?
-                .copied(),
-            None
-        );
-        Ok(())
-    })
-    .unwrap();
-
-    let empty = directory.path().join("empty.jsonl");
-    File::create(&empty).unwrap();
-    run(
-        "stock-cache",
-        &[
-            "import",
-            "--database",
-            database,
-            "--table",
-            "source_daily_bars",
-            "--input",
-            empty.to_str().unwrap(),
-            "--strategy",
-            "replace-dates",
-            "--dates",
-            "2025-01-02",
-        ],
-    );
-    run(
-        "stock-cache",
-        &[
-            "import",
-            "--database",
-            database,
-            "--table",
-            "source_daily_bars",
-            "--input",
-            empty.to_str().unwrap(),
-            "--strategy",
-            "replace-keys",
-            "--key-values",
-            "[[\"source_daily_bars\",\"000001.SZ\",\"2025-01-03\"]]",
-        ],
-    );
-    assert_eq!(
-        run_json("stock-cache", &["status", "--database", database])["tables"]["source_daily_bars"],
-        0
-    );
-}
-
-#[test]
-fn v3_calc_cli_persists_calculation_tables() {
-    let directory = tempdir().unwrap();
-    let database = directory.path().join("stock-cache.duckdb");
-    let bars_path = directory.path().join("bars.jsonl");
-    let calendar_path = directory.path().join("calendar.txt");
-    let output_path = directory.path().join("calculated.jsonl");
-    let start = NaiveDate::from_ymd_opt(2025, 1, 2).unwrap();
-    let dates = (0..35)
-        .map(|offset| start + Duration::days(offset))
-        .filter(|day| day.weekday().number_from_monday() <= 5)
-        .collect::<Vec<_>>();
-    let rows = dates
-        .iter()
-        .enumerate()
-        .map(|(index, day)| {
-            json!({
-                "source_dataset": "demo",
-                "ts_code": "000001.SZ",
-                "trade_date": day.to_string(),
-                "open": 9.5 + index as f64,
-                "high": 10.5 + index as f64,
-                "low": 9.0 + index as f64,
-                "close": 10.0 + index as f64,
-                "vol": 100.0,
-                "amount": 1000.0
-            })
-        })
-        .collect::<Vec<_>>();
-    write_jsonl(&bars_path, &rows);
-    std::fs::write(
-        &calendar_path,
-        dates
-            .iter()
-            .map(|day| format!("{day}\n"))
-            .collect::<String>(),
-    )
-    .unwrap();
-
-    run(
-        "stock-cache",
-        &[
-            "calc",
-            "--input",
-            bars_path.to_str().unwrap(),
-            "--calendar",
-            calendar_path.to_str().unwrap(),
-            "--database",
-            database.to_str().unwrap(),
-            "--write",
-            "--output",
-            output_path.to_str().unwrap(),
-            "--calc-version",
-            "v3-test",
-        ],
-    );
-
-    let output_rows = std::fs::read_to_string(output_path)
-        .unwrap()
-        .lines()
-        .count();
-    assert!(output_rows > dates.len());
-    duckdb::with_connection(database.to_str().unwrap(), |connection| {
-        for table in [
-            "calc_daily_indicators",
-            "calc_daily_czsc_structure",
-            "calc_daily_rolling_factors",
-            "calc_daily_left_peak",
-        ] {
-            assert_eq!(duckdb::table_count(connection, table)?, dates.len() as i64);
-        }
-        let mut daily_states = connection.query(
-            "SELECT COUNT(*)::BIGINT FROM calc_indicator_state WHERE period_type = 'daily'",
-            duckdb_neo::Parameters::None,
-        )?;
-        let daily_state_count = daily_states
-            .next_chunk()?
-            .unwrap()
-            .get_vector_at::<i64>(0)?
-            .reader()?
-            .get(0)?
-            .copied()
-            .unwrap();
-        drop(daily_states);
-        assert_eq!(daily_state_count, dates.len() as i64);
-        assert!(duckdb::table_count(connection, "calc_period_bars")? > 0);
-        Ok(())
-    })
-    .unwrap();
-}
 
 #[test]
 fn init_db_and_status_use_dotenv_database_without_database_argument() {
@@ -291,4 +28,178 @@ fn init_db_and_status_use_dotenv_database_without_database_argument() {
         assert_eq!(summary["database"], database.to_str().unwrap());
     }
     assert!(database.is_file());
+}
+
+#[test]
+fn erase_removes_only_requested_dates_and_invalidates_coverage() {
+    use duckdb_neo::Parameters;
+    use stock_cache::{metadata::tushare_fields::DATASETS, v3::duckdb};
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("cache.duckdb");
+    let database = database.to_str().unwrap();
+    let mut tables = DATASETS
+        .iter()
+        .filter(|d| d.field("trade_date").is_some())
+        .map(|d| (d.table, "trade_date"))
+        .collect::<Vec<_>>();
+    tables.extend([
+        ("source_daily_bars", "trade_date"),
+        ("calc_period_bars", "period_end_date"),
+        ("calc_indicator_state", "period_end_date"),
+        ("calc_daily_indicators", "trade_date"),
+        ("calc_daily_czsc_structure", "trade_date"),
+        ("calc_daily_rolling_factors", "trade_date"),
+        ("calc_daily_left_peak", "trade_date"),
+        ("cache_fetch_coverage", "trade_date"),
+    ]);
+    duckdb::with_connection(database, |connection| {
+        duckdb::create_schema(connection)?;
+        for (table, date_column) in &tables {
+            for day in ["2026-11-09", "2026-11-10", "2026-11-11"] {
+                let (columns, values) = if *table == "cache_fetch_coverage" {
+                    (
+                        "dataset,trade_date,code,row_count".to_string(),
+                        format!("'stock_stk_factor_pro',DATE '{day}','',1"),
+                    )
+                } else if table.starts_with("calc_") {
+                    let period = if *date_column == "period_end_date" {
+                        format!(",'daily',DATE '{day}'")
+                    } else {
+                        String::new()
+                    };
+                    let price = if *table == "calc_period_bars" {
+                        ",'qfq'"
+                    } else {
+                        ""
+                    };
+                    (
+                        format!(
+                            "source_dataset,ts_code,{date_column},calc_version{}{}",
+                            if period.is_empty() {
+                                ""
+                            } else {
+                                ",period_type,period_start_date"
+                            },
+                            if price.is_empty() { "" } else { ",price_basis" }
+                        ),
+                        format!(
+                            "'stock_stk_factor_pro','000001.SZ',DATE '{day}','test'{period}{price}"
+                        ),
+                    )
+                } else if *table == "source_daily_bars" {
+                    (
+                        "source_dataset,ts_code,trade_date,price_basis".into(),
+                        format!("'demo','000001.SZ',DATE '{day}','qfq'"),
+                    )
+                } else if *table == "index_limit_cpt_list" {
+                    (
+                        "ts_code,trade_date,rank".into(),
+                        format!("'000001.SZ',DATE '{day}',1"),
+                    )
+                } else {
+                    (
+                        "ts_code,trade_date".into(),
+                        format!("'000001.SZ',DATE '{day}'"),
+                    )
+                };
+                connection.execute(
+                    format!("INSERT INTO {table} ({columns}) VALUES ({values})"),
+                    Parameters::None,
+                )?;
+            }
+        }
+        for table in ["stock_basic", "index_ths"] {
+            connection.execute(
+                format!("INSERT INTO {table} (ts_code) VALUES ('demo')"),
+                Parameters::None,
+            )?;
+        }
+        connection.execute(
+            "INSERT INTO index_ths_member (ts_code,con_code) VALUES ('demo','member')",
+            Parameters::None,
+        )?;
+        connection.execute(
+            "INSERT INTO cache_trade_calendar VALUES (DATE '2026-11-10')",
+            Parameters::None,
+        )?;
+        Ok(())
+    })
+    .unwrap();
+    let invoke = |args: &[&str]| {
+        Command::cargo_bin("stock-cache")
+            .unwrap()
+            .args(args)
+            .args(["--database", database])
+            .output()
+            .unwrap()
+    };
+    for args in [
+        vec!["erase"],
+        vec!["erase", "--start-date", "2026-11-09"],
+        vec![
+            "erase",
+            "--start-date",
+            "20261109",
+            "--end-date",
+            "2026-11-10",
+        ],
+        vec![
+            "erase",
+            "--start-date",
+            "2026-11-11",
+            "--end-date",
+            "2026-11-09",
+        ],
+    ] {
+        assert!(!invoke(&args).status.success());
+    }
+    let args = [
+        "erase",
+        "--start-date",
+        "2026-11-10",
+        "--end-date",
+        "2026-11-10",
+    ];
+    let output = invoke(&args);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
+    for (table, _) in &tables {
+        assert_eq!(summary["deleted_row_counts"][table], 1);
+    }
+    duckdb::with_connection(database, |connection| {
+        for (table, _) in &tables {
+            assert_eq!(duckdb::table_count(connection, table)?, 2, "{table}");
+        }
+        for table in [
+            "stock_basic",
+            "index_ths",
+            "index_ths_member",
+            "cache_trade_calendar",
+        ] {
+            assert_eq!(duckdb::table_count(connection, table)?, 1);
+        }
+        Ok(())
+    })
+    .unwrap();
+    let retry = invoke(&args);
+    assert!(retry.status.success());
+    let retry: Value = serde_json::from_slice(&retry.stdout).unwrap();
+    assert!(retry["deleted_row_counts"]
+        .as_object()
+        .unwrap()
+        .values()
+        .all(|v| v == 0));
+    for command in ["import", "fetch", "calc"] {
+        assert!(!Command::cargo_bin("stock-cache")
+            .unwrap()
+            .arg(command)
+            .output()
+            .unwrap()
+            .status
+            .success());
+    }
 }

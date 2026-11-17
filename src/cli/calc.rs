@@ -1,8 +1,4 @@
-//! JSONL bridge for the calculation kernels.
-//!
-//! This subcommand owns the calculation boundary and emits table-tagged JSONL rows.
-//! With `--database --write` it also persists those rows through the Rust
-//! `duckdb-neo` writer; without that flag it remains a protocol-only bridge.
+//! Internal calculation and batch persistence used by the market-cache workflow.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -13,42 +9,28 @@ use std::{
 
 use anyhow::{anyhow, bail, Context, Result};
 use chrono::{Datelike, NaiveDate};
-use clap::Args as ClapArgs;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use stock_cache::v3::{checkpoint, czsc, duckdb, kdj, left_peak, macd, rolling};
 
-#[derive(Debug, ClapArgs)]
-pub(crate) struct Args {
-    #[arg(long, default_value = "-")]
+#[derive(Debug)]
+struct Args {
     input: String,
-    #[arg(long)]
     calendar: PathBuf,
-    #[arg(long)]
     source_dataset: Option<String>,
     /// Source date at which a correction starts; with --write, use persisted
     /// checkpoints and warmup windows to limit the replacement slice.
-    #[arg(long)]
     changed_from: Option<String>,
-    #[arg(long, default_value = "v3-macd-kdj-czsc-1")]
     calc_version: String,
-    #[arg(long, default_value = "qfq")]
     price_basis: String,
-    #[arg(long, default_value_t = 9)]
     kdj_window: usize,
-    #[arg(long, default_value = "-")]
     output: String,
     /// Persist all calculated tables through the Rust DuckDB writer.
-    #[arg(long)]
     database: Option<PathBuf>,
-    #[arg(long, requires = "database")]
     write: bool,
-    #[arg(long = "scope")]
     scope: Vec<String>,
-    #[arg(skip)]
     output_from: Option<NaiveDate>,
-    #[arg(skip)]
     output_to: Option<NaiveDate>,
 }
 
@@ -86,7 +68,7 @@ struct OutputRow {
     row: Value,
 }
 
-pub(crate) fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let calendar = read_calendar(&args.calendar)?;
     let bars = read_input(&args)?;
     let mut groups: BTreeMap<(String, String), Vec<Bar>> = BTreeMap::new();
@@ -100,7 +82,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
         let changed_from = args.changed_from.as_deref().map(parse_date).transpose()?;
         if let Some(changed_from) = changed_from {
             validate_incremental_inputs(
-                args.database.as_deref().expect("clap requires database"),
+                args.database
+                    .as_deref()
+                    .expect("cached calculation requires database"),
                 &calendar,
                 &groups,
                 changed_from,
@@ -111,7 +95,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
         calculate_groups(&args, &calendar, groups, &mut rendered)?;
         let scope = parse_scope(&args.scope)?;
         persist_calculation(
-            args.database.as_deref().expect("clap requires database"),
+            args.database
+                .as_deref()
+                .expect("cached calculation requires database"),
             &calendar,
             changed_from,
             &rendered,

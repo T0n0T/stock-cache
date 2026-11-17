@@ -28,22 +28,18 @@ Rust CLI 是运行和消费 v3 的唯一命令入口；`tools/*.py` 只承担字
 6. `replace-batch-keys` 按 staging 中出现的逻辑键批量删除并插入，用于全量计算聚合写入；
 7. 成功提交后执行 `CHECKPOINT`，异常回滚。
 
-对应策略为：日常新增使用 `append`，历史补全使用按日期分块的 `replace-dates`，单日修订也使用单日期 `replace-dates`；需要精确删改时使用 `replace-keys`。无 `--changed-from` 的全量计算按计算表聚合，再用 `replace-batch-keys` 精确替换输入批次涉及的键，避免逐标的打开 writer，也不误删同日其他标的。生产路径不逐行 upsert。
+对应策略为：日常新增使用 `append`，历史补全使用按日期分块的 `replace-dates`，单日修订也使用单日期 `replace-dates`；需要精确删改时使用 `replace-keys`。主流程的计算按计算表聚合，再用 `replace-batch-keys` 精确替换输入批次涉及的键，避免逐标的打开 writer，也不误删同日其他标的。生产路径不逐行 upsert。
 
 ## CLI
 
 ```bash
 cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
-cargo run --bin stock-cache -- fetch --database ./runtime/stock-cache.duckdb \
-  --dataset stock_stk_factor_pro --params '{"trade_date":"20261113"}'
-cargo run --bin stock-cache -- import --database ./runtime/stock-cache.duckdb \
-  --table source_daily_bars --input bars.jsonl --strategy append
-cargo run --bin stock-cache -- calc --input bars-with-warmup.jsonl --calendar trade_cal.txt \
-  --database ./runtime/stock-cache.duckdb --write
+cargo run --bin stock-cache -- write --mode full --lookback-trading-days 1
+cargo run --bin stock-cache -- erase --start-date 2026-11-09 --end-date 2026-11-13
 ```
 
-源数据修订时，以 `--changed-from` 指定起点并提供足够 warmup；计算器根据 checkpoint 规划受影响日期，再由 Rust writer 整体替换结果切片。
+历史修订通过 `write --mode full --start-date ... --end-date ...` 重拉并计算；结果依赖后续日期时，应将目标范围延伸至最新缓存日期。
 
 ## 计算正确性
 
@@ -67,7 +63,7 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 
 ## 写入性能测量
 
-基准工具 `tools/benchmark_rust_writer.py` 默认把 JSON 写到 `target/` 下的临时目录，不把生成报告放入仓库。报告至少区分：
+基准工具 `tools/benchmark_rust_writer.py`（先执行 `cargo build --release --example writer-benchmark`） 默认把 JSON 写到 `target/` 下的临时目录，不把生成报告放入仓库。报告至少区分：
 
 - writer-only wall time、逻辑行数和 rows/s；
 - fetch 端到端时间，拆分 HTTP/解码、序列化、写入/checkpoint；
@@ -78,7 +74,7 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 
 ## 五日计算与计算表写入
 
-使用真实 `stock_stk_factor_pro` 数据，日期为 2026-11-09 至 2026-11-13，共 27,452 行、5,575 个标的。输入只有这五个交易日，没有额外 warmup 行；单独计算命令耗时 1.63 秒。`stock-cache calc --write` 同时计算并写入六张计算表，输出 159,544 行、约 136.7 MiB；干净计算表首次填入耗时 19.73 秒，两次同批次替换分别耗时 20.06 和 20.29 秒，三轮中位数 20.06 秒，峰值 RSS 约 1.39 GiB。计算表最终行数为：`calc_period_bars` 11,142、`calc_indicator_state` 38,594，其余四张日表各 27,452。
+使用真实 `stock_stk_factor_pro` 数据，日期为 2026-11-09 至 2026-11-13，共 27,452 行、5,575 个标的。输入只有这五个交易日，没有额外 warmup 行；单独计算命令耗时 1.63 秒。当时的独立计算入口（现已收回 write 内部） 同时计算并写入六张计算表，输出 159,544 行、约 136.7 MiB；干净计算表首次填入耗时 19.73 秒，两次同批次替换分别耗时 20.06 和 20.29 秒，三轮中位数 20.06 秒，峰值 RSS 约 1.39 GiB。计算表最终行数为：`calc_period_bars` 11,142、`calc_indicator_state` 38,594，其余四张日表各 27,452。
 
 单独计算与计算加写入的差值约 18–20 秒，但包含结果解析、按表暂存、DuckDB 替换/checkpoint 和最终输出，不能视作纯数据库写耗时。该路径当前仍会在内存中保留全量渲染结果；本轮峰值内存显示后续应优先把计算结果流式写入按表暂存文件，降低批量回补的内存占用。此零 warmup 运行只用于性能测量，MACD 等滚动指标从给定五日样本起算，不代表长历史基准值。
 
@@ -94,7 +90,7 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 目标日期，`--mode calc` 仅使用已有来源和已缓存日历计算。默认数据库为
 `runtime/stock-cache.duckdb`，支持 `DUCKDB_PATH`、`--database`；加载 `.env` 或
 `--env-file`，环境变量优先。`INDEX_LIST_PATH` 和 `TARGET_CACHE_TABLES_PATH`
-可覆盖内置配置。JSONL 导入改用 `import` 子命令。
+可覆盖内置配置。公开子命令仅保留 init/init-db、status、write、erase。
 
 来源表按请求日期及指数代码替换；历史覆盖由 `cache_fetch_coverage` 记录，
 包括已成功获取的空响应，避免每天重复请求。目标日期始终刷新。计算按标的批次
@@ -105,3 +101,12 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 首轮 MACD 沿用 v2 的 36 个月有限预热口径，不能视为上市以来的精确基线。
 每批来源与计算结果使用 writer 事务；跨 HTTP 和各计算批次不构成单一事务，失败
 不会报告成功，已完成的来源缓存可供重试复用。
+
+## 日期擦除
+
+`stock-cache erase --start-date YYYY-MM-DD --end-date YYYY-MM-DD` 恢复 v2 的明确
+日期区间擦除语义。一个事务删除所有日期来源表、source_daily_bars、六张计算表和
+cache_fetch_coverage 的区间记录；周/月表按 period_end_date 匹配。保留 stock_basic、
+index_ths、index_ths_member 和 cache_trade_calendar。日期必须成对提供且起日不晚于
+止日，缺失数据库报错。区间外结果不删除；历史改动后需重算依赖它的后续日期。
+计算和 HTTP 拉取均作为 write 内部能力，不提供 import/fetch/calc 子命令。
