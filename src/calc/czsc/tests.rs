@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use serde::Deserialize;
 
-use super::{CzscAnalyzer, CzscBar, CzscConfig, CzscSnapshot, CzscSourceBar};
+use super::{AnalyzerSnapshot, CzscAnalyzer, CzscBar, CzscConfig, CzscSourceBar};
 
 #[derive(Deserialize)]
 struct Fixture {
@@ -212,7 +212,7 @@ fn parse_date(value: &str) -> NaiveDate {
     NaiveDate::parse_from_str(value, "%Y-%m-%d").expect("fixture date")
 }
 
-fn assert_snapshot(actual: &CzscSnapshot, expected: &ExpectedSnapshot) {
+fn assert_snapshot(actual: &AnalyzerSnapshot, expected: &ExpectedSnapshot) {
     assert_eq!(actual.source_bar_valid, expected.source_bar_valid);
     assert_eq!(actual.status, expected.status);
     assert_eq!(

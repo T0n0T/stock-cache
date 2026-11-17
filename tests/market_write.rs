@@ -12,7 +12,7 @@ use std::{
     },
     thread,
 };
-use stock_cache::v3::duckdb;
+use stock_cache::storage::duckdb;
 use tempfile::tempdir;
 
 const OPEN: [&str; 10] = [

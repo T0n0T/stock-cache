@@ -12,7 +12,10 @@ use chrono::{Datelike, NaiveDate};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use stock_cache::v3::{checkpoint, czsc, duckdb, kdj, left_peak, macd, rolling};
+use stock_cache::{
+    calc::{checkpoint, czsc, kdj, left_peak, macd, rolling},
+    storage::duckdb,
+};
 
 #[derive(Debug)]
 struct Args {

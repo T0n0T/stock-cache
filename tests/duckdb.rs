@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, fs::File, io::Write};
 
 use serde_json::json;
-use stock_cache::v3::duckdb;
+use stock_cache::storage::duckdb;
 use tempfile::tempdir;
 
 fn jsonl_file(

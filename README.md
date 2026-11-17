@@ -7,17 +7,23 @@ The Rust executable owns HTTP requests, JSON decoding, batch writes, MACD/KDJ/ro
 ## Layout
 
 ```text
-schemas/tushare-fields.yaml  Tushare dataset metadata and DuckDB field types
-src/source/tushare_http.rs    Rust reqwest transport
-src/v3/duckdb.rs              DuckDB schema, staging writer, and checkpoint I/O
-src/v3/{macd,kdj,rolling,left_peak,czsc}.rs  calculation kernels
-src/main.rs                  unified CLI
-src/cli/write.rs             market-cache workflow
-src/cli/calc.rs              calculation subcommand with DuckDB persistence
-docs/program-design.md        runtime and write strategy
-docs/schema-design.md         table and performance design
-docs/data-usage-guide.md      DuckDB consumer queries
+src/main.rs                  CLI root and command dispatch
+src/cli/                     command-line argument definitions
+src/app/                     write, erase, status, and calculation workflows
+src/calc/                    MACD, KDJ, rolling, left-peak, and CZSC algorithms
+src/source/                  Rust Tushare HTTP client
+src/storage/duckdb/          DuckDB schema, writer, cache, and checkpoint access
+src/metadata/                dataset and field metadata
+schemas/                     source metadata definition
+config/                      default cache table and index lists
+docs/program-design.md       runtime and write strategy
+docs/schema-design.md        table and performance design
+docs/data-usage-guide.md     DuckDB consumer queries
 ```
+
+`app` coordinates the workflows, `calc` contains reusable calculation logic, and
+`storage` owns database operations. The directory names describe these boundaries;
+the calculation implementation is not tied to a schema or release version.
 
 ## Daily market-cache workflow
 
@@ -91,7 +97,7 @@ cargo clippy --all-targets -- -D warnings
 git diff --check
 ```
 
-See the v3 documents for calculation semantics, warmup rules, measured ingestion boundaries, and consumer SQL.
+See the design and data-usage documents for calculation semantics, warmup rules, measured ingestion boundaries, and consumer SQL.
 
 The writer benchmark uses a developer example, not the product CLI:
 

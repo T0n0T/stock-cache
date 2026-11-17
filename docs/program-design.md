@@ -1,8 +1,8 @@
-# v3 程序设计
+# 程序设计
 
 v3 是独立的 Rust + DuckDB 路径。Tushare HTTP 拉取、JSON 解码、批量写入、MACD/KDJ/rolling/left-peak/CZSC 计算和结果落库均由 Rust 完成；仓库不再维护旧数据库后端或兼容写入路径。
 
-## 程序边界
+## 程序边界与目录分层
 
 ```text
 Rust reqwest Tushare transport
@@ -14,11 +14,13 @@ stock-cache (Rust) ---- DuckDB file
         +-- calc tables and checkpoints
 ```
 
-Rust CLI 是运行和消费 v3 的唯一命令入口；`tools/*.py` 只承担字段发现、metadata/文档生成和基准辅助，不进入生产数据路径。`duckdb-neo` 提供 DuckDB v2 C API binding。
+Rust CLI 是唯一命令入口；`tools/*.py` 只承担字段发现、metadata/文档生成和基准辅助，不进入生产数据路径。`duckdb-neo` 提供 DuckDB v2 C API binding。
+
+代码按职责分层：`src/cli` 定义命令参数，`src/app` 编排写入、擦除和计算流程，`src/calc` 实现可复用的计算算法，`src/source` 负责 Tushare HTTP，`src/storage/duckdb` 管理表结构、批量写入和状态读取，`src/metadata` 提供数据集元信息。计算算法不再放在单独的版本目录中。
 
 ## Rust writer
 
-`src/v3/duckdb.rs` 对每个批次使用一条连接和一个事务：
+`src/storage/duckdb/writer.rs` 对每个批次使用一条连接和一个事务：
 
 1. 用 `read_json_auto(..., format='newline_delimited')` 将 JSONL 载入临时 staging 表；
 2. 按目标表逻辑键保留批次最后一行；

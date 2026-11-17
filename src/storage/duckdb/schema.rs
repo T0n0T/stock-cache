@@ -1,10 +1,4 @@
-//! Rust-owned DuckDB schema and batch writer for v3.
-//!
-//! Input is JSONL only at this boundary. DuckDB reads the JSONL file into a temporary
-//! staging table, then all validation, replacement, deduplication and commit work is
-//! executed as set-based SQL on one v2-C-API connection.
-
-use std::{collections::BTreeMap, fs, path::Path};
+//! DuckDB schema, connection lifecycle, and table metadata.
 
 use anyhow::{anyhow, bail, Context, Result};
 use chrono::NaiveDate;
@@ -13,9 +7,7 @@ use duckdb_neo::{
     environment::{Environment, StorageLocation},
     Parameters,
 };
-use serde_json::Value;
 
-use super::checkpoint::IndicatorCheckpoint;
 use crate::metadata::tushare_fields::{dataset, WriteStrategy, DATASETS};
 
 const SOURCE_COLUMNS: &[&str] = &[
@@ -201,7 +193,7 @@ pub fn table_columns(table: &str) -> Result<Vec<String>> {
                     .map(|field| field.name.to_string())
                     .collect()
             })
-            .ok_or_else(|| anyhow!("unknown v3 table: {table}"))?,
+            .ok_or_else(|| anyhow!("unknown cache table: {table}"))?,
     };
     Ok(result)
 }
@@ -237,7 +229,7 @@ pub fn table_keys(table: &str) -> Result<Vec<String>> {
                     ..
                 } => natural_key_candidate.to_vec(),
             },
-            None => bail!("unknown v3 table: {table}"),
+            None => bail!("unknown cache table: {table}"),
         },
     }
     .into_iter()
@@ -245,19 +237,19 @@ pub fn table_keys(table: &str) -> Result<Vec<String>> {
     .collect())
 }
 
-fn ident(value: &str) -> String {
+pub(super) fn ident(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\"\""))
 }
-fn sql_string(value: &str) -> String {
+pub(super) fn sql_string(value: &str) -> String {
     format!("'{}'", value.replace('\'', "''"))
 }
-fn date_literal(value: &str) -> Result<String> {
+pub(super) fn date_literal(value: &str) -> Result<String> {
     Ok(format!(
         "DATE {}",
         sql_string(&parse_date(value)?.to_string())
     ))
 }
-fn parse_date(value: &str) -> Result<NaiveDate> {
+pub(super) fn parse_date(value: &str) -> Result<NaiveDate> {
     NaiveDate::parse_from_str(value, "%Y-%m-%d")
         .or_else(|_| NaiveDate::parse_from_str(value, "%Y%m%d"))
         .map_err(|_| anyhow!("invalid date: {value}"))
@@ -301,7 +293,7 @@ fn metadata_type_for(table: &str, column: &str) -> Option<&'static str> {
     Some(field.duckdb_type)
 }
 
-fn type_for_table_column(table: &str, column: &str) -> &'static str {
+pub(super) fn type_for_table_column(table: &str, column: &str) -> &'static str {
     metadata_type_for(table, column).unwrap_or_else(|| type_for(column))
 }
 
@@ -350,7 +342,7 @@ pub fn with_connection<T>(database: &str, f: impl FnOnce(&Connection) -> Result<
     f(&connection)
 }
 
-fn execute_script(connection: &Connection, sql: &str) -> Result<()> {
+pub(super) fn execute_script(connection: &Connection, sql: &str) -> Result<()> {
     for statement in connection.parse(sql)? {
         connection.execute(statement?, Parameters::None)?;
     }
@@ -391,314 +383,6 @@ pub fn checkpoint(connection: &Connection) -> Result<()> {
         .execute("CHECKPOINT", Parameters::None)
         .map(|_| ())
         .map_err(Into::into)
-}
-
-/// Load all persisted indicator states for one source instrument and calculation version.
-///
-/// Dates are read as text to keep the DuckDB C API boundary independent of its
-/// temporal representation, then parsed with the same date rules as the writer.
-pub fn load_indicator_checkpoints(
-    connection: &Connection,
-    source_dataset: &str,
-    ts_code: &str,
-    calc_version: &str,
-) -> Result<Vec<IndicatorCheckpoint>> {
-    let sql = format!(
-        "SELECT source_dataset, ts_code, period_type, period_start_date::VARCHAR, period_end_date::VARCHAR, macd_ema12, macd_ema26, macd_dea, macd_period_count, kdj_k, kdj_d, kdj_period_count, calc_version FROM calc_indicator_state WHERE source_dataset = {} AND ts_code = {} AND calc_version = {} ORDER BY period_end_date, period_type",
-        sql_string(source_dataset),
-        sql_string(ts_code),
-        sql_string(calc_version),
-    );
-    let mut result = connection.query(sql, Parameters::None)?;
-    let mut rows = Vec::new();
-    while let Some(chunk) = result.next_chunk()? {
-        let source = chunk.get_vector_at::<String>(0)?.reader()?;
-        let code = chunk.get_vector_at::<String>(1)?.reader()?;
-        let period = chunk.get_vector_at::<String>(2)?.reader()?;
-        let start = chunk.get_vector_at::<String>(3)?.reader()?;
-        let end = chunk.get_vector_at::<String>(4)?.reader()?;
-        let ema12 = chunk.get_vector_at::<f64>(5)?.reader()?;
-        let ema26 = chunk.get_vector_at::<f64>(6)?.reader()?;
-        let dea = chunk.get_vector_at::<f64>(7)?.reader()?;
-        let macd_count = chunk.get_vector_at::<i64>(8)?.reader()?;
-        let kdj_k = chunk.get_vector_at::<f64>(9)?.reader()?;
-        let kdj_d = chunk.get_vector_at::<f64>(10)?.reader()?;
-        let kdj_count = chunk.get_vector_at::<i64>(11)?.reader()?;
-        let version = chunk.get_vector_at::<String>(12)?.reader()?;
-        for index in 0..chunk.row_count()? {
-            let source = source
-                .get(index)?
-                .ok_or_else(|| anyhow!("checkpoint source_dataset is NULL"))?;
-            let code = code
-                .get(index)?
-                .ok_or_else(|| anyhow!("checkpoint ts_code is NULL"))?;
-            let period = period
-                .get(index)?
-                .ok_or_else(|| anyhow!("checkpoint period_type is NULL"))?;
-            let start = start
-                .get(index)?
-                .ok_or_else(|| anyhow!("checkpoint period_start_date is NULL"))?;
-            let end = end
-                .get(index)?
-                .ok_or_else(|| anyhow!("checkpoint period_end_date is NULL"))?;
-            let version = version
-                .get(index)?
-                .ok_or_else(|| anyhow!("checkpoint calc_version is NULL"))?;
-            rows.push(IndicatorCheckpoint {
-                source_dataset: source.to_string(),
-                ts_code: code.to_string(),
-                period_type: period.to_string(),
-                period_start_date: parse_date(start)?,
-                period_end_date: parse_date(end)?,
-                macd_ema12: ema12.get(index)?.copied(),
-                macd_ema26: ema26.get(index)?.copied(),
-                macd_dea: dea.get(index)?.copied(),
-                macd_period_count: macd_count.get(index)?.copied(),
-                kdj_k: kdj_k.get(index)?.copied(),
-                kdj_d: kdj_d.get(index)?.copied(),
-                kdj_period_count: kdj_count.get(index)?.copied(),
-                calc_version: version.to_string(),
-            });
-        }
-    }
-    Ok(rows)
-}
-
-pub fn table_count(connection: &Connection, table: &str) -> Result<i64> {
-    let mut result = connection.query(
-        format!("SELECT COUNT(*)::BIGINT FROM {}", ident(table)),
-        Parameters::None,
-    )?;
-    let chunk = result
-        .next_chunk()?
-        .ok_or_else(|| anyhow!("DuckDB returned no count row"))?;
-    Ok(*chunk
-        .get_vector_at::<i64>(0)?
-        .reader()?
-        .get(0)?
-        .ok_or_else(|| anyhow!("DuckDB count is NULL"))?)
-}
-
-pub fn write_jsonl(
-    connection: &Connection,
-    table: &str,
-    input: &Path,
-    strategy: &str,
-    dates: &[String],
-    scope: &BTreeMap<String, String>,
-    key_values: &[Vec<Value>],
-) -> Result<i64> {
-    if !matches!(
-        strategy,
-        "append" | "replace-dates" | "replace-keys" | "replace-batch-keys" | "replace-all"
-    ) {
-        bail!("unknown v3 write strategy: {strategy}");
-    }
-    if strategy == "replace-keys" && key_values.is_empty() {
-        bail!("replace-keys requires at least one logical key");
-    }
-    let cols = table_columns(table)?;
-    if strategy == "replace-all"
-        && !dataset(table).is_some_and(|metadata| {
-            matches!(metadata.write_strategy, WriteStrategy::ReplaceAll { .. })
-        })
-    {
-        bail!("replace-all is only allowed for reference snapshot tables");
-    }
-    let key_cols = table_keys(table)?;
-    for column in scope.keys() {
-        if !cols.iter().any(|known| known == column) {
-            bail!("scope column is not part of {table}: {column}");
-        }
-    }
-    let stage = "__v3_stage";
-    execute_script(connection, &format!("DROP TABLE IF EXISTS {stage}; CREATE TEMP TABLE {stage} AS SELECT * FROM {} LIMIT 0; ALTER TABLE {stage} ADD COLUMN __v3_batch_order BIGINT", ident(table)))?;
-    let metadata =
-        fs::metadata(input).with_context(|| format!("stat JSONL {}", input.display()))?;
-    if metadata.len() > 0 {
-        let projection = cols
-            .iter()
-            .map(|column| {
-                let source = ident(column);
-                let target_type = type_for_table_column(table, column);
-                if target_type == "DATE" {
-                    format!(
-                        "COALESCE(try_strptime(CAST({source} AS VARCHAR), '%Y-%m-%d')::DATE, try_strptime(CAST({source} AS VARCHAR), '%Y%m%d')::DATE) AS {source}"
-                    )
-                } else {
-                    format!("CAST({source} AS {target_type}) AS {source}")
-                }
-            })
-            .collect::<Vec<_>>()
-            .join(", ");
-        let input_columns = cols
-            .iter()
-            .map(|column| format!("{}: 'VARCHAR'", sql_string(column)))
-            .collect::<Vec<_>>()
-            .join(", ");
-        let path = sql_string(&input.to_string_lossy());
-        let sql = format!("INSERT INTO {stage} ({}, __v3_batch_order) SELECT {projection}, ROW_NUMBER() OVER () - 1 FROM read_json_auto({path}, format='newline_delimited', records=true, columns={{{input_columns}}})", cols.iter().map(|x| ident(x)).collect::<Vec<_>>().join(", "));
-        connection.execute(sql, Parameters::None)?;
-    }
-    let result = (|| -> Result<i64> {
-        connection.execute("BEGIN TRANSACTION", Parameters::None)?;
-        if strategy == "append" {
-            let join = key_cols
-                .iter()
-                .map(|column| format!("target.{0}=staged.{0}", ident(column)))
-                .collect::<Vec<_>>()
-                .join(" AND ");
-            let exists = format!("SELECT 1 FROM {table} target JOIN (SELECT {keys} FROM {stage} QUALIFY ROW_NUMBER() OVER (PARTITION BY {keys} ORDER BY __v3_batch_order DESC)=1) staged ON {join} LIMIT 1", table=ident(table), keys=key_cols.iter().map(|x| ident(x)).collect::<Vec<_>>().join(", "));
-            let mut check = connection.query(exists, Parameters::None)?;
-            let already_exists = check.next_chunk()?.is_some();
-            drop(check);
-            if already_exists {
-                bail!("append batch contains a logical key already present in target");
-            }
-        } else if strategy == "replace-all" {
-            connection.execute(format!("DELETE FROM {}", ident(table)), Parameters::None)?;
-        } else if strategy == "replace-batch-keys" {
-            let key_match = key_cols
-                .iter()
-                .map(|column| format!("target.{0} IS NOT DISTINCT FROM staged.{0}", ident(column)))
-                .collect::<Vec<_>>()
-                .join(" AND ");
-            let delete = format!(
-                "DELETE FROM {} AS target USING (SELECT DISTINCT {} FROM {stage}) AS staged WHERE {key_match}",
-                ident(table),
-                key_cols
-                    .iter()
-                    .map(|column| ident(column))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-            connection.execute(delete, Parameters::None)?;
-        } else {
-            let predicate =
-                replacement_predicate(table, &cols, dates, scope, key_cols.as_slice(), key_values)?;
-            connection.execute(
-                format!("DELETE FROM {} WHERE {predicate}", ident(table)),
-                Parameters::None,
-            )?;
-        }
-        let key_sql = key_cols
-            .iter()
-            .map(|x| ident(x))
-            .collect::<Vec<_>>()
-            .join(", ");
-        let count_sql = format!("SELECT COUNT(*)::BIGINT FROM (SELECT ROW_NUMBER() OVER (PARTITION BY {key_sql} ORDER BY __v3_batch_order DESC) rank FROM {stage}) WHERE rank=1");
-        let mut count = connection.query(count_sql, Parameters::None)?;
-        let written = count
-            .next_chunk()?
-            .and_then(|chunk| {
-                chunk.get_vector_at::<i64>(0).ok().and_then(|v| {
-                    v.reader()
-                        .ok()
-                        .and_then(|r| r.get(0).ok().flatten().copied())
-                })
-            })
-            .unwrap_or(0);
-        drop(count);
-        let insert = format!("INSERT INTO {} ({}) SELECT {} FROM {stage} QUALIFY ROW_NUMBER() OVER (PARTITION BY {key_sql} ORDER BY __v3_batch_order DESC)=1", ident(table), cols.iter().map(|x| ident(x)).collect::<Vec<_>>().join(", "), cols.iter().map(|x| ident(x)).collect::<Vec<_>>().join(", "));
-        connection.execute(insert, Parameters::None)?;
-        connection.execute("COMMIT", Parameters::None)?;
-        Ok(written)
-    })();
-    if result.is_err() {
-        let _ = connection.execute("ROLLBACK", Parameters::None);
-    }
-    let _ = connection.execute(format!("DROP TABLE IF EXISTS {stage}"), Parameters::None);
-    result
-}
-
-fn replacement_predicate(
-    table: &str,
-    cols: &[String],
-    dates: &[String],
-    scope: &BTreeMap<String, String>,
-    key_cols: &[String],
-    key_values: &[Vec<Value>],
-) -> Result<String> {
-    if !key_values.is_empty() {
-        if key_values.iter().any(|key| key_cols.len() != key.len()) {
-            bail!("replace key width does not match table key");
-        }
-        return Ok(key_values
-            .iter()
-            .map(|key| {
-                key.iter()
-                    .enumerate()
-                    .map(|(index, value)| {
-                        format!(
-                            "{} = {}",
-                            ident(&key_cols[index]),
-                            json_literal(value, type_for_table_column(table, &key_cols[index]))
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join(" AND ")
-            })
-            .map(|x| format!("({x})"))
-            .collect::<Vec<_>>()
-            .join(" OR "));
-    }
-    if dates.is_empty() {
-        bail!("replace-dates requires non-empty dates");
-    }
-    if !cols
-        .iter()
-        .any(|x| x == "trade_date" || x == "period_end_date")
-    {
-        bail!("table has no date replacement column");
-    }
-    let date_column = if cols.iter().any(|x| x == "trade_date") {
-        "trade_date"
-    } else {
-        "period_end_date"
-    };
-    let date_sql = dates
-        .iter()
-        .map(|x| date_literal(x))
-        .collect::<Result<Vec<_>>>()?
-        .join(", ");
-    let mut terms = vec![format!("{} IN ({date_sql})", ident(date_column))];
-    if table.starts_with("calc_") {
-        for required in ["source_dataset", "calc_version"] {
-            if !scope.contains_key(required) {
-                bail!("v3 calculation replacement requires source_dataset and calc_version scope");
-            }
-        }
-    }
-    for (column, value) in scope {
-        terms.push(format!(
-            "{} IS NOT DISTINCT FROM {}",
-            ident(column),
-            json_literal(
-                &Value::String(value.clone()),
-                type_for_table_column(table, column)
-            )
-        ));
-    }
-    Ok(terms.join(" AND "))
-}
-
-fn json_literal(value: &Value, ty: &str) -> String {
-    if value.is_null() {
-        "NULL".to_string()
-    } else if ty == "DATE" {
-        value
-            .as_str()
-            .and_then(|raw| date_literal(raw).ok())
-            .unwrap_or_else(|| "NULL".to_string())
-    } else if ty == "BOOLEAN" || ty == "DOUBLE" || ty == "BIGINT" {
-        value.to_string()
-    } else {
-        let text = value
-            .as_str()
-            .map(str::to_string)
-            .unwrap_or_else(|| value.to_string());
-        sql_string(&text)
-    }
 }
 
 const SCHEMA_SQL: &str = r#"

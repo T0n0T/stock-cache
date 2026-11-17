@@ -2,7 +2,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::{collections::BTreeMap, path::PathBuf};
-use stock_cache::v3::duckdb;
+use stock_cache::storage::duckdb;
 
 #[derive(Parser)]
 struct Args {

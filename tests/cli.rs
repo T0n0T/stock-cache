@@ -33,7 +33,7 @@ fn init_db_and_status_use_dotenv_database_without_database_argument() {
 #[test]
 fn erase_removes_only_requested_dates_and_invalidates_coverage() {
     use duckdb_neo::Parameters;
-    use stock_cache::{metadata::tushare_fields::DATASETS, v3::duckdb};
+    use stock_cache::{metadata::tushare_fields::DATASETS, storage::duckdb};
     let directory = tempdir().unwrap();
     let database = directory.path().join("cache.duckdb");
     let database = database.to_str().unwrap();

@@ -344,7 +344,7 @@ mod tests {
     #[test]
     fn wrapper_preserves_golden_source_bar_validity() {
         let fixture: GoldenFixture = serde_json::from_str(include_str!(
-            "../../tests/fixtures/czsc/handcrafted_daily.json"
+            "../../../tests/fixtures/czsc/handcrafted_daily.json"
         ))
         .unwrap();
         for case in fixture.cases {
