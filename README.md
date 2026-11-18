@@ -1,66 +1,45 @@
 # stock-cache
 
-`stock-cache` is a Rust-owned Tushare ingestion, DuckDB storage, and local factor calculation tool. The active development target is v3 and it uses a local DuckDB file.
+`stock-cache` 是一个由 Rust 实现的 Tushare 数据采集、DuckDB 存储与本地因子计算工具。当前开发目标是 v3，使用本地 DuckDB 文件。
 
-The Rust executable owns HTTP requests, JSON decoding, batch writes, MACD/KDJ/rolling/left-peak/CZSC calculations, and DuckDB transactions.
+Rust 可执行程序负责 HTTP 请求、JSON 解码、批量写入、MACD/KDJ/rolling/left-peak/CZSC 计算以及 DuckDB 事务。
 
-## Layout
+## 目录结构
 
 ```text
-src/main.rs                  CLI root and command dispatch
-src/cli/                     command-line argument definitions
-src/app/                     write, erase, status, and calculation workflows
-src/calc/                    MACD, KDJ, rolling, left-peak, and CZSC algorithms
-src/source/                  Rust Tushare HTTP client
-src/storage/duckdb/          DuckDB schema, writer, cache, and checkpoint access
-src/metadata/                dataset and field metadata
-schemas/                     source metadata definition
-config/                      default cache table and index lists
-docs/program-design.md       runtime and write strategy
-docs/schema-design.md        table and performance design
-docs/data-usage-guide.md     DuckDB consumer queries
+src/main.rs                  CLI 入口与命令分发
+src/cli/                     命令行参数定义
+src/app/                     write、erase、serve、status 与计算工作流
+src/calc/                    MACD、KDJ、rolling、left-peak 与 CZSC 算法
+src/source/                  Rust Tushare HTTP 客户端
+src/storage/duckdb/          DuckDB schema、写入器、缓存、检查点与 Quack 服务端
+src/metadata/                数据集与字段元数据
+schemas/                     数据源元数据定义
+config/                      默认缓存表与索引列表
+docs/program-design.md       运行时与写入策略
+docs/schema-design.md        表结构与性能设计
+docs/data-usage-guide.md     DuckDB 消费端查询
 ```
 
-`app` coordinates the workflows, `calc` contains reusable calculation logic, and
-`storage` owns database operations. The directory names describe these boundaries;
-the calculation implementation is not tied to a schema or release version.
+`app` 负责编排工作流，`calc` 包含可复用的计算逻辑，`storage` 负责数据库操作。目录名称描述了这些边界；计算实现不绑定于某个 schema 或发布版本。
 
-## Daily market-cache workflow
+## 每日行情缓存工作流
 
 ```bash
 target/release/stock-cache write --mode full --lookback-trading-days 1
-# Historical target window:
+# 指定历史窗口：
 target/release/stock-cache write --mode full --start-date 2026-11-09 --end-date 2026-11-13
 ```
 
-`write` is the normal market-cache entry point. `full` fetches target-day market
-sources, fills missing calculation-source history for the preceding 36 months,
-then calculates and writes the target results. Trading dates come from Tushare's
-SSE calendar; a weekend selects the latest open session. If the target day's stock
-data has not been published, the command fails instead of silently using yesterday.
+`write` 是常规的行情缓存入口。`full` 会抓取目标日的行情数据源，补齐前 36 个月缺失的计算数据源历史，然后计算并写入目标结果。交易日期取自 Tushare 的上交所日历；遇到周末时选择最近的一个交易日。如果目标日的股票数据尚未发布，命令会直接失败，而不会静默使用前一日的数据。
 
-The default database is `runtime/stock-cache.duckdb` (`DUCKDB_PATH` or `--database`
-overrides it). Shell variables take priority over `.env`; `--env-file` selects a
-specific file. `cache` fetches only target sources; `calc` calculates from existing
-cached sources and calendar without HTTP access. `--refresh` updates reference
-snapshots. `--max-concurrency` bounds HTTP requests; `--chunk-size` bounds the number
-of instruments per calculation batch. `--force-recalc` also refetches history in
-`full` mode. Targets are refreshed on every run; successful warmup requests are
-reused, including empty responses. Newly added indexes receive their own backfill.
+默认数据库为 `runtime/stock-cache.duckdb`（可用 `DUCKDB_PATH` 或 `--database` 覆盖）。Shell 变量优先于 `.env`；`--env-file` 用于指定特定文件。`cache` 只抓取目标数据源；`calc` 基于已缓存的数据源和日历进行计算，不访问 HTTP。`--refresh` 会更新参考数据快照。`--max-concurrency` 限制 HTTP 请求并发数；`--chunk-size` 限制每批计算的标的数量。`--force-recalc` 还会在 `full` 模式下重新抓取历史数据。默认情况下每次运行都会刷新目标数据；成功的预热请求会被复用，包括空响应。新增的指数会获得各自的历史回填。`--skip-covered`（别名 `--resume`）还会复用已覆盖的目标请求，因此被中断的多日回填可以继续执行，无需重新抓取已完成的日期；它与 `--force-recalc` 冲突。
 
-Stocks use `*_qfq` OHLC; indexes use their raw OHLC. Warmup rows remain in source
-tables; only target-date calculation rows and completed-period rows ending in the
-target window are persisted. Existing earlier cache history remains part of the
-calculation input so EMA seeds do not shift forward each day. The initial 36-month
-warmup follows v2's finite-history convention, not an inception-history baseline.
-Writes use Rust batch staging and transactions; failure leaves completed source
-batches reusable for a retry. A workflow is not one transaction across all HTTP
-requests and calculation batches.
+股票使用 `*_qfq` 复权 OHLC；指数使用原始 OHLC。预热行保留在数据源表中；只有目标日的计算行以及以目标窗口结束的完整周期行会被持久化。已有的更早缓存历史仍会作为计算输入，以免 EMA 种子每天向前漂移。初始的 36 个月预热遵循 v2 的有限历史约定，而不是从上市首日开始的历史基线。写入采用 Rust 批量暂存和事务；失败时已完成的源数据批次仍可复用于重试。一个工作流并不是跨所有 HTTP 请求和计算批次的单一事务。
 
-The public commands are `init` (`init-db` alias), `status`, `write`, and `erase`.
-Calculation and HTTP fetching are internal stages of `write`.
+公开命令为 `init`（别名 `init-db`）、`status`、`write`、`erase` 和 `serve`。计算与 HTTP 抓取是 `write` 的内部阶段。
 
-## Quick start
+## 快速开始
 
 ```bash
 cargo build --bins
@@ -68,27 +47,46 @@ cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
 ```
 
-Erase an inclusive date window:
+删除一个闭区间日期窗口：
 
 ```bash
 stock-cache erase --start-date 2026-11-09 --end-date 2026-11-13
 ```
 
-Erasure removes dated source rows, calculation rows (period tables by period end),
-and request coverage in one transaction. It preserves reference snapshots and the
-trading calendar. Dates are required; there is no implicit full-database erasure.
-Later calculation dates remain stored, matching v2; recalculate through the latest
-cached date after correcting history, because rolling results may depend on it.
+删除操作会在一个事务中移除带日期的数据源行、计算行（周期表按周期结束日）以及请求覆盖记录。它会保留参考数据快照和交易日历。日期是必填的；不存在隐式的全库删除。更晚的计算日期仍会保留（与 v2 一致）；在修正历史数据后，请重算至最近一个缓存日期，因为滚动结果可能依赖该历史。
 
-## Write strategies
+## 通过 Quack 进行网络访问
 
-- Daily append: `append` for a new logical-key range.
-- Historical completion or a corrected date: `replace-dates` with an explicit date set.
-- Explicit row deletion or replacement: `replace-keys` with complete logical keys.
+在环境变量或 `.env` 中设置非空的 `QUACK_AUTH_TOKEN`，然后在写完缓存后在前台启动服务端：
 
-The writer loads a JSONL batch into DuckDB staging, deduplicates by logical key, applies the date/key replacement, commits once, and checkpoints. It does not perform production row-by-row upserts.
+```bash
+stock-cache serve --database runtime/stock-cache.duckdb
+# 监听网络接口：
+stock-cache serve --bind 0.0.0.0:9494
+```
 
-## Verification
+`serve` 将 DuckDB 原生的 **Quack** 协议封装在同一个可执行程序内。它以只读方式打开已有数据库，默认监听 `127.0.0.1:9494`。可在环境变量或 `.env` 中设置 `QUACK_BIND` 和 `QUACK_AUTH_TOKEN`，或用 `--bind` 和 `--auth-token` 覆盖。无论绑定到哪个地址都必须提供 token，以免 DuckDB 静默生成一个无法访问的凭据。启动时的 JSON 会报告就绪状态、传输 URL 和 TLS 证书指纹，但不会打印 token。
+
+在支持 Quack 的 DuckDB 客户端中，挂载服务端并查询其表：
+
+```sql
+ATTACH 'quack:server-host:9494' AS market
+  (TOKEN 'your-token', SSL_FINGERPRINT 'fingerprint-from-startup-json');
+SELECT count(*) FROM market.main.calc_daily_indicators;
+DETACH market;
+```
+
+Quack 在 localhost 上使用 HTTP，在绑定网络接口时使用 HTTPS 并自动生成证书。远程客户端使用当前启动 JSON 中的 `ssl_fingerprint`；连接默认的本地 HTTP 服务时可省略 `SSL_FINGERPRINT`。在客户端中请将通配符监听地址替换为服务端可访问的主机名。Quack 以流式方式返回 SQL 查询结果，并不会复制 `.duckdb` 文件。Ctrl-C 或 SIGTERM 会停止服务并释放数据库锁。在运行本地写入前请先停止服务，更新完成后再重新启动。systemd 或 Docker 等进程管理器可以直接托管该命令；无需额外的启动脚本或 DuckDB 可执行文件。
+
+## 写入策略
+
+- 每日追加：对新逻辑键范围使用 `append`。
+- 历史补齐或修正某个日期：使用带显式日期集合的 `replace-dates`。
+- 显式删除或替换行：使用带完整逻辑键的 `replace-keys`。
+
+写入器将 JSONL 批次载入 DuckDB 暂存表，按逻辑键去重，应用日期/键替换，提交一次并写入检查点。它不执行生产中逐行 upsert 的操作。
+
+## 验证
 
 ```bash
 cargo fmt --check
@@ -97,9 +95,9 @@ cargo clippy --all-targets -- -D warnings
 git diff --check
 ```
 
-See the design and data-usage documents for calculation semantics, warmup rules, measured ingestion boundaries, and consumer SQL.
+有关计算语义、预热规则、实测数据采集边界和消费端 SQL，请参阅设计与数据使用文档。
 
-The writer benchmark uses a developer example, not the product CLI:
+写入器基准测试使用开发者示例，而非产品 CLI：
 
 ```bash
 cargo build --release --example writer-benchmark
