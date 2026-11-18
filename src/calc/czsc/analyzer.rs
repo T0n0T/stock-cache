@@ -5,7 +5,7 @@ use super::{
     structure::build_snapshot,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct CzscAnalyzer {
     config: CzscConfig,
     last_source_date: Option<chrono::NaiveDate>,
@@ -37,13 +37,22 @@ impl CzscAnalyzer {
     }
 
     pub(crate) fn process(&mut self, source: CzscSourceBar) -> Result<CzscSnapshot> {
+        let valid = self.advance(source)?;
+        Ok(self.snapshot(valid))
+    }
+
+    pub(crate) fn advance(&mut self, source: CzscSourceBar) -> Result<bool> {
         self.check_source_date(source.trade_date)?;
         let valid = source.valid_bar();
         if let Some(bar) = valid {
             self.update_valid(bar);
         }
         self.last_source_date = Some(source.trade_date);
-        Ok(build_snapshot(self, valid.is_some()))
+        Ok(valid.is_some())
+    }
+
+    pub(crate) fn snapshot(&self, source_bar_valid: bool) -> CzscSnapshot {
+        build_snapshot(self, source_bar_valid)
     }
 
     fn check_source_date(&self, trade_date: chrono::NaiveDate) -> Result<()> {

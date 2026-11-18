@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{ensure, Result};
 use chrono::{Datelike, NaiveDate};
 use serde::Serialize;
@@ -69,6 +71,17 @@ pub fn calculate_multi_period_czsc(
     bars: &[OhlcBar],
     trading_dates: &[NaiveDate],
 ) -> Result<Vec<MultiPeriodCzscRow>> {
+    calculate_multi_period_czsc_for_dates(bars, trading_dates, None, None)
+}
+
+/// Advance the analyzers over all bars, returning snapshots only within the
+/// inclusive date bounds.
+pub fn calculate_multi_period_czsc_for_dates(
+    bars: &[OhlcBar],
+    trading_dates: &[NaiveDate],
+    from: Option<NaiveDate>,
+    to: Option<NaiveDate>,
+) -> Result<Vec<MultiPeriodCzscRow>> {
     validate_dates(bars)?;
     validate_calendar(trading_dates)?;
     for bar in bars {
@@ -78,16 +91,41 @@ pub fn calculate_multi_period_czsc(
             bar.trade_date
         );
     }
-    let daily = calculate_czsc(bars)?;
+    let mut daily = CzscAnalyzer::new(CzscConfig {
+        min_bi_len: MIN_BI_LEN,
+        max_bi_num: MAX_BI_NUM,
+    });
+    let mut weekly_ends = HashMap::new();
+    let mut monthly_ends = HashMap::new();
+    for &date in trading_dates {
+        weekly_ends.insert(period_key(PeriodType::Weekly, date), date);
+        monthly_ends.insert(period_key(PeriodType::Monthly, date), date);
+    }
+    let mut weekly = PeriodCzscAccumulator::new(PeriodType::Weekly);
+    let mut monthly = PeriodCzscAccumulator::new(PeriodType::Monthly);
     let mut rows = Vec::with_capacity(bars.len());
-    for index in 0..bars.len() {
-        let prefix = &bars[..=index];
-        rows.push(MultiPeriodCzscRow {
-            trade_date: bars[index].trade_date,
-            daily: daily[index].clone(),
-            weekly: period_snapshot(prefix, trading_dates, PeriodType::Weekly)?,
-            monthly: period_snapshot(prefix, trading_dates, PeriodType::Monthly)?,
-        });
+    for bar in bars {
+        let selected = !from.is_some_and(|from| bar.trade_date < from)
+            && !to.is_some_and(|to| bar.trade_date > to);
+        let daily_valid = advance_bar(&mut daily, *bar)?;
+        let weekly_snapshot = weekly.observe(
+            *bar,
+            weekly_ends[&period_key(PeriodType::Weekly, bar.trade_date)],
+            selected,
+        )?;
+        let monthly_snapshot = monthly.observe(
+            *bar,
+            monthly_ends[&period_key(PeriodType::Monthly, bar.trade_date)],
+            selected,
+        )?;
+        if selected {
+            rows.push(MultiPeriodCzscRow {
+                trade_date: bar.trade_date,
+                daily: snapshot_bar(&daily, bar.trade_date, daily_valid),
+                weekly: weekly_snapshot.expect("selected period has a snapshot"),
+                monthly: monthly_snapshot.expect("selected period has a snapshot"),
+            });
+        }
     }
     Ok(rows)
 }
@@ -98,6 +136,64 @@ enum PeriodType {
     Monthly,
 }
 
+// Keep the analyzer at the end of the last completed period. The current
+// period changes each day, so preview it on a copy only when needed and
+// commit its final value when the next period starts.
+struct PeriodCzscAccumulator {
+    period_type: PeriodType,
+    committed: CzscAnalyzer,
+    current: Option<OhlcBar>,
+}
+
+impl PeriodCzscAccumulator {
+    fn new(period_type: PeriodType) -> Self {
+        Self {
+            period_type,
+            committed: CzscAnalyzer::new(CzscConfig {
+                min_bi_len: MIN_BI_LEN,
+                max_bi_num: MAX_BI_NUM,
+            }),
+            current: None,
+        }
+    }
+
+    fn observe(
+        &mut self,
+        bar: OhlcBar,
+        period_end: NaiveDate,
+        selected: bool,
+    ) -> Result<Option<CzscSnapshot>> {
+        let key = period_key(self.period_type, bar.trade_date);
+        if self
+            .current
+            .is_some_and(|current| period_key(self.period_type, current.trade_date) != key)
+        {
+            advance_bar(
+                &mut self.committed,
+                self.current.take().expect("period exists"),
+            )?;
+        }
+        if let Some(current) = &mut self.current {
+            current.trade_date = period_end;
+            current.high = max_opt(current.high, bar.high);
+            current.low = min_opt(current.low, bar.low);
+            current.close = bar.close.or(current.close);
+        } else {
+            self.current = Some(bar);
+        }
+
+        if !selected {
+            return Ok(None);
+        }
+        let mut preview = self.committed.clone();
+        let mut snapshot = process_bar(&mut preview, self.current.expect("current period exists"))?;
+        snapshot.trade_date = bar.trade_date;
+        snapshot.period_complete = bar.trade_date == period_end;
+        Ok(Some(snapshot))
+    }
+}
+
+#[cfg(test)]
 fn period_snapshot(
     bars: &[OhlcBar],
     trading_dates: &[NaiveDate],
@@ -149,15 +245,31 @@ fn period_snapshot(
 }
 
 fn process_bar(analyzer: &mut CzscAnalyzer, bar: OhlcBar) -> Result<CzscSnapshot> {
-    let snapshot = analyzer.process(CzscSourceBar {
+    let snapshot = analyzer.process(source_bar(bar))?;
+    Ok(convert_snapshot(bar.trade_date, snapshot))
+}
+
+fn advance_bar(analyzer: &mut CzscAnalyzer, bar: OhlcBar) -> Result<bool> {
+    analyzer.advance(source_bar(bar))
+}
+
+fn source_bar(bar: OhlcBar) -> CzscSourceBar {
+    CzscSourceBar {
         trade_date: bar.trade_date,
         open: bar.open,
         high: bar.high,
         low: bar.low,
         close: bar.close,
-    })?;
-    Ok(CzscSnapshot {
-        trade_date: bar.trade_date,
+    }
+}
+
+fn snapshot_bar(analyzer: &CzscAnalyzer, date: NaiveDate, valid: bool) -> CzscSnapshot {
+    convert_snapshot(date, analyzer.snapshot(valid))
+}
+
+fn convert_snapshot(date: NaiveDate, snapshot: super::model::CzscSnapshot) -> CzscSnapshot {
+    CzscSnapshot {
+        trade_date: date,
         period_complete: true,
         source_bar_valid: snapshot.source_bar_valid,
         status: snapshot.status,
@@ -183,9 +295,10 @@ fn process_bar(analyzer: &mut CzscAnalyzer, bar: OhlcBar) -> Result<CzscSnapshot
         post_peak_first_bear_low: snapshot.post_peak_first_bear_low,
         post_peak_first_bear_close: snapshot.post_peak_first_bear_close,
         post_peak_first_bear_missing: snapshot.post_peak_first_bear_missing,
-    })
+    }
 }
 
+#[cfg(test)]
 fn empty_snapshot(trade_date: NaiveDate) -> CzscSnapshot {
     CzscSnapshot {
         trade_date,
@@ -262,6 +375,69 @@ fn min_opt(a: Option<f64>, b: Option<f64>) -> Option<f64> {
 mod tests {
     use super::*;
     use serde::Deserialize;
+
+    #[test]
+    fn multi_period_matches_recomputed_history_with_gaps_and_invalid_bars() {
+        use chrono::{Duration, Weekday};
+
+        let start = NaiveDate::from_ymd_opt(2024, 10, 1).unwrap();
+        let calendar: Vec<_> = (0..420)
+            .map(|day| start + Duration::days(day))
+            .filter(|date| !matches!(date.weekday(), Weekday::Sat | Weekday::Sun))
+            .filter(|date| *date != NaiveDate::from_ymd_opt(2025, 1, 1).unwrap())
+            .collect();
+        let bars: Vec<_> = calendar
+            .iter()
+            .take(245)
+            .enumerate()
+            .filter(|(index, _)| index % 17 != 0 && !(90..=100).contains(index))
+            .map(|(index, &trade_date)| {
+                let close = 100.0 + (index as f64 * 0.2).sin() * 10.0;
+                OhlcBar {
+                    trade_date,
+                    open: (index % 23 != 0).then_some(close - 0.5),
+                    high: Some(close + 1.0),
+                    low: Some(close - 1.0),
+                    close: (index % 31 != 0).then_some(close),
+                }
+            })
+            .collect();
+        let actual = calculate_multi_period_czsc(&bars, &calendar).unwrap();
+        for (index, row) in actual.iter().enumerate() {
+            let prefix = &bars[..=index];
+            assert_eq!(
+                row.weekly,
+                period_snapshot(prefix, &calendar, PeriodType::Weekly).unwrap(),
+                "weekly {}",
+                row.trade_date
+            );
+            assert_eq!(
+                row.monthly,
+                period_snapshot(prefix, &calendar, PeriodType::Monthly).unwrap(),
+                "monthly {}",
+                row.trade_date
+            );
+        }
+        for (from, to) in [
+            (Some(bars[120].trade_date), Some(bars[210].trade_date)),
+            (None, Some(bars[20].trade_date)),
+            (Some(bars[210].trade_date), None),
+            (Some(bars[210].trade_date), Some(bars[120].trade_date)),
+        ] {
+            let expected: Vec<_> = actual
+                .iter()
+                .filter(|row| {
+                    !from.is_some_and(|from| row.trade_date < from)
+                        && !to.is_some_and(|to| row.trade_date > to)
+                })
+                .cloned()
+                .collect();
+            assert_eq!(
+                calculate_multi_period_czsc_for_dates(&bars, &calendar, from, to).unwrap(),
+                expected
+            );
+        }
+    }
     #[test]
     fn invalid_ohlc_is_point_in_time_without_advancing_state() {
         let d1 = NaiveDate::from_ymd_opt(2025, 1, 2).unwrap();

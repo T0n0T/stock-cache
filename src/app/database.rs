@@ -5,7 +5,7 @@ use serde_json::Value;
 use stock_cache::storage::duckdb;
 
 pub(crate) fn init(database: Option<String>) -> Result<()> {
-    let database = resolve_database(database)?;
+    let database = prepare_database(database)?;
     duckdb::with_connection(&database, |connection| {
         duckdb::create_schema(connection)?;
         duckdb::checkpoint(connection)?;
@@ -18,7 +18,7 @@ pub(crate) fn init(database: Option<String>) -> Result<()> {
 }
 
 pub(crate) fn status(database: Option<String>) -> Result<()> {
-    let database = resolve_database(database)?;
+    let database = prepare_database(database)?;
     duckdb::with_connection(&database, |connection| {
         duckdb::create_schema(connection)?;
         let tables = [
@@ -57,10 +57,14 @@ pub(crate) fn status(database: Option<String>) -> Result<()> {
     })
 }
 
-fn resolve_database(database: Option<String>) -> Result<String> {
-    let database = database
+pub(crate) fn resolve_database(database: Option<String>) -> String {
+    database
         .or_else(|| std::env::var("DUCKDB_PATH").ok())
-        .unwrap_or_else(|| "runtime/stock-cache.duckdb".into());
+        .unwrap_or_else(|| "runtime/stock-cache.duckdb".into())
+}
+
+fn prepare_database(database: Option<String>) -> Result<String> {
+    let database = resolve_database(database);
     if let Some(parent) = Path::new(&database)
         .parent()
         .filter(|p| !p.as_os_str().is_empty())

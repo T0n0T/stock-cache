@@ -96,6 +96,7 @@ fn run(args: Args) -> Result<()> {
         }
         let mut rendered = Vec::new();
         calculate_groups(&args, &calendar, groups, &mut rendered)?;
+        eprintln!("[write] persisting calculated batch");
         let scope = parse_scope(&args.scope)?;
         persist_calculation(
             args.database
@@ -160,8 +161,17 @@ fn calculate_groups<W: Write>(
     groups: BTreeMap<(String, String), Vec<Bar>>,
     output: &mut W,
 ) -> Result<()> {
-    for ((_dataset, _ts_code), bars) in groups {
+    let total = groups.len();
+    let mut last_progress = std::time::Instant::now();
+    for (index, ((_dataset, _ts_code), bars)) in groups.into_iter().enumerate() {
         calculate_group(args, calendar, &bars, output)?;
+        if index + 1 < total && last_progress.elapsed().as_secs() >= 5 {
+            eprintln!(
+                "[write] calculating batch: {}/{total} instruments",
+                index + 1
+            );
+            last_progress = std::time::Instant::now();
+        }
     }
     Ok(())
 }
@@ -298,11 +308,13 @@ fn persist_calculation(
                 continue;
             }
             let path = temp_root.join(format!("{index}.jsonl"));
-            let mut file = File::create(&path)?;
+            let mut file = BufWriter::new(File::create(&path)?);
             for row in &rows {
                 serde_json::to_writer(&mut file, row)?;
                 file.write_all(b"\n")?;
             }
+            file.flush()?;
+            drop(file);
             let dates = rows
                 .iter()
                 .filter_map(|row| row.get(date_key).and_then(Value::as_str))
@@ -486,57 +498,78 @@ fn calculate_group<W: Write>(
         .collect::<Vec<_>>();
     let macd_values = macd::calculate_multi_period_macd(&macd_bars, calendar)?;
     let kdj_values = kdj::calculate_multi_period_kdj(&ohlcv_bars, calendar, args.kdj_window)?;
-    let czsc_values = czsc::calculate_multi_period_czsc(&ohlc_bars, calendar)?;
-    let rolling_values = rolling::calculate_rolling(&rolling_bars)?;
-    let left_peak_values = left_peak::calculate_left_peak(&left_peak_bars)?;
+    let mut czsc_values = czsc::calculate_multi_period_czsc_for_dates(
+        &ohlc_bars,
+        calendar,
+        args.output_from,
+        args.output_to,
+    )?
+    .into_iter();
+    let mut rolling_values =
+        rolling::calculate_rolling_for_dates(&rolling_bars, args.output_from, args.output_to)?
+            .into_iter();
+    let mut left_peak_values = left_peak::calculate_left_peak_for_dates(
+        &left_peak_bars,
+        args.output_from,
+        args.output_to,
+    )?
+    .into_iter();
     let mut period_kdj_values: BTreeMap<(String, NaiveDate), kdj::KdjValue> = BTreeMap::new();
     for index in 0..bars.len() {
         let bar = &bars[index];
         let macd_row = &macd_values.rows[index];
         let kdj_row = &kdj_values[index];
-        let czsc_row = &czsc_values[index];
-        let rolling_row = &rolling_values[index];
-        let left_peak_row = &left_peak_values[index];
-        emit(
-            args,
-            output,
-            "calc_daily_indicators",
-            indicator_row(dataset, ts_code, bar.trade_date, args, macd_row, kdj_row),
-        )?;
-        emit(
-            args,
-            output,
-            "calc_daily_czsc_structure",
-            czsc_row_value(dataset, ts_code, bar.trade_date, args, czsc_row),
-        )?;
-        emit(
-            args,
-            output,
-            "calc_daily_rolling_factors",
-            rolling_row_value(dataset, ts_code, args, rolling_row),
-        )?;
-        emit(
-            args,
-            output,
-            "calc_daily_left_peak",
-            left_peak_row_value(dataset, ts_code, args, left_peak_row),
-        )?;
-        if let Some(daily) = macd_row.daily {
+        if includes_output(args, bar.trade_date) {
+            let czsc_row = czsc_values
+                .next()
+                .context("missing CZSC value for output date")?;
+            let left_peak_row = left_peak_values
+                .next()
+                .context("missing left peak value for output date")?;
+            let rolling_row = rolling_values
+                .next()
+                .context("missing rolling value for output date")?;
             emit(
                 args,
                 output,
-                "calc_indicator_state",
-                state_row(StateRowInput {
-                    dataset,
-                    ts_code,
-                    period_type: "daily",
-                    start: bar.trade_date,
-                    end: bar.trade_date,
-                    calc_version: &args.calc_version,
-                    macd: Some(daily),
-                    kdj: kdj_row.daily,
-                }),
+                "calc_daily_indicators",
+                indicator_row(dataset, ts_code, bar.trade_date, args, macd_row, kdj_row),
             )?;
+            emit(
+                args,
+                output,
+                "calc_daily_czsc_structure",
+                czsc_row_value(dataset, ts_code, bar.trade_date, args, &czsc_row),
+            )?;
+            emit(
+                args,
+                output,
+                "calc_daily_rolling_factors",
+                rolling_row_value(dataset, ts_code, args, &rolling_row),
+            )?;
+            emit(
+                args,
+                output,
+                "calc_daily_left_peak",
+                left_peak_row_value(dataset, ts_code, args, &left_peak_row),
+            )?;
+            if let Some(daily) = macd_row.daily {
+                emit(
+                    args,
+                    output,
+                    "calc_indicator_state",
+                    state_row(StateRowInput {
+                        dataset,
+                        ts_code,
+                        period_type: "daily",
+                        start: bar.trade_date,
+                        end: bar.trade_date,
+                        calc_version: &args.calc_version,
+                        macd: Some(daily),
+                        kdj: kdj_row.daily,
+                    }),
+                )?;
+            }
         }
         if period_is_complete_for_input(calendar, bars, index, "weekly") {
             if let Some(value) = kdj_row.weekly {
@@ -554,6 +587,9 @@ fn calculate_group<W: Write>(
         }
     }
     for period in &macd_values.completed_periods {
+        if !includes_output(args, period.period_end_date) {
+            continue;
+        }
         let period_type = match period.period_type {
             macd::PeriodType::Weekly => "weekly",
             macd::PeriodType::Monthly => "monthly",
@@ -582,6 +618,10 @@ fn calculate_group<W: Write>(
     Ok(())
 }
 
+fn includes_output(args: &Args, date: NaiveDate) -> bool {
+    !args.output_from.is_some_and(|from| date < from) && !args.output_to.is_some_and(|to| date > to)
+}
+
 fn emit<W: Write>(args: &Args, output: &mut W, table: &'static str, row: Value) -> Result<()> {
     let date = row
         .get("trade_date")
@@ -589,10 +629,7 @@ fn emit<W: Write>(args: &Args, output: &mut W, table: &'static str, row: Value) 
         .and_then(Value::as_str)
         .map(parse_date)
         .transpose()?;
-    if date.is_some_and(|date| {
-        args.output_from.is_some_and(|from| date < from)
-            || args.output_to.is_some_and(|to| date > to)
-    }) {
+    if date.is_some_and(|date| !includes_output(args, date)) {
         return Ok(());
     }
     serde_json::to_writer(&mut *output, &OutputRow { table, row })?;
@@ -690,11 +727,19 @@ fn state_row(row: StateRowInput<'_>) -> Value {
 }
 
 fn period_end(calendar: &[NaiveDate], date: NaiveDate, period_type: &str) -> Option<NaiveDate> {
-    calendar
+    let key = period_key(period_type, date);
+    let position = calendar.partition_point(|candidate| *candidate <= date);
+    calendar[position..]
         .iter()
-        .rev()
-        .find(|candidate| period_key(period_type, **candidate) == period_key(period_type, date))
+        .take_while(|candidate| period_key(period_type, **candidate) == key)
+        .last()
         .copied()
+        .or_else(|| {
+            calendar[..position]
+                .last()
+                .copied()
+                .filter(|candidate| period_key(period_type, *candidate) == key)
+        })
 }
 
 fn period_is_complete_for_input(
@@ -810,7 +855,22 @@ fn period_bar_rows(
     bars: &[Bar],
 ) -> Vec<Value> {
     let mut grouped: BTreeMap<(String, String), Vec<&Bar>> = BTreeMap::new();
+    let first_relevant = args.output_from.map(|from| {
+        let week_start = from
+            .checked_sub_signed(chrono::Duration::days(i64::from(
+                from.weekday().num_days_from_monday(),
+            )))
+            .unwrap_or(NaiveDate::MIN);
+        let month_start = from.with_day(1).expect("first day of a month exists");
+        week_start.min(month_start)
+    });
     for bar in bars {
+        if first_relevant.is_some_and(|first| bar.trade_date < first) {
+            continue;
+        }
+        if args.output_to.is_some_and(|last| bar.trade_date > last) {
+            break;
+        }
         for period_type in ["weekly", "monthly"] {
             grouped
                 .entry((
@@ -821,10 +881,10 @@ fn period_bar_rows(
                 .push(bar);
         }
     }
-    grouped.into_iter().filter_map(|((period_type, key), values)| {
-        let period_end = calendar.iter().rev().find(|date| period_key(period_type.as_str(), **date) == key).copied()?;
+    grouped.into_iter().filter_map(|((period_type, _key), values)| {
         let last_date = values.last()?.trade_date;
-        if period_end > last_date { return None; }
+        let period_end = period_end(calendar, last_date, period_type.as_str())?;
+        if period_end > last_date || !includes_output(args, period_end) { return None; }
         let first = values.first()?;
         let period_start_date = if period_type == "weekly" {
             first.trade_date - chrono::Duration::days(i64::from(first.trade_date.weekday().num_days_from_monday()))
@@ -888,4 +948,116 @@ pub(crate) fn run_cached(
         output_from: Some(from),
         output_to: Some(to),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Duration, Weekday};
+
+    #[test]
+    fn period_end_matches_calendar_search_across_gaps_and_year_boundaries() {
+        let start = NaiveDate::from_ymd_opt(2024, 12, 1).unwrap();
+        let calendar: Vec<_> = (0..120)
+            .map(|offset| start + Duration::days(offset))
+            .filter(|date| !matches!(date.weekday(), Weekday::Sat | Weekday::Sun))
+            .filter(|date| *date != NaiveDate::from_ymd_opt(2025, 1, 1).unwrap())
+            .collect();
+        for offset in -10..130 {
+            let date = start + Duration::days(offset);
+            for period_type in ["weekly", "monthly"] {
+                let expected = calendar
+                    .iter()
+                    .rev()
+                    .find(|candidate| {
+                        period_key(period_type, **candidate) == period_key(period_type, date)
+                    })
+                    .copied();
+                assert_eq!(
+                    period_end(&calendar, date, period_type),
+                    expected,
+                    "{period_type} {date}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn bounded_output_matches_full_history_filtered_by_date() {
+        let start = NaiveDate::from_ymd_opt(2025, 1, 1).unwrap();
+        let calendar: Vec<_> = (0..120)
+            .map(|offset| start + Duration::days(offset))
+            .filter(|date| !matches!(date.weekday(), Weekday::Sat | Weekday::Sun))
+            .collect();
+        let bars: Vec<_> = calendar
+            .iter()
+            .enumerate()
+            .map(|(index, &trade_date)| {
+                let close = 100.0 + (index as f64 / 4.0).sin() * 8.0;
+                Bar {
+                    source_dataset: "stock_stk_factor_pro".into(),
+                    ts_code: "000001.SZ".into(),
+                    trade_date,
+                    open: Some(close - 0.3),
+                    high: Some(close + 1.0),
+                    low: Some(close - 1.0),
+                    close: Some(close),
+                    vol: Some(1000.0),
+                    amount: Some(10000.0),
+                    turnover_rate: Some(1.0),
+                }
+            })
+            .collect();
+        let mut args = Args {
+            input: String::new(),
+            calendar: PathBuf::new(),
+            source_dataset: None,
+            changed_from: None,
+            calc_version: "test".into(),
+            price_basis: "qfq".into(),
+            kdj_window: 9,
+            output: String::new(),
+            database: None,
+            write: false,
+            scope: vec![],
+            output_from: None,
+            output_to: None,
+        };
+        let mut full = Vec::new();
+        calculate_group(&args, &calendar, &bars, &mut full).unwrap();
+        let parse_lines = |bytes: &[u8]| -> Vec<Value> {
+            bytes
+                .split(|byte| *byte == b'\n')
+                .filter(|line| !line.is_empty())
+                .map(|line| serde_json::from_slice(line).unwrap())
+                .collect()
+        };
+        for (from, to) in [
+            (Some(calendar[45]), Some(calendar[69])),
+            (Some(calendar[20]), Some(calendar[23])),
+            (None, Some(calendar[23])),
+            (Some(calendar[65]), None),
+            (Some(calendar[65]), Some(calendar[23])),
+        ] {
+            args.output_from = from;
+            args.output_to = to;
+            let mut bounded = Vec::new();
+            calculate_group(&args, &calendar, &bars, &mut bounded).unwrap();
+            let expected: Vec<_> = parse_lines(&full)
+                .into_iter()
+                .filter(|envelope| {
+                    let row = &envelope["row"];
+                    let date = row
+                        .get("trade_date")
+                        .or_else(|| row.get("period_end_date"))
+                        .and_then(Value::as_str)
+                        .map(parse_date)
+                        .transpose()
+                        .unwrap();
+                    date.is_none_or(|date| includes_output(&args, date))
+                })
+                .collect();
+            assert_eq!(parse_lines(&bounded), expected);
+        }
+    }
 }

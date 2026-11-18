@@ -41,8 +41,25 @@ pub struct RollingValue {
 }
 
 pub fn calculate_rolling(bars: &[RollingBar]) -> Result<Vec<RollingValue>> {
+    calculate_rolling_for_dates(bars, None, None)
+}
+
+/// Calculate selected dates while retaining the preceding bars for each window.
+pub fn calculate_rolling_for_dates(
+    bars: &[RollingBar],
+    from: Option<NaiveDate>,
+    to: Option<NaiveDate>,
+) -> Result<Vec<RollingValue>> {
     validate_dates(bars)?;
-    Ok((0..bars.len()).map(|idx| compute_row(bars, idx)).collect())
+    Ok(bars
+        .iter()
+        .enumerate()
+        .filter(|(_, bar)| {
+            !from.is_some_and(|from| bar.trade_date < from)
+                && !to.is_some_and(|to| bar.trade_date > to)
+        })
+        .map(|(idx, _)| compute_row(bars, idx))
+        .collect())
 }
 
 fn compute_row(bars: &[RollingBar], idx: usize) -> RollingValue {
@@ -197,6 +214,51 @@ fn validate_dates(bars: &[RollingBar]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn selected_dates_keep_rolling_history_and_validate_all_bars() {
+        let start = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let bars: Vec<_> = (0..300)
+            .map(|index| {
+                let price = 20.0 + (index as f64 / 8.0).sin() * 4.0;
+                RollingBar {
+                    trade_date: start + chrono::Duration::days(index),
+                    open: Some(price),
+                    high: Some(price + 1.0),
+                    low: Some(price - 1.0),
+                    close: (index % 97 != 0).then_some(price),
+                    volume: Some(100.0 + index as f64),
+                    turnover_rate: Some(2.0),
+                }
+            })
+            .collect();
+        let all = calculate_rolling(&bars).unwrap();
+        for (from, to) in [
+            (Some(bars[220].trade_date), Some(bars[260].trade_date)),
+            (None, Some(bars[25].trade_date)),
+            (Some(bars[260].trade_date), None),
+            (Some(bars[260].trade_date), Some(bars[220].trade_date)),
+        ] {
+            let expected: Vec<_> = all
+                .iter()
+                .filter(|row| {
+                    !from.is_some_and(|from| row.trade_date < from)
+                        && !to.is_some_and(|to| row.trade_date > to)
+                })
+                .copied()
+                .collect();
+            assert_eq!(
+                calculate_rolling_for_dates(&bars, from, to).unwrap(),
+                expected
+            );
+        }
+        let mut invalid = bars;
+        invalid[0].high = Some(f64::NAN);
+        assert!(
+            calculate_rolling_for_dates(&invalid, Some(invalid[260].trade_date), None).is_err()
+        );
+    }
+
     #[test]
     fn windows_require_complete_values() {
         let bars = (1..=25)

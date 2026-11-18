@@ -203,9 +203,28 @@ fn full_workflow_uses_history_reuses_cache_and_recomputes_offline() {
         "{}",
         String::from_utf8_lossy(&first.stderr)
     );
-    let summary: Value = serde_json::from_slice(&first.stdout).unwrap();
-    assert_eq!(summary["target_trade_dates"], json!(["2026-11-09"]));
-    assert_eq!(summary["calculated_rows"], 15); // 4 daily tables + daily state, 3 instruments
+    let progress = String::from_utf8_lossy(&first.stderr);
+    assert!(
+        progress.contains("[write] fetched 12/12 requests"),
+        "{progress}"
+    );
+    assert!(
+        progress.contains("[write] fetch complete; calculating indicators"),
+        "{progress}"
+    );
+    assert!(
+        progress.contains("[write] calculating stock_stk_factor_pro: 1/1 instruments"),
+        "{progress}"
+    );
+    let summary = String::from_utf8_lossy(&first.stdout);
+    assert!(
+        summary.contains("Write completed successfully."),
+        "{summary}"
+    );
+    assert!(summary.contains("Mode: full"), "{summary}");
+    assert!(summary.contains("Target dates: 2026-11-09"), "{summary}");
+    assert!(summary.contains("Calculated rows: 15"), "{summary}");
+    assert!(!summary.trim_start().starts_with('{'), "{summary}");
     assert_eq!(server.requests.lock().unwrap().len(), 13); // calendar + 4 sessions * 3 sources
     assert_eq!(
         scalar(

@@ -2,6 +2,23 @@
 
 计算来源表沿用 Tushare 接口名，计算结果表使用 `calc_` 前缀。所有表位于同一个 DuckDB 文件；表结构由 `docs/schema-design.md` 和 Rust schema 初始化代码共同定义。
 
+## 通过网络查询
+
+先设置 `QUACK_AUTH_TOKEN`，在缓存所在机器启动 `stock-cache serve`，默认提供 `127.0.0.1:9494` 的 Quack 入口。远程访问使用 `stock-cache serve --bind 0.0.0.0:9494`。所有地址均要求非空 token。数据库默认 `runtime/stock-cache.duckdb`，支持 `--database` 和 `DUCKDB_PATH`。
+
+支持 Quack 的 DuckDB 客户端可以直接挂载查询：
+
+```sql
+ATTACH 'quack:server-host:9494' AS market
+  (TOKEN 'your-token', SSL_FINGERPRINT 'fingerprint-from-startup-json');
+SELECT source_dataset, max(trade_date), count(*)
+FROM market.main.calc_daily_indicators
+GROUP BY source_dataset;
+DETACH market;
+```
+
+网络监听默认使用 HTTPS，`ssl_fingerprint` 从本次服务启动 JSON 获取；连接默认本机 HTTP 入口时省略 `SSL_FINGERPRINT`，仍需提供 token。监听 `0.0.0.0` 时，客户端将示例中的 `server-host` 替换为服务端实际可达主机名或 IP。挂载后也可先执行 `USE market`，直接使用本文后续 SQL 中的表名。目标数据库以只读方式挂载，Quack 传输查询结果；服务运行时本地写入会因文件锁失败，更新缓存前先用 Ctrl-C/SIGTERM 停止服务，写入完成后重新启动。
+
 ## 表选择
 
 | 用途 | 表 |
@@ -107,4 +124,4 @@ from calc_indicator_state
 group by source_dataset, period_type;
 ```
 
-DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补使用 `stock-cache write --mode full --start-date YYYY-MM-DD --end-date YYYY-MM-DD`，由工具自动补齐预热历史。擦除日期数据使用 `erase --start-date ... --end-date ...`。
+DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补使用 `stock-cache write --mode full --start-date YYYY-MM-DD --end-date YYYY-MM-DD`，由工具自动补齐预热历史。长时间回补中断后，重跑时加上 `--skip-covered`（别名 `--resume`）即可跳过已写入 `cache_fetch_coverage` 的请求，避免重复拉取已完成日期。擦除日期数据使用 `erase --start-date ... --end-date ...`。

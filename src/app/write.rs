@@ -2,7 +2,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     time::Instant,
 };
 
@@ -36,6 +36,107 @@ pub(crate) struct Options {
     pub(crate) chunk_size: Option<usize>,
     pub(crate) refresh: bool,
     pub(crate) force_recalc: bool,
+    pub(crate) skip_covered: bool,
+}
+
+// Targets are normally refreshed even when already covered, so provider
+// corrections reach the cache. Resuming a backfill opts out of that and reuses
+// every completed request, warmup and target alike.
+fn should_fetch(warmup: bool, skip_covered: bool, force_recalc: bool, covered: bool) -> bool {
+    force_recalc || (!warmup && !skip_covered) || !covered
+}
+
+fn mode_name(mode: Mode) -> &'static str {
+    match mode {
+        Mode::Full => "full",
+        Mode::Cache => "cache",
+        Mode::Calc => "calc",
+    }
+}
+
+fn format_count(count: usize) -> String {
+    let digits = count.to_string();
+    let mut formatted = String::with_capacity(digits.len() + digits.len() / 3);
+    for (index, digit) in digits.chars().enumerate() {
+        if index > 0 && (digits.len() - index) % 3 == 0 {
+            formatted.push(',');
+        }
+        formatted.push(digit);
+    }
+    formatted
+}
+
+fn format_duration(milliseconds: f64) -> String {
+    if milliseconds < 1_000.0 {
+        return format!("{milliseconds:.0} ms");
+    }
+    let seconds = milliseconds / 1_000.0;
+    if seconds < 60.0 {
+        return format!("{seconds:.2} s");
+    }
+    let minutes = (seconds / 60.0).floor() as u64;
+    format!("{minutes}m {:05.2}s", seconds - minutes as f64 * 60.0)
+}
+
+fn format_target_window(target: &[NaiveDate]) -> String {
+    match target {
+        [] => "none".to_string(),
+        [day] => day.to_string(),
+        [first, rest @ .., last] => format!("{first} to {last} ({} trading days)", rest.len() + 2),
+    }
+}
+
+fn print_summary(
+    mode: Mode,
+    database: &Path,
+    target: Option<&[NaiveDate]>,
+    warmup_start: Option<NaiveDate>,
+    source_row_counts: &BTreeMap<String, usize>,
+    calculated_rows: Option<usize>,
+    fetch_write_ms: Option<f64>,
+    calc_write_ms: Option<f64>,
+    total_ms: f64,
+    refresh_only: bool,
+) {
+    println!("Write completed successfully.");
+    if refresh_only {
+        println!("  Mode: {} (reference refresh only)", mode_name(mode));
+    } else {
+        println!("  Mode: {}", mode_name(mode));
+    }
+    println!("  Database: {}", database.display());
+    if let Some(target) = target {
+        println!("  Target dates: {}", format_target_window(target));
+    }
+    if let Some(warmup_start) = warmup_start {
+        println!("  Warmup start: {warmup_start}");
+    }
+
+    if source_row_counts.is_empty() {
+        println!("  Source rows fetched: none");
+    } else {
+        println!("  Source rows fetched:");
+        for (source, count) in source_row_counts {
+            println!("    {source}: {}", format_count(*count));
+        }
+    }
+    if let Some(calculated_rows) = calculated_rows {
+        println!("  Calculated rows: {}", format_count(calculated_rows));
+    }
+
+    println!("  Timing:");
+    if let Some(fetch_write_ms) = fetch_write_ms {
+        let label = if mode == Mode::Calc {
+            "Prepare"
+        } else {
+            "Fetch/write"
+        };
+        println!("    {label}: {}", format_duration(fetch_write_ms));
+    }
+    if let Some(calc_write_ms) = calc_write_ms {
+        println!("    Calculate/write: {}", format_duration(calc_write_ms));
+    }
+    println!("    Total: {}", format_duration(total_ms));
 }
 
 pub(crate) fn run(args: Options) -> Result<()> {
@@ -108,9 +209,17 @@ pub(crate) fn run(args: Options) -> Result<()> {
             &mut counts,
         )?;
         duckdb::with_connection(&database.to_string_lossy(), duckdb::checkpoint)?;
-        println!(
-            "{}",
-            json!({"status":"success", "mode":"cache", "refresh_only":true, "database":database, "source_row_counts":counts, "total_ms":started.elapsed().as_secs_f64()*1000.0})
+        print_summary(
+            Mode::Cache,
+            &database,
+            None,
+            None,
+            &counts,
+            None,
+            None,
+            None,
+            started.elapsed().as_secs_f64() * 1000.0,
+            true,
         );
         return Ok(());
     }
@@ -208,6 +317,7 @@ pub(crate) fn run(args: Options) -> Result<()> {
         let enabled = configured_tables()?;
         let indexes = configured_indexes()?;
         let mut jobs = Vec::new();
+        let mut skipped = 0usize;
         let coverage = duckdb::with_connection(&database.to_string_lossy(), |connection| {
             coverage(connection)
         })?;
@@ -229,13 +339,23 @@ pub(crate) fn run(args: Options) -> Result<()> {
                         code,
                     };
                     // Always refresh targets; only historical completed requests are reused.
-                    if !warmup || args.force_recalc || !coverage.contains(&job.key()) {
+                    if should_fetch(
+                        warmup,
+                        args.skip_covered,
+                        args.force_recalc,
+                        coverage.contains(&job.key()),
+                    ) {
                         jobs.push(job);
+                    } else {
+                        skipped += 1;
                     }
                 }
             }
         }
         let total_jobs = jobs.len();
+        if args.skip_covered {
+            eprintln!("[write] resume: {skipped} covered requests skipped, {total_jobs} to fetch");
+        }
         duckdb::with_connection(&database.to_string_lossy(), |connection| {
             for (batch, jobs) in jobs.chunks(concurrency).enumerate() {
                 let mut tasks = tokio::task::JoinSet::new();
@@ -303,7 +423,7 @@ pub(crate) fn run(args: Options) -> Result<()> {
                     execute(connection, format!("INSERT OR REPLACE INTO cache_fetch_coverage VALUES ({}, DATE '{}', {}, {})", literal(job.id), job.day, literal(&job.code), written))?;
                     *fetched_rows.entry(job.id.into()).or_default() += rows.len();
                 }
-                if batch % 10 == 0 {
+                if batch % 10 == 0 || (batch + 1) * concurrency >= total_jobs {
                     eprintln!(
                         "[write] fetched {}/{} requests",
                         ((batch + 1) * concurrency).min(total_jobs),
@@ -320,6 +440,7 @@ pub(crate) fn run(args: Options) -> Result<()> {
     let fetch_ms = started.elapsed().as_secs_f64() * 1000.0;
     let mut calc_rows = 0usize;
     if args.mode != Mode::Cache {
+        eprintln!("[write] fetch complete; calculating indicators");
         // Require source-history coverage, not just a recent row, before deriving factors.
         duckdb::with_connection(&database.to_string_lossy(), |connection| {
             let present = coverage(connection)?;
@@ -350,7 +471,9 @@ pub(crate) fn run(args: Options) -> Result<()> {
                 strings(connection,
                 format!("SELECT DISTINCT ts_code FROM {id} WHERE trade_date BETWEEN DATE '{from}' AND DATE '{to}' ORDER BY ts_code"))
             })?;
-            for codes in codes.chunks(chunk_size) {
+            let total_codes = codes.len();
+            eprintln!("[write] calculating {id}: 0/{total_codes} instruments");
+            for (batch, codes) in codes.chunks(chunk_size).enumerate() {
                 let input = work.path().join("bars.jsonl");
                 let output = work.path().join("calculated.jsonl");
                 duckdb::with_connection(&database.to_string_lossy(), |connection| {
@@ -398,6 +521,10 @@ pub(crate) fn run(args: Options) -> Result<()> {
                     },
                 )?;
                 calc_rows += fs::read_to_string(&output)?.lines().count();
+                eprintln!(
+                    "[write] calculating {id}: {}/{total_codes} instruments",
+                    ((batch + 1) * chunk_size).min(total_codes)
+                );
             }
         }
         ensure!(
@@ -406,9 +533,18 @@ pub(crate) fn run(args: Options) -> Result<()> {
         );
     }
     duckdb::with_connection(&database.to_string_lossy(), duckdb::checkpoint)?;
-    println!(
-        "{}",
-        json!({"status":"success", "mode":format!("{:?}",args.mode).to_lowercase(), "database":database, "target_trade_dates":target, "warmup_start":history_from, "source_row_counts":fetched_rows, "calculated_rows":calc_rows, "fetch_write_ms":fetch_ms, "calc_write_ms":started.elapsed().as_secs_f64()*1000.0-fetch_ms, "total_ms":started.elapsed().as_secs_f64()*1000.0})
+    let total_ms = started.elapsed().as_secs_f64() * 1000.0;
+    print_summary(
+        args.mode,
+        &database,
+        Some(&target),
+        Some(history_from),
+        &fetched_rows,
+        (args.mode != Mode::Cache).then_some(calc_rows),
+        Some(fetch_ms),
+        (args.mode != Mode::Cache).then_some(total_ms - fetch_ms),
+        total_ms,
+        false,
     );
     Ok(())
 }
@@ -416,6 +552,22 @@ pub(crate) fn run(args: Options) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::super::market_data::{date, targets};
+    use super::should_fetch;
+
+    #[test]
+    fn skip_covered_reuses_completed_requests() {
+        // Ordinary runs refresh targets but reuse covered warmup history.
+        assert!(should_fetch(false, false, false, true));
+        assert!(!should_fetch(true, false, false, true));
+        assert!(should_fetch(true, false, false, false));
+        // Resuming skips targets and warmup alike once covered.
+        assert!(!should_fetch(false, true, false, true));
+        assert!(!should_fetch(true, true, false, true));
+        assert!(should_fetch(false, true, false, false));
+        assert!(should_fetch(true, true, false, false));
+        // An explicit recalculation still refetches covered history.
+        assert!(should_fetch(true, false, true, true));
+    }
 
     #[test]
     fn lookback_selects_sessions_not_calendar_days() {

@@ -17,7 +17,7 @@ reqwest = { version = "0.12", default-features = false, features = ["json", "rus
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tempfile = "3.10"
-tokio = { version = "1.38", features = ["io-util", "macros", "rt-multi-thread", "time", "net"] }
+tokio = { version = "1.38", features = ["io-util", "macros", "rt-multi-thread", "signal", "time", "net"] }
 
 [build-dependencies]
 # Stage the native library only after its download/build has completed.

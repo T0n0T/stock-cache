@@ -16,7 +16,7 @@ stock-cache (Rust) ---- DuckDB file
 
 Rust CLI 是唯一命令入口；`tools/*.py` 只承担字段发现、metadata/文档生成和基准辅助，不进入生产数据路径。`duckdb-neo` 提供 DuckDB v2 C API binding。
 
-代码按职责分层：`src/cli` 定义命令参数，`src/app` 编排写入、擦除和计算流程，`src/calc` 实现可复用的计算算法，`src/source` 负责 Tushare HTTP，`src/storage/duckdb` 管理表结构、批量写入和状态读取，`src/metadata` 提供数据集元信息。计算算法不再放在单独的版本目录中。
+代码按职责分层：`src/cli` 定义命令参数，`src/app` 编排写入、擦除、计算和网络服务流程，`src/calc` 实现可复用的计算算法，`src/source` 负责 Tushare HTTP，`src/storage/duckdb` 管理表结构、批量写入、状态读取和 Quack 服务，`src/metadata` 提供数据集元信息。计算算法不再放在单独的版本目录中。
 
 ## Rust writer
 
@@ -39,6 +39,7 @@ cargo run --bin stock-cache -- init --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- status --database ./runtime/stock-cache.duckdb
 cargo run --bin stock-cache -- write --mode full --lookback-trading-days 1
 cargo run --bin stock-cache -- erase --start-date 2026-11-09 --end-date 2026-11-13
+cargo run --bin stock-cache -- serve --database ./runtime/stock-cache.duckdb
 ```
 
 历史修订通过 `write --mode full --start-date ... --end-date ...` 重拉并计算；结果依赖后续日期时，应将目标范围延伸至最新缓存日期。
@@ -92,14 +93,16 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 目标日期，`--mode calc` 仅使用已有来源和已缓存日历计算。默认数据库为
 `runtime/stock-cache.duckdb`，支持 `DUCKDB_PATH`、`--database`；加载 `.env` 或
 `--env-file`，环境变量优先。`INDEX_LIST_PATH` 和 `TARGET_CACHE_TABLES_PATH`
-可覆盖内置配置。公开子命令仅保留 init/init-db、status、write、erase。
+可覆盖内置配置。公开子命令为 init/init-db、status、write、erase、serve。
 
 来源表按请求日期及指数代码替换；历史覆盖由 `cache_fetch_coverage` 记录，
-包括已成功获取的空响应，避免每天重复请求。目标日期始终刷新。计算按标的批次
+包括已成功获取的空响应，避免每天重复请求。目标日期默认始终刷新。计算按标的批次
 从 DuckDB 读取全部已缓存历史；股票使用前复权 OHLC，指数使用原始 OHLC。
 预热仅参与计算，输出在写入前按目标日期过滤，避免把全量历史结果留在内存。
 `--chunk-size` 控制标的批次，`--max-concurrency` 控制 HTTP 并发。
 `--force-recalc` 在 full 模式额外刷新历史；计算本身每次都会重算目标切片。
+`--skip-covered`（别名 `--resume`）跳过 `cache_fetch_coverage` 已覆盖的请求，
+目标日期也包含在内，用于失败后断点续跑；它与 `--force-recalc` 互斥。
 首轮 MACD 沿用 v2 的 36 个月有限预热口径，不能视为上市以来的精确基线。
 每批来源与计算结果使用 writer 事务；跨 HTTP 和各计算批次不构成单一事务，失败
 不会报告成功，已完成的来源缓存可供重试复用。
@@ -112,3 +115,17 @@ cache_fetch_coverage 的区间记录；周/月表按 period_end_date 匹配。�
 index_ths、index_ths_member 和 cache_trade_calendar。日期必须成对提供且起日不晚于
 止日，缺失数据库报错。区间外结果不删除；历史改动后需重算依赖它的后续日期。
 计算和 HTTP 拉取均作为 write 内部能力，不提供 import/fetch/calc 子命令。
+
+## Quack 网络服务
+
+`stock-cache serve` 在同一个 Rust 可执行文件中封装 DuckDB 原生 Quack 服务；不再增加启动脚本或单独的 DuckDB CLI 依赖。它通过协议传输 SQL 查询结果，不负责复制数据库文件。
+
+职责按现有目录分层：`src/cli/serve.rs` 定义参数并解析环境变量，`src/app/serve.rs` 检查文件、监听地址和认证要求，管理前台进程与退出信号；`src/storage/duckdb/quack.rs` 通过 `duckdb-neo` 管理 Environment、Instance、只读数据库 attachment 和服务生命周期。
+
+数据库默认 `runtime/stock-cache.duckdb`，优先级为 `--database`、`DUCKDB_PATH`、默认值。文件必须已存在，失败时不创建目录或空数据库。默认绑定 `127.0.0.1:9494`；`--bind` 覆盖 `QUACK_BIND`。`--auth-token` 覆盖 `QUACK_AUTH_TOKEN`，所有监听地址都要求非空 token，避免原生服务自动生成凭证却无法交付给调用方。统一支持 `.env` 和全局 `--env-file`，进程环境优先于文件。
+
+服务在独立 DuckDB Instance 中以 `read_only=true` 挂载目标文件为默认数据库，再执行 `CALL quack_serve('quack:host:port', token = '...', allow_other_hostname = true)`；允许用户显式选择的网络监听地址。传输遵循 DuckDB 原生默认值：localhost 使用 HTTP，网络监听使用 HTTPS 和自动生成的证书。读取 `quack_serve` 返回的 URL，以及 `quack_server_list().info` 中的 `ssl_fingerprint`，供客户端固定证书。服务启动成功且退出信号处理器已就绪后，输出包含地址、URL、数据库、只读标志、认证状态、TLS 标志和证书指纹的 JSON，启动 JSON 不输出 token。
+
+Ctrl-C/SIGINT 或 SIGTERM 触发 `CALL quack_stop(...)`，成功后进程正常退出；服务对象销毁时也会尝试停止监听。服务持有数据库读锁，独立进程的本地写入会失败。更新顺序为停止服务、执行 `write` 或 `erase`、再启动服务；需要持续在线且同时更新时，应另行设计同进程写入或快照发布机制。
+
+客户端使用支持 Quack 的 DuckDB 执行 `ATTACH 'quack:server-host:9494' AS market (TOKEN '...', SSL_FINGERPRINT '...')`，通过 `market.main.<table>` 查询。证书指纹以本次启动输出为准；连接默认本机 HTTP 入口时省略 `SSL_FINGERPRINT`，保留 token。集成测试复用 `duckdb-neo` 的原生客户端，覆盖真实网络查询、网络监听的 TLS 与证书固定、缺失/错误 token、包含单引号的 token、远程写入拒绝、配置文件、SIGINT/SIGTERM 退出和退出后恢复本地写入，无需增加客户端 crate。systemd/Docker 等只负责守护该前台命令。

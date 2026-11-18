@@ -2,7 +2,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
-    io::Write,
+    io::{BufWriter, Write},
     path::Path,
 };
 
@@ -146,11 +146,12 @@ impl Job {
     }
 }
 pub(super) fn write_rows(path: &Path, rows: &[BTreeMap<String, Value>]) -> Result<()> {
-    let mut file = fs::File::create(path)?;
+    let mut file = BufWriter::new(fs::File::create(path)?);
     for row in rows {
         serde_json::to_writer(&mut file, row)?;
         file.write_all(b"\n")?;
     }
+    file.flush()?;
     Ok(())
 }
 pub(super) fn refresh(

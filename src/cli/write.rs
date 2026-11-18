@@ -40,6 +40,10 @@ pub(crate) struct Args {
     /// Re-fetch the required calculation history before recalculating.
     #[arg(long)]
     force_recalc: bool,
+    /// Skip requests already recorded as covered, including target dates.
+    /// Use this to resume an interrupted backfill without refetching completed dates.
+    #[arg(long, alias = "resume", conflicts_with = "force_recalc")]
+    skip_covered: bool,
 }
 
 pub(crate) fn run(args: Args) -> Result<()> {
@@ -58,6 +62,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         chunk_size: args.chunk_size,
         refresh: args.refresh,
         force_recalc: args.force_recalc,
+        skip_covered: args.skip_covered,
     })
 }
 

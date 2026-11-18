@@ -23,6 +23,8 @@ enum Command {
     Write(cli::write::Args),
     /// Erase source and calculation data in an inclusive date window.
     Erase(cli::erase::Args),
+    /// Serve the existing DuckDB cache read-only over Quack until interrupted.
+    Serve(cli::serve::Args),
     #[command(alias = "init-db")]
     Init {
         #[arg(long)]
@@ -40,6 +42,7 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Write(args) => cli::write::run(args),
         Command::Erase(args) => cli::erase::run(args),
+        Command::Serve(args) => cli::serve::run(args),
         Command::Init { database } => app::database::init(database),
         Command::Status { database } => app::database::status(database),
     }
@@ -65,6 +68,7 @@ mod tests {
         ));
         assert!(Cli::try_parse_from(["stock-cache", "init-db"]).is_ok());
         assert!(Cli::try_parse_from(["stock-cache", "status"]).is_ok());
+        assert!(Cli::try_parse_from(["stock-cache", "serve"]).is_ok());
         for removed in ["import", "fetch", "calc"] {
             assert!(Cli::try_parse_from(["stock-cache", removed]).is_err());
         }

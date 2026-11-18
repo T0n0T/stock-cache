@@ -38,8 +38,26 @@ pub struct LeftPeakValue {
 }
 
 pub fn calculate_left_peak(bars: &[LeftPeakBar]) -> Result<Vec<LeftPeakValue>> {
+    calculate_left_peak_for_dates(bars, None, None)
+}
+
+/// Calculate rows within the inclusive date bounds, retaining all earlier bars
+/// for the history used by each selected row.
+pub fn calculate_left_peak_for_dates(
+    bars: &[LeftPeakBar],
+    from: Option<NaiveDate>,
+    to: Option<NaiveDate>,
+) -> Result<Vec<LeftPeakValue>> {
     validate_dates(bars)?;
-    Ok((0..bars.len()).map(|idx| compute_row(bars, idx)).collect())
+    Ok(bars
+        .iter()
+        .enumerate()
+        .filter(|(_, bar)| {
+            !from.is_some_and(|from| bar.trade_date < from)
+                && !to.is_some_and(|to| bar.trade_date > to)
+        })
+        .map(|(idx, _)| compute_row(bars, idx))
+        .collect())
 }
 
 fn compute_row(bars: &[LeftPeakBar], idx: usize) -> LeftPeakValue {
@@ -281,6 +299,50 @@ fn validate_dates(bars: &[LeftPeakBar]) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn selected_dates_match_full_calculation_and_validate_history() {
+        let start = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
+        let bars: Vec<_> = (0..420)
+            .map(|index| {
+                let close = 20.0 + (index as f64 / 8.0).sin() * 4.0;
+                LeftPeakBar {
+                    trade_date: start + chrono::Duration::days(index),
+                    open: (index % 23 != 0).then_some(close - 0.3),
+                    high: Some(close + 1.0),
+                    low: Some(close - 1.0),
+                    close: Some(close),
+                }
+            })
+            .collect();
+        let all = calculate_left_peak(&bars).unwrap();
+        for (from, to) in [
+            (Some(bars[300].trade_date), Some(bars[400].trade_date)),
+            (None, Some(bars[25].trade_date)),
+            (Some(bars[400].trade_date), None),
+            (Some(bars[400].trade_date), Some(bars[300].trade_date)),
+        ] {
+            let expected: Vec<_> = all
+                .iter()
+                .filter(|row| {
+                    !from.is_some_and(|from| row.trade_date < from)
+                        && !to.is_some_and(|to| row.trade_date > to)
+                })
+                .cloned()
+                .collect();
+            assert_eq!(
+                calculate_left_peak_for_dates(&bars, from, to).unwrap(),
+                expected
+            );
+        }
+
+        let mut invalid = bars;
+        invalid[0].high = Some(f64::NAN);
+        assert!(
+            calculate_left_peak_for_dates(&invalid, Some(invalid[400].trade_date), None).is_err()
+        );
+    }
+
     #[test]
     fn finds_peak_breakout_and_anchor() {
         let bars = (1..=25)
