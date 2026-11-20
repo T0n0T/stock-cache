@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, fs::File, io::Write};
 
+use duckdb_neo::Parameters;
 use serde_json::json;
 use stock_cache::storage::duckdb;
 use tempfile::tempdir;
@@ -18,22 +19,6 @@ fn jsonl_file(
     path
 }
 
-fn source_row(date: &str, close: f64) -> serde_json::Value {
-    json!({
-        "source_dataset": "source_daily_bars",
-        "ts_code": "000001.SZ",
-        "trade_date": date,
-        "open": close - 0.5,
-        "high": close + 0.5,
-        "low": close - 1.0,
-        "close": close,
-        "vol": 100.0,
-        "amount": 1000.0,
-        "turnover_rate": 1.0,
-        "price_basis": "qfq"
-    })
-}
-
 fn indicator_row(value: serde_json::Value) -> serde_json::Value {
     let mut row = serde_json::Map::new();
     for column in duckdb::table_columns("calc_daily_indicators").unwrap() {
@@ -46,77 +31,31 @@ fn indicator_row(value: serde_json::Value) -> serde_json::Value {
 }
 
 #[test]
-fn rust_writer_handles_append_replace_delete_and_checkpoint() {
+fn create_schema_removes_legacy_source_daily_bars_table() {
     let directory = tempdir().unwrap();
     let database = directory.path().join("cache.duckdb");
-    let first = jsonl_file(
-        directory.path(),
-        "first.jsonl",
-        &[
-            source_row("2025-01-02", 10.0),
-            source_row("2025-01-03", 11.0),
-        ],
-    );
     duckdb::with_connection(database.to_str().unwrap(), |connection| {
-        duckdb::create_schema(connection)?;
-        duckdb::create_schema(connection)?;
-        assert_eq!(
-            duckdb::write_jsonl(
-                connection,
-                "source_daily_bars",
-                &first,
-                "append",
-                &[],
-                &BTreeMap::new(),
-                &[],
-            )?,
-            2
-        );
-        Ok(())
-    })
-    .unwrap();
+        connection.execute(
+            "CREATE TABLE source_daily_bars (trade_date DATE)",
+            Parameters::None,
+        )?;
 
-    let duplicate = jsonl_file(
-        directory.path(),
-        "duplicate.jsonl",
-        &[source_row("2025-01-02", 99.0)],
-    );
-    let duplicate_result = duckdb::with_connection(database.to_str().unwrap(), |connection| {
         duckdb::create_schema(connection)?;
-        duckdb::write_jsonl(
-            connection,
-            "source_daily_bars",
-            &duplicate,
-            "append",
-            &[],
-            &BTreeMap::new(),
-            &[],
-        )
-    });
-    assert!(duplicate_result.is_err());
 
-    let empty = jsonl_file(directory.path(), "empty.jsonl", &[]);
-    duckdb::with_connection(database.to_str().unwrap(), |connection| {
-        duckdb::create_schema(connection)?;
-        let scope = BTreeMap::new();
-        assert_eq!(
-            duckdb::write_jsonl(
-                connection,
-                "source_daily_bars",
-                &empty,
-                "replace-dates",
-                &["2025-01-02".to_string()],
-                &scope,
-                &[],
-            )?,
-            0
-        );
-        duckdb::checkpoint(connection)
-    })
-    .unwrap();
-
-    duckdb::with_connection(database.to_str().unwrap(), |connection| {
-        assert_eq!(duckdb::table_count(connection, "source_daily_bars")?, 1);
+        let mut result = connection.query(
+            "SELECT COUNT(*)::BIGINT FROM information_schema.tables \
+             WHERE table_name = 'source_daily_bars'",
+            Parameters::None,
+        )?;
+        let count = result
+            .next_chunk()?
+            .unwrap()
+            .get_vector_at::<i64>(0)?
+            .reader()?
+            .get(0)?
+            .copied()
+            .unwrap();
+        assert_eq!(count, 0);
         Ok(())
     })
     .unwrap();
@@ -384,16 +323,6 @@ fn reference_snapshot_replacement_removes_obsolete_keys_and_rolls_back_failure()
         )
         .is_err());
         assert_eq!(duckdb::table_count(connection, "stock_basic")?, 1);
-        assert!(duckdb::write_jsonl(
-            connection,
-            "source_daily_bars",
-            &first,
-            "replace-all",
-            &[],
-            &BTreeMap::new(),
-            &[]
-        )
-        .is_err());
         Ok(())
     })
     .unwrap();

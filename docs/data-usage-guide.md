@@ -124,4 +124,4 @@ from calc_indicator_state
 group by source_dataset, period_type;
 ```
 
-DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补使用 `stock-cache write --mode full --start-date YYYY-MM-DD --end-date YYYY-MM-DD`，由工具自动补齐预热历史。长时间回补中断后，重跑时加上 `--skip-covered`（别名 `--resume`）即可跳过已写入 `cache_fetch_coverage` 的请求，避免重复拉取已完成日期。擦除日期数据使用 `erase --start-date ... --end-date ...`。
+DuckDB CLI 的 `status` 命令会输出来源表和计算表的行数；因子回补使用 `stock-cache write --mode full --start-date YYYY-MM-DD --end-date YYYY-MM-DD`，由工具自动补齐预热历史。长时间回补中断后，重跑时加上 `--skip-covered`（别名 `--resume`）即可跳过已写入 `cache_fetch_coverage` 的请求，避免重复拉取已完成日期。擦除日期数据使用 `erase --start-date ... --end-date ...`；按交易日相对窗口擦除可用 `erase --lookback-trading-days N`（截止今天，取 `cache_trade_calendar` 中最近 N 个交易日，与显式日期参数互斥）。

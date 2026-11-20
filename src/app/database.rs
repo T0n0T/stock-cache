@@ -34,7 +34,6 @@ pub(crate) fn status(database: Option<String>) -> Result<()> {
             "index_ths_member",
             "index_limit_cpt_list",
             "stock_limit_list_ths",
-            "source_daily_bars",
             "calc_period_bars",
             "calc_indicator_state",
             "calc_daily_indicators",

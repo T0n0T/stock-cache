@@ -619,7 +619,7 @@ fn calculate_group<W: Write>(
 }
 
 fn includes_output(args: &Args, date: NaiveDate) -> bool {
-    !args.output_from.is_some_and(|from| date < from) && !args.output_to.is_some_and(|to| date > to)
+    args.output_from.is_none_or(|from| date >= from) && args.output_to.is_none_or(|to| date <= to)
 }
 
 fn emit<W: Write>(args: &Args, output: &mut W, table: &'static str, row: Value) -> Result<()> {

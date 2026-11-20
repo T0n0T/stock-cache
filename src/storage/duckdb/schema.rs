@@ -10,19 +10,6 @@ use duckdb_neo::{
 
 use crate::metadata::tushare_fields::{dataset, WriteStrategy, DATASETS};
 
-const SOURCE_COLUMNS: &[&str] = &[
-    "source_dataset",
-    "ts_code",
-    "trade_date",
-    "open",
-    "high",
-    "low",
-    "close",
-    "vol",
-    "amount",
-    "turnover_rate",
-    "price_basis",
-];
 const PERIOD_COLUMNS: &[&str] = &[
     "source_dataset",
     "ts_code",
@@ -161,7 +148,6 @@ fn czsc_columns(prefix: &str) -> Vec<String> {
 
 pub fn table_columns(table: &str) -> Result<Vec<String>> {
     let result = match table {
-        "source_daily_bars" => SOURCE_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
         "calc_period_bars" => PERIOD_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
         "calc_indicator_state" => STATE_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
         "calc_daily_indicators" => INDICATOR_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
@@ -200,7 +186,6 @@ pub fn table_columns(table: &str) -> Result<Vec<String>> {
 
 pub fn table_keys(table: &str) -> Result<Vec<String>> {
     Ok(match table {
-        "source_daily_bars" => vec!["source_dataset", "ts_code", "trade_date"],
         "calc_period_bars" => vec![
             "source_dataset",
             "ts_code",
@@ -350,31 +335,8 @@ pub(super) fn execute_script(connection: &Connection, sql: &str) -> Result<()> {
 }
 
 pub fn create_schema(connection: &Connection) -> Result<()> {
+    connection.execute("DROP TABLE IF EXISTS source_daily_bars", Parameters::None)?;
     execute_script(connection, SCHEMA_SQL)?;
-    let mut columns = connection.query(
-        "SELECT COUNT(*)::BIGINT FROM information_schema.columns WHERE table_name = 'source_daily_bars' AND column_name = 'turnover_rate'",
-        Parameters::None,
-    )?;
-    let has_turnover_rate = columns
-        .next_chunk()?
-        .and_then(|chunk| {
-            chunk
-                .get_vector_at::<i64>(0)
-                .ok()?
-                .reader()
-                .ok()?
-                .get(0)
-                .ok()?
-                .copied()
-        })
-        .is_some_and(|count| count > 0);
-    drop(columns);
-    if !has_turnover_rate {
-        connection.execute(
-            "ALTER TABLE source_daily_bars ADD COLUMN turnover_rate DOUBLE",
-            Parameters::None,
-        )?;
-    }
     execute_script(connection, &source_schema_sql())
 }
 
@@ -388,7 +350,6 @@ pub fn checkpoint(connection: &Connection) -> Result<()> {
 const SCHEMA_SQL: &str = r#"
 CREATE TABLE IF NOT EXISTS cache_trade_calendar (trade_date DATE PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS cache_fetch_coverage (dataset VARCHAR, trade_date DATE, code VARCHAR, row_count BIGINT NOT NULL CHECK (row_count >= 0), PRIMARY KEY(dataset, trade_date, code));
-CREATE TABLE IF NOT EXISTS source_daily_bars (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, trade_date DATE NOT NULL, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, vol DOUBLE, amount DOUBLE, turnover_rate DOUBLE, price_basis VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, trade_date));
 CREATE TABLE IF NOT EXISTS calc_period_bars (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, period_type VARCHAR NOT NULL, period_start_date DATE NOT NULL, period_end_date DATE NOT NULL, price_basis VARCHAR NOT NULL, open DOUBLE, high DOUBLE, low DOUBLE, close DOUBLE, vol DOUBLE, amount DOUBLE, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, period_type, period_end_date, calc_version));
 CREATE TABLE IF NOT EXISTS calc_indicator_state (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, period_type VARCHAR NOT NULL, period_start_date DATE NOT NULL, period_end_date DATE NOT NULL, macd_ema12 DOUBLE, macd_ema26 DOUBLE, macd_dea DOUBLE, macd_period_count BIGINT, kdj_k DOUBLE, kdj_d DOUBLE, kdj_period_count BIGINT, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, period_type, period_end_date, calc_version));
 CREATE TABLE IF NOT EXISTS calc_daily_indicators (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, trade_date DATE NOT NULL, daily_macd_dif_asof DOUBLE, daily_macd_dea_asof DOUBLE, daily_macd_hist_x2_asof DOUBLE, daily_macd_dea_pctile_asof DOUBLE, daily_macd_period_count BIGINT CHECK (daily_macd_period_count IS NULL OR daily_macd_period_count >= 0), weekly_macd_dif_asof DOUBLE, weekly_macd_dea_asof DOUBLE, weekly_macd_hist_x2_asof DOUBLE, weekly_macd_dea_pctile_asof DOUBLE, weekly_macd_period_count BIGINT, monthly_macd_dif_asof DOUBLE, monthly_macd_dea_asof DOUBLE, monthly_macd_hist_x2_asof DOUBLE, monthly_macd_dea_pctile_asof DOUBLE, monthly_macd_period_count BIGINT, weekly_kdj_k_asof DOUBLE, weekly_kdj_d_asof DOUBLE, weekly_kdj_j_asof DOUBLE, monthly_kdj_k_asof DOUBLE, monthly_kdj_d_asof DOUBLE, monthly_kdj_j_asof DOUBLE, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, trade_date, calc_version));

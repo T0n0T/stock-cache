@@ -69,6 +69,18 @@ mod tests {
         assert!(Cli::try_parse_from(["stock-cache", "init-db"]).is_ok());
         assert!(Cli::try_parse_from(["stock-cache", "status"]).is_ok());
         assert!(Cli::try_parse_from(["stock-cache", "serve"]).is_ok());
+        assert!(
+            Cli::try_parse_from(["stock-cache", "erase", "--lookback-trading-days", "1"]).is_ok()
+        );
+        assert!(Cli::try_parse_from([
+            "stock-cache",
+            "erase",
+            "--start-date",
+            "2026-11-09",
+            "--end-date",
+            "2026-11-13"
+        ])
+        .is_ok());
         for removed in ["import", "fetch", "calc"] {
             assert!(Cli::try_parse_from(["stock-cache", removed]).is_err());
         }
@@ -94,6 +106,23 @@ mod tests {
                 "write",
                 "--mode",
                 "full",
+                "--lookback-trading-days",
+                "1",
+                "--start-date",
+                "2026-11-09",
+                "--end-date",
+                "2026-11-13",
+            ],
+        ] {
+            assert!(Cli::try_parse_from(args).is_err());
+        }
+        for args in [
+            vec!["stock-cache", "erase"],
+            vec!["stock-cache", "erase", "--lookback-trading-days", "0"],
+            vec!["stock-cache", "erase", "--start-date", "2026-11-09"],
+            vec![
+                "stock-cache",
+                "erase",
                 "--lookback-trading-days",
                 "1",
                 "--start-date",

@@ -22,16 +22,9 @@ def rows_for(start: date, days: int, rows_per_day: int) -> list[dict[str, object
             close = float(symbol) + offset / 100.0
             rows.append(
                 {
-                    "source_dataset": "source_daily_bars",
                     "ts_code": f"{symbol:06d}.SZ",
                     "trade_date": current.isoformat(),
-                    "open": close - 0.5,
-                    "high": close + 0.5,
-                    "low": close - 1.0,
-                    "close": close,
-                    "vol": 1000.0 + symbol,
-                    "amount": 10000.0 + symbol,
-                    "price_basis": "qfq",
+                    "rank": symbol + 1,
                 }
             )
     return rows
@@ -72,8 +65,8 @@ def measure(binary: str, workload: str, rows_per_day: int, root: Path) -> dict[s
     database = root / f"{workload}.duckdb"
     run(binary, database, ["init"])
     if base:
-        run(binary, database, ["import", "--table", "source_daily_bars", "--input", str(base_path), "--strategy", "append"])
-    command = ["import", "--table", "source_daily_bars", "--input", str(batch_path), "--strategy", strategy]
+        run(binary, database, ["import", "--table", "index_limit_cpt_list", "--input", str(base_path), "--strategy", "append"])
+    command = ["import", "--table", "index_limit_cpt_list", "--input", str(batch_path), "--strategy", strategy]
     if dates:
         command.extend(["--dates", ",".join(value.isoformat() for value in dates)])
     started = time.perf_counter()

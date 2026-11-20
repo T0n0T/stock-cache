@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
-    time::Instant,
+    time::{Duration as StdDuration, Instant},
 };
 
 use anyhow::{ensure, Context, Result};
@@ -58,7 +58,7 @@ fn format_count(count: usize) -> String {
     let digits = count.to_string();
     let mut formatted = String::with_capacity(digits.len() + digits.len() / 3);
     for (index, digit) in digits.chars().enumerate() {
-        if index > 0 && (digits.len() - index) % 3 == 0 {
+        if index > 0 && (digits.len() - index).is_multiple_of(3) {
             formatted.push(',');
         }
         formatted.push(digit);
@@ -86,18 +86,32 @@ fn format_target_window(target: &[NaiveDate]) -> String {
     }
 }
 
-fn print_summary(
+struct Summary<'a> {
     mode: Mode,
-    database: &Path,
-    target: Option<&[NaiveDate]>,
+    database: &'a Path,
+    target: Option<&'a [NaiveDate]>,
     warmup_start: Option<NaiveDate>,
-    source_row_counts: &BTreeMap<String, usize>,
+    source_row_counts: &'a BTreeMap<String, usize>,
     calculated_rows: Option<usize>,
     fetch_write_ms: Option<f64>,
     calc_write_ms: Option<f64>,
     total_ms: f64,
     refresh_only: bool,
-) {
+}
+
+fn print_summary(summary: Summary<'_>) {
+    let Summary {
+        mode,
+        database,
+        target,
+        warmup_start,
+        source_row_counts,
+        calculated_rows,
+        fetch_write_ms,
+        calc_write_ms,
+        total_ms,
+        refresh_only,
+    } = summary;
     println!("Write completed successfully.");
     if refresh_only {
         println!("  Mode: {} (reference refresh only)", mode_name(mode));
@@ -209,18 +223,18 @@ pub(crate) fn run(args: Options) -> Result<()> {
             &mut counts,
         )?;
         duckdb::with_connection(&database.to_string_lossy(), duckdb::checkpoint)?;
-        print_summary(
-            Mode::Cache,
-            &database,
-            None,
-            None,
-            &counts,
-            None,
-            None,
-            None,
-            started.elapsed().as_secs_f64() * 1000.0,
-            true,
-        );
+        print_summary(Summary {
+            mode: Mode::Cache,
+            database: &database,
+            target: None,
+            warmup_start: None,
+            source_row_counts: &counts,
+            calculated_rows: None,
+            fetch_write_ms: None,
+            calc_write_ms: None,
+            total_ms: started.elapsed().as_secs_f64() * 1000.0,
+            refresh_only: true,
+        });
         return Ok(());
     }
     let query_start = start
@@ -356,79 +370,96 @@ pub(crate) fn run(args: Options) -> Result<()> {
         if args.skip_covered {
             eprintln!("[write] resume: {skipped} covered requests skipped, {total_jobs} to fetch");
         }
+        let request_window = client.config().requests_per_minute;
+        eprintln!(
+            "[write] request budget: at most {request_window} jobs per 60s; transport also counts pagination and retries"
+        );
         duckdb::with_connection(&database.to_string_lossy(), |connection| {
-            for (batch, jobs) in jobs.chunks(concurrency).enumerate() {
-                let mut tasks = tokio::task::JoinSet::new();
-                let responses = runtime.block_on(async {
-                    for job in jobs.iter().cloned() {
-                        let client = client.clone();
-                        tasks.spawn(async move {
-                            let params = job.params();
-                            let rows = client
-                                .fetch_dataset(dataset(job.id).unwrap(), &params)
-                                .await?;
-                            Ok::<_, anyhow::Error>((job, rows))
-                        });
-                    }
-                    let mut responses = Vec::new();
-                    while let Some(result) = tasks.join_next().await {
-                        responses.push(result??);
-                    }
-                    Ok::<_, anyhow::Error>(responses)
-                })?;
-                for (job, mut rows) in responses {
-                    if job.id == "index_moneyflow_cnt_ths" {
-                        rows.retain(|row| {
-                            row.get("ts_code")
-                                .and_then(Value::as_str)
-                                .is_some_and(|code| !code.is_empty())
-                        });
-                    }
-                    if job.id == "stock_stk_factor_pro" {
-                        ensure!(!rows.is_empty(), "Tushare has no stock market data for {}; target data may not be published yet", job.day);
-                    }
-                    for row in &rows {
-                        ensure!(
-                            row.get("trade_date")
-                                .and_then(Value::as_str)
-                                .is_some_and(|d| d == job.day.to_string()
-                                    || d == job.day.format("%Y%m%d").to_string()),
-                            "{} returned a row outside requested date {}",
-                            job.id,
-                            job.day
+            let mut window_started: Option<Instant> = None;
+            for (window, window_jobs) in jobs.chunks(request_window).enumerate() {
+                if let Some(started) = window_started {
+                    let elapsed = started.elapsed();
+                    let window_duration = StdDuration::from_secs(60);
+                    if elapsed < window_duration {
+                        eprintln!(
+                            "[write] request budget reached; waiting {:.1}s before next batch",
+                            (window_duration - elapsed).as_secs_f64()
                         );
-                        if !job.code.is_empty() {
-                            ensure!(
-                                row.get("ts_code").and_then(Value::as_str) == Some(&job.code),
-                                "index response code mismatch"
-                            );
-                        }
+                        runtime.block_on(tokio::time::sleep(window_duration - elapsed));
                     }
-                    let path = work.path().join("source.jsonl");
-                    write_rows(&path, &rows)?;
-                    let scope = if job.code.is_empty() {
-                        BTreeMap::new()
-                    } else {
-                        BTreeMap::from([("ts_code".into(), job.code.clone())])
-                    };
-                    let written = duckdb::write_jsonl(
-                        connection,
-                        job.id,
-                        &path,
-                        "replace-dates",
-                        &[job.day.to_string()],
-                        &scope,
-                        &[],
-                    )?;
-                    execute(connection, format!("INSERT OR REPLACE INTO cache_fetch_coverage VALUES ({}, DATE '{}', {}, {})", literal(job.id), job.day, literal(&job.code), written))?;
-                    *fetched_rows.entry(job.id.into()).or_default() += rows.len();
                 }
-                if batch % 10 == 0 || (batch + 1) * concurrency >= total_jobs {
-                    eprintln!(
-                        "[write] fetched {}/{} requests",
-                        ((batch + 1) * concurrency).min(total_jobs),
-                        total_jobs
-                    );
+                window_started = Some(Instant::now());
+                for (batch, jobs) in window_jobs.chunks(concurrency).enumerate() {
+                    let mut tasks = tokio::task::JoinSet::new();
+                    let responses = runtime.block_on(async {
+                        for job in jobs.iter().cloned() {
+                            let client = client.clone();
+                            tasks.spawn(async move {
+                                let params = job.params();
+                                let rows = client
+                                    .fetch_dataset(dataset(job.id).unwrap(), &params)
+                                    .await?;
+                                Ok::<_, anyhow::Error>((job, rows))
+                            });
+                        }
+                        let mut responses = Vec::new();
+                        while let Some(result) = tasks.join_next().await {
+                            responses.push(result??);
+                        }
+                        Ok::<_, anyhow::Error>(responses)
+                    })?;
+                    for (job, mut rows) in responses {
+                        if job.id == "index_moneyflow_cnt_ths" {
+                            rows.retain(|row| {
+                                row.get("ts_code")
+                                    .and_then(Value::as_str)
+                                    .is_some_and(|code| !code.is_empty())
+                            });
+                        }
+                        if job.id == "stock_stk_factor_pro" {
+                            ensure!(!rows.is_empty(), "Tushare has no stock market data for {}; target data may not be published yet", job.day);
+                        }
+                        for row in &rows {
+                            ensure!(
+                                row.get("trade_date")
+                                    .and_then(Value::as_str)
+                                    .is_some_and(|d| d == job.day.to_string()
+                                        || d == job.day.format("%Y%m%d").to_string()),
+                                "{} returned a row outside requested date {}",
+                                job.id,
+                                job.day
+                            );
+                            if !job.code.is_empty() {
+                                ensure!(
+                                    row.get("ts_code").and_then(Value::as_str) == Some(&job.code),
+                                    "index response code mismatch"
+                                );
+                            }
+                        }
+                        let path = work.path().join("source.jsonl");
+                        write_rows(&path, &rows)?;
+                        let scope = if job.code.is_empty() {
+                            BTreeMap::new()
+                        } else {
+                            BTreeMap::from([("ts_code".into(), job.code.clone())])
+                        };
+                        let written = duckdb::write_jsonl(
+                            connection,
+                            job.id,
+                            &path,
+                            "replace-dates",
+                            &[job.day.to_string()],
+                            &scope,
+                            &[],
+                        )?;
+                        execute(connection, format!("INSERT OR REPLACE INTO cache_fetch_coverage VALUES ({}, DATE '{}', {}, {})", literal(job.id), job.day, literal(&job.code), written))?;
+                        *fetched_rows.entry(job.id.into()).or_default() += rows.len();
+                    }
+                    let fetched = (window * request_window + batch * concurrency + jobs.len())
+                        .min(total_jobs);
+                    if batch % 10 == 0 || fetched == total_jobs {
+                        eprintln!("[write] fetched {fetched}/{total_jobs} requests");
+                    }
                 }
             }
             Ok(())
@@ -482,20 +513,20 @@ pub(crate) fn run(args: Options) -> Result<()> {
                         .iter()
                         .map(|col| {
                             if adjusted {
-                                format!("{col}_qfq AS {col}")
+                                format!("source.{col}_qfq AS {col}")
                             } else {
-                                (*col).to_string()
+                                format!("source.{col}")
                             }
                         })
                         .collect::<Vec<_>>()
                         .join(",");
                     let amount = if dataset(id).unwrap().field("amount").is_some() {
-                        "amount"
+                        "source.amount"
                     } else {
                         "NULL::DOUBLE AS amount"
                     };
                     let turnover = if dataset(id).unwrap().field("turnover_rate").is_some() {
-                        "turnover_rate"
+                        "source.turnover_rate"
                     } else {
                         "NULL::DOUBLE AS turnover_rate"
                     };
@@ -505,7 +536,10 @@ pub(crate) fn run(args: Options) -> Result<()> {
                         .collect::<Vec<_>>()
                         .join(",");
                     // Keep the original cache seed as it grows; never slide EMA's seed forward.
-                    execute(connection, format!("COPY (SELECT {} AS source_dataset, ts_code, trade_date, {prices}, vol, {amount}, {turnover} FROM {id} WHERE ts_code IN ({codes}) AND trade_date <= DATE '{to}' ORDER BY ts_code, trade_date) TO {} (FORMAT JSON)", literal(id), literal(&input.to_string_lossy())))
+                    // Some index endpoints can return rows for exchange holidays.  The
+                    // calculation calendar is authoritative, so exclude those rows instead
+                    // of making the indicator calculator treat a holiday as a trading session.
+                    execute(connection, format!("COPY (SELECT {} AS source_dataset, source.ts_code, source.trade_date, {prices}, source.vol, {amount}, {turnover} FROM {id} AS source INNER JOIN cache_trade_calendar AS calendar ON calendar.trade_date = source.trade_date WHERE source.ts_code IN ({codes}) AND source.trade_date <= DATE '{to}' ORDER BY source.ts_code, source.trade_date) TO {} (FORMAT JSON)", literal(id), literal(&input.to_string_lossy())))
                 })?;
                 super::calculation::run_cached(
                     &input,
@@ -534,18 +568,18 @@ pub(crate) fn run(args: Options) -> Result<()> {
     }
     duckdb::with_connection(&database.to_string_lossy(), duckdb::checkpoint)?;
     let total_ms = started.elapsed().as_secs_f64() * 1000.0;
-    print_summary(
-        args.mode,
-        &database,
-        Some(&target),
-        Some(history_from),
-        &fetched_rows,
-        (args.mode != Mode::Cache).then_some(calc_rows),
-        Some(fetch_ms),
-        (args.mode != Mode::Cache).then_some(total_ms - fetch_ms),
+    print_summary(Summary {
+        mode: args.mode,
+        database: &database,
+        target: Some(&target),
+        warmup_start: Some(history_from),
+        source_row_counts: &fetched_rows,
+        calculated_rows: (args.mode != Mode::Cache).then_some(calc_rows),
+        fetch_write_ms: Some(fetch_ms),
+        calc_write_ms: (args.mode != Mode::Cache).then_some(total_ms - fetch_ms),
         total_ms,
-        false,
-    );
+        refresh_only: false,
+    });
     Ok(())
 }
 

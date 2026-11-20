@@ -105,8 +105,8 @@ pub fn calculate_multi_period_czsc_for_dates(
     let mut monthly = PeriodCzscAccumulator::new(PeriodType::Monthly);
     let mut rows = Vec::with_capacity(bars.len());
     for bar in bars {
-        let selected = !from.is_some_and(|from| bar.trade_date < from)
-            && !to.is_some_and(|to| bar.trade_date > to);
+        let selected = from.is_none_or(|from| bar.trade_date >= from)
+            && to.is_none_or(|to| bar.trade_date <= to);
         let daily_valid = advance_bar(&mut daily, *bar)?;
         let weekly_snapshot = weekly.observe(
             *bar,
@@ -427,8 +427,8 @@ mod tests {
             let expected: Vec<_> = actual
                 .iter()
                 .filter(|row| {
-                    !from.is_some_and(|from| row.trade_date < from)
-                        && !to.is_some_and(|to| row.trade_date > to)
+                    from.is_none_or(|from| row.trade_date >= from)
+                        && to.is_none_or(|to| row.trade_date <= to)
                 })
                 .cloned()
                 .collect();

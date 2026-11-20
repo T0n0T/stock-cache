@@ -53,8 +53,8 @@ pub fn calculate_left_peak_for_dates(
         .iter()
         .enumerate()
         .filter(|(_, bar)| {
-            !from.is_some_and(|from| bar.trade_date < from)
-                && !to.is_some_and(|to| bar.trade_date > to)
+            from.is_none_or(|from| bar.trade_date >= from)
+                && to.is_none_or(|to| bar.trade_date <= to)
         })
         .map(|(idx, _)| compute_row(bars, idx))
         .collect())
@@ -325,8 +325,8 @@ mod tests {
             let expected: Vec<_> = all
                 .iter()
                 .filter(|row| {
-                    !from.is_some_and(|from| row.trade_date < from)
-                        && !to.is_some_and(|to| row.trade_date > to)
+                    from.is_none_or(|from| row.trade_date >= from)
+                        && to.is_none_or(|to| row.trade_date <= to)
                 })
                 .cloned()
                 .collect();

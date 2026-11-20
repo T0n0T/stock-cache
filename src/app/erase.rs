@@ -1,16 +1,17 @@
 //! Atomic, date-bounded erasure of market data; reference data and calendar survive.
 use std::{collections::BTreeMap, path::PathBuf};
 
-use anyhow::{ensure, Result};
-use chrono::NaiveDate;
+use anyhow::{bail, ensure, Result};
+use chrono::{FixedOffset, NaiveDate, Utc};
 use duckdb_neo::Parameters;
 use serde_json::json;
 use stock_cache::{metadata::tushare_fields::DATASETS, storage::duckdb};
 
 pub(crate) struct Args {
     pub(crate) database: Option<String>,
-    pub(crate) start_date: String,
-    pub(crate) end_date: String,
+    pub(crate) start_date: Option<String>,
+    pub(crate) end_date: Option<String>,
+    pub(crate) lookback_trading_days: Option<u32>,
 }
 
 fn parse_date(text: &str) -> Result<NaiveDate> {
@@ -21,18 +22,74 @@ fn parse_date(text: &str) -> Result<NaiveDate> {
     Ok(NaiveDate::parse_from_str(text, "%Y-%m-%d")?)
 }
 
+fn cached_sessions(database: &str, through: NaiveDate) -> Result<Vec<NaiveDate>> {
+    duckdb::with_connection(database, |connection| {
+        duckdb::create_schema(connection)?;
+        let mut query = connection.query(
+            format!(
+                "SELECT trade_date::VARCHAR FROM cache_trade_calendar \
+                 WHERE trade_date <= DATE '{through}' ORDER BY trade_date"
+            ),
+            Parameters::None,
+        )?;
+        let mut sessions = Vec::new();
+        while let Some(chunk) = query.next_chunk()? {
+            let column = chunk.get_vector_at::<String>(0)?.reader()?;
+            for index in 0..chunk.row_count()? {
+                if let Some(text) = column.get(index)? {
+                    sessions.push(parse_date(text)?);
+                }
+            }
+        }
+        Ok(sessions)
+    })
+}
+
+fn lookback_window(sessions: &[NaiveDate], days: u32) -> Result<(NaiveDate, NaiveDate)> {
+    ensure!(
+        !sessions.is_empty(),
+        "cached trade calendar has no sessions up to today; run write first"
+    );
+    ensure!(
+        sessions.len() >= days as usize,
+        "cached trade calendar has too few trading days for requested lookback; run write first"
+    );
+    let selected = &sessions[sessions.len() - days as usize..];
+    Ok((
+        selected[0],
+        *selected.last().expect("lookback window is non-empty"),
+    ))
+}
+
+fn resolve_window(database: &str, args: &Args) -> Result<(NaiveDate, NaiveDate)> {
+    match (
+        args.start_date.as_deref(),
+        args.end_date.as_deref(),
+        args.lookback_trading_days,
+    ) {
+        (Some(start), Some(end), None) => Ok((parse_date(start)?, parse_date(end)?)),
+        (None, None, Some(days)) => {
+            let today = Utc::now()
+                .with_timezone(&FixedOffset::east_opt(8 * 3600).expect("valid offset"))
+                .date_naive();
+            lookback_window(&cached_sessions(database, today)?, days)
+        }
+        _ => bail!("provide both --start-date and --end-date, or --lookback-trading-days"),
+    }
+}
+
 pub(crate) fn run(args: Args) -> Result<()> {
-    let start = parse_date(&args.start_date)?;
-    let end = parse_date(&args.end_date)?;
-    ensure!(start <= end, "--start-date must be <= --end-date");
     let database = args
         .database
+        .clone()
         .or_else(|| std::env::var("DUCKDB_PATH").ok())
         .unwrap_or_else(|| "runtime/stock-cache.duckdb".into());
     ensure!(
         PathBuf::from(&database).is_file(),
         "database does not exist: {database}"
     );
+    let (start, end) = resolve_window(&database, &args)?;
+    ensure!(start <= end, "--start-date must be <= --end-date");
     let counts = duckdb::with_connection(&database, |connection| {
         duckdb::create_schema(connection)?;
         let mut targets = DATASETS
@@ -41,7 +98,6 @@ pub(crate) fn run(args: Args) -> Result<()> {
             .map(|d| (d.table, "trade_date"))
             .collect::<Vec<_>>();
         targets.extend([
-            ("source_daily_bars", "trade_date"),
             ("calc_period_bars", "period_end_date"),
             ("calc_indicator_state", "period_end_date"),
             ("calc_daily_indicators", "trade_date"),
@@ -89,4 +145,32 @@ pub(crate) fn run(args: Args) -> Result<()> {
         json!({"status":"success", "mode":"erase", "database":database, "start_date":start, "end_date":end, "deleted_row_counts":counts})
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn day(text: &str) -> NaiveDate {
+        parse_date(text).unwrap()
+    }
+
+    #[test]
+    fn lookback_selects_the_most_recent_sessions() {
+        let sessions = [day("2026-11-09"), day("2026-11-10"), day("2026-11-11")];
+        assert_eq!(
+            lookback_window(&sessions, 1).unwrap(),
+            (day("2026-11-11"), day("2026-11-11"))
+        );
+        assert_eq!(
+            lookback_window(&sessions, 2).unwrap(),
+            (day("2026-11-10"), day("2026-11-11"))
+        );
+        assert_eq!(
+            lookback_window(&sessions, 3).unwrap(),
+            (day("2026-11-09"), day("2026-11-11"))
+        );
+        assert!(lookback_window(&sessions, 4).is_err());
+        assert!(lookback_window(&[], 1).is_err());
+    }
 }

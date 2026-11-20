@@ -4,7 +4,11 @@
 //! name, selected fields and parameter map, while this module owns connection
 //! reuse, pagination, response validation and transient retry handling.
 
-use std::{collections::BTreeMap, time::Duration};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
 
 use anyhow::{anyhow, bail, Context, Result};
 use reqwest::{Client, StatusCode};
@@ -17,6 +21,10 @@ const DEFAULT_PAGE_SIZE: usize = 5_000;
 const DEFAULT_MAX_PAGES: usize = 1_000;
 const DEFAULT_MAX_RETRIES: usize = 3;
 const DEFAULT_RETRY_BACKOFF: Duration = Duration::from_millis(200);
+// Tushare documents a 500 requests/minute limit for this token. Keep a small
+// margin because their accounting window is opaque and retries count too.
+const MAX_REQUESTS_PER_MINUTE: usize = 500;
+const DEFAULT_REQUESTS_PER_MINUTE: usize = 450;
 
 /// Configuration for [`TushareHttpClient`].
 #[derive(Debug, Clone)]
@@ -29,6 +37,7 @@ pub struct TushareHttpConfig {
     /// Number of retries after the initial request.
     pub max_retries: usize,
     pub retry_backoff: Duration,
+    pub requests_per_minute: usize,
 }
 
 impl TushareHttpConfig {
@@ -41,6 +50,7 @@ impl TushareHttpConfig {
             max_pages: DEFAULT_MAX_PAGES,
             max_retries: DEFAULT_MAX_RETRIES,
             retry_backoff: DEFAULT_RETRY_BACKOFF,
+            requests_per_minute: DEFAULT_REQUESTS_PER_MINUTE,
         }
     }
 
@@ -74,6 +84,9 @@ impl TushareHttpConfig {
         if let Some(value) = env_u64("TUSHARE_HTTP_RETRY_BACKOFF_MS")? {
             config.retry_backoff = Duration::from_millis(value);
         }
+        if let Some(value) = env_usize("TUSHARE_HTTP_REQUESTS_PER_MINUTE")? {
+            config.requests_per_minute = value;
+        }
         config.validate()?;
         Ok(config)
     }
@@ -94,6 +107,12 @@ impl TushareHttpConfig {
         if self.max_pages == 0 {
             bail!("Tushare HTTP max_pages must be positive");
         }
+        if self.requests_per_minute == 0 {
+            bail!("Tushare HTTP requests_per_minute must be positive");
+        }
+        if self.requests_per_minute > MAX_REQUESTS_PER_MINUTE {
+            bail!("Tushare HTTP requests_per_minute must not exceed {MAX_REQUESTS_PER_MINUTE}");
+        }
         Ok(())
     }
 }
@@ -109,6 +128,49 @@ impl Default for TushareHttpConfig {
 pub struct TushareHttpClient {
     client: Client,
     config: TushareHttpConfig,
+    limiter: Arc<RequestLimiter>,
+}
+
+struct RequestLimiter {
+    limit: usize,
+    window: Duration,
+    requests: Mutex<VecDeque<Instant>>,
+}
+
+impl RequestLimiter {
+    fn new(limit: usize) -> Self {
+        Self {
+            limit,
+            window: Duration::from_secs(60),
+            requests: Mutex::new(VecDeque::with_capacity(limit)),
+        }
+    }
+
+    async fn acquire(&self) {
+        loop {
+            let wait = {
+                let now = Instant::now();
+                let mut requests = self.requests.lock().expect("request limiter poisoned");
+                while requests
+                    .front()
+                    .is_some_and(|started| now.duration_since(*started) >= self.window)
+                {
+                    requests.pop_front();
+                }
+                if requests.len() < self.limit {
+                    requests.push_back(now);
+                    None
+                } else {
+                    Some(self.window - now.duration_since(*requests.front().unwrap()))
+                }
+            };
+            if let Some(wait) = wait {
+                tokio::time::sleep(wait).await;
+            } else {
+                return;
+            }
+        }
+    }
 }
 
 impl std::fmt::Debug for TushareHttpClient {
@@ -120,6 +182,7 @@ impl std::fmt::Debug for TushareHttpClient {
             .field("page_size", &self.config.page_size)
             .field("max_pages", &self.config.max_pages)
             .field("max_retries", &self.config.max_retries)
+            .field("requests_per_minute", &self.config.requests_per_minute)
             .finish_non_exhaustive()
     }
 }
@@ -131,7 +194,12 @@ impl TushareHttpClient {
             .timeout(config.timeout)
             .build()
             .context("failed to build Tushare HTTP client")?;
-        Ok(Self { client, config })
+        let limiter = Arc::new(RequestLimiter::new(config.requests_per_minute));
+        Ok(Self {
+            client,
+            config,
+            limiter,
+        })
     }
 
     pub fn config(&self) -> &TushareHttpConfig {
@@ -208,6 +276,7 @@ impl TushareHttpClient {
 
     async fn send_with_retry(&self, request: &Value) -> Result<ApiResponse> {
         for attempt in 0..=self.config.max_retries {
+            self.limiter.acquire().await;
             let result = self
                 .client
                 .post(&self.config.endpoint)
@@ -407,6 +476,7 @@ mod tests {
             max_pages: 4,
             max_retries: 2,
             retry_backoff: Duration::from_millis(1),
+            requests_per_minute: 450,
         }
     }
 
@@ -483,5 +553,13 @@ mod tests {
         task.await.unwrap();
         assert_eq!(rows.len(), 1);
         assert_eq!(requests.lock().await.len(), 2);
+    }
+
+    #[test]
+    fn rejects_request_budget_above_provider_limit() {
+        let mut config = config("http://127.0.0.1:1".to_string());
+        config.requests_per_minute = 501;
+        let error = TushareHttpClient::new(config).unwrap_err();
+        assert!(error.to_string().contains("must not exceed 500"));
     }
 }

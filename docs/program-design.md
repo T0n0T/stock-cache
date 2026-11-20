@@ -66,7 +66,7 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 
 ## 写入性能测量
 
-基准工具 `tools/benchmark_rust_writer.py`（先执行 `cargo build --release --example writer-benchmark`） 默认把 JSON 写到 `target/` 下的临时目录，不把生成报告放入仓库。报告至少区分：
+基准工具 `tools/benchmark_rust_writer.py`（先执行 `cargo build --release --example writer-benchmark`）使用 `calc_daily_indicators` 测量批量 writer，默认把 JSON 写到 `target/` 下的临时目录，不把生成报告放入仓库。报告至少区分：
 
 - writer-only wall time、逻辑行数和 rows/s；
 - fetch 端到端时间，拆分 HTTP/解码、序列化、写入/checkpoint；
@@ -100,6 +100,7 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 从 DuckDB 读取全部已缓存历史；股票使用前复权 OHLC，指数使用原始 OHLC。
 预热仅参与计算，输出在写入前按目标日期过滤，避免把全量历史结果留在内存。
 `--chunk-size` 控制标的批次，`--max-concurrency` 控制 HTTP 并发。
+Tushare HTTP 请求默认按每分钟 450 次限流，分页与重试共享同一预算；`write` 还按该预算切分抓取批次，并在批次之间等待完整窗口，避免补算任务一次性超过接口额度。可用 `TUSHARE_HTTP_REQUESTS_PER_MINUTE` 调低或调整预算。
 `--force-recalc` 在 full 模式额外刷新历史；计算本身每次都会重算目标切片。
 `--skip-covered`（别名 `--resume`）跳过 `cache_fetch_coverage` 已覆盖的请求，
 目标日期也包含在内，用于失败后断点续跑；它与 `--force-recalc` 互斥。
@@ -110,11 +111,14 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 ## 日期擦除
 
 `stock-cache erase --start-date YYYY-MM-DD --end-date YYYY-MM-DD` 恢复 v2 的明确
-日期区间擦除语义。一个事务删除所有日期来源表、source_daily_bars、六张计算表和
+日期区间擦除语义。一个事务删除所有日期来源表、六张计算表和
 cache_fetch_coverage 的区间记录；周/月表按 period_end_date 匹配。保留 stock_basic、
 index_ths、index_ths_member 和 cache_trade_calendar。日期必须成对提供且起日不晚于
-止日，缺失数据库报错。区间外结果不删除；历史改动后需重算依赖它的后续日期。
-计算和 HTTP 拉取均作为 write 内部能力，不提供 import/fetch/calc 子命令。
+止日，缺失数据库报错。另可用 `--lookback-trading-days N` 指定相对窗口：从
+cache_trade_calendar 中取不晚于今天（东八区）的最近 N 个交易日，与显式日期参数
+互斥，历史交易日不足时报错并提示先运行 write。区间外结果不删除；历史改动后需
+重算依赖它的后续日期。计算和 HTTP 拉取均作为 write 内部能力，不提供
+import/fetch/calc 子命令。
 
 ## Quack 网络服务
 

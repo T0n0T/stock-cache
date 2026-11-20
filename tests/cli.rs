@@ -43,7 +43,6 @@ fn erase_removes_only_requested_dates_and_invalidates_coverage() {
         .map(|d| (d.table, "trade_date"))
         .collect::<Vec<_>>();
     tables.extend([
-        ("source_daily_bars", "trade_date"),
         ("calc_period_bars", "period_end_date"),
         ("calc_indicator_state", "period_end_date"),
         ("calc_daily_indicators", "trade_date"),
@@ -85,11 +84,6 @@ fn erase_removes_only_requested_dates_and_invalidates_coverage() {
                         format!(
                             "'stock_stk_factor_pro','000001.SZ',DATE '{day}','test'{period}{price}"
                         ),
-                    )
-                } else if *table == "source_daily_bars" {
-                    (
-                        "source_dataset,ts_code,trade_date,price_basis".into(),
-                        format!("'demo','000001.SZ',DATE '{day}','qfq'"),
                     )
                 } else if *table == "index_limit_cpt_list" {
                     (
@@ -201,5 +195,83 @@ fn erase_removes_only_requested_dates_and_invalidates_coverage() {
             .unwrap()
             .status
             .success());
+    }
+}
+
+#[test]
+fn erase_lookback_uses_the_cached_trading_calendar() {
+    use duckdb_neo::Parameters;
+    use stock_cache::storage::duckdb;
+    let directory = tempdir().unwrap();
+    let database = directory.path().join("cache.duckdb");
+    let database = database.to_str().unwrap();
+    duckdb::with_connection(database, |connection| {
+        duckdb::create_schema(connection)?;
+        for day in ["2026-11-09", "2026-11-10", "2026-11-11"] {
+            connection.execute(
+                format!("INSERT INTO cache_trade_calendar VALUES (DATE '{day}')"),
+                Parameters::None,
+            )?;
+            connection.execute(
+                format!(
+                    "INSERT INTO cache_fetch_coverage VALUES \
+                     ('stock_stk_factor_pro', DATE '{day}', '', 1)"
+                ),
+                Parameters::None,
+            )?;
+        }
+        Ok(())
+    })
+    .unwrap();
+    let output = Command::cargo_bin("stock-cache")
+        .unwrap()
+        .args(["erase", "--lookback-trading-days", "2"])
+        .args(["--database", database])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let summary: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(summary["start_date"], "2026-11-10");
+    assert_eq!(summary["end_date"], "2026-11-11");
+    assert_eq!(summary["deleted_row_counts"]["cache_fetch_coverage"], 2);
+    duckdb::with_connection(database, |connection| {
+        duckdb::create_schema(connection)?;
+        assert_eq!(duckdb::table_count(connection, "cache_trade_calendar")?, 3);
+        assert_eq!(duckdb::table_count(connection, "cache_fetch_coverage")?, 1);
+        Ok(())
+    })
+    .unwrap();
+}
+
+#[test]
+fn erase_rejects_ambiguous_or_empty_windows() {
+    for args in [
+        vec!["erase"],
+        vec!["erase", "--lookback-trading-days", "0"],
+        vec!["erase", "--start-date", "2026-11-09"],
+        vec![
+            "erase",
+            "--lookback-trading-days",
+            "1",
+            "--start-date",
+            "2026-11-09",
+            "--end-date",
+            "2026-11-13",
+        ],
+    ] {
+        assert!(
+            !Command::cargo_bin("stock-cache")
+                .unwrap()
+                .args(&args)
+                .output()
+                .unwrap()
+                .status
+                .success(),
+            "{args:?}"
+        );
     }
 }
