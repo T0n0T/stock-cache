@@ -1,8 +1,7 @@
 # Target cache source tables written by write --mode cache/full target cache stage.
 stock_stk_factor_pro
 stock_limit_list_ths
-stock_moneyflow_ths
+stock_moneyflow
 index_limit_cpt_list
 index_idx_factor_pro
 index_ths_daily
-index_moneyflow_cnt_ths

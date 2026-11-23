@@ -12,5 +12,8 @@ mod writer;
 pub use calculation_state::load_indicator_checkpoints;
 pub use market_data::table_count;
 pub use quack::QuackServer;
-pub use schema::{checkpoint, create_schema, table_columns, table_keys, with_connection};
+pub use schema::{
+    checkpoint, create_schema, table_columns, table_keys, with_connection,
+    INDUSTRY_MONEYFLOW_TABLE, INDUSTRY_MONEYFLOW_VERSION,
+};
 pub use writer::write_jsonl;

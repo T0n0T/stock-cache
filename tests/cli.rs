@@ -90,6 +90,11 @@ fn erase_removes_only_requested_dates_and_invalidates_coverage() {
                         "ts_code,trade_date,rank".into(),
                         format!("'000001.SZ',DATE '{day}',1"),
                     )
+                } else if *table == "index_weight" {
+                    (
+                        "index_code,trade_date,con_code,weight".into(),
+                        format!("'000300.SH',DATE '{day}','000001.SZ',1.0"),
+                    )
                 } else {
                     (
                         "ts_code,trade_date".into(),

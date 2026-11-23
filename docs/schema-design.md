@@ -12,14 +12,18 @@ v3 只使用 DuckDB 本地副本。来源表保持 Tushare 接口的一接口一
 | --- | --- | --- |
 | `stock_basic` | `stock_basic` | `ts_code` |
 | `stock_stk_factor_pro` | `stk_factor_pro` | `trade_date, ts_code` |
-| `stock_moneyflow_ths` | `moneyflow_ths` | `trade_date, ts_code` |
+| `stock_moneyflow` | `moneyflow` | `trade_date, ts_code` |
 | `index_idx_factor_pro` | `index_idx_factor_pro` | `trade_date, ts_code` |
+| `index_weight` | `index_weight` | `index_code, trade_date, con_code` |
 | `index_ths` | `ths_index` | `ts_code` |
 | `index_ths_daily` | `index_ths_daily` | `trade_date, ts_code` |
-| `index_moneyflow_cnt_ths` | `index_moneyflow_cnt_ths` | `trade_date, ts_code` |
 | `index_ths_member` | `ths_member` | `ts_code, con_code` |
+| `index_sw_classify` | `index_classify` | `index_code` |
+| `index_sw_member` | `index_member_all` | `ts_code, in_date` |
 | `index_limit_cpt_list` | `limit_cpt_list` | `trade_date, ts_code` |
 | `stock_limit_list_ths` | `limit_list_ths` | `trade_date, ts_code` |
+
+`index_weight` 按月保存配置中 `category=market` 的市场指数成分权重，字段为 `index_code`, `trade_date`, `con_code`, `weight`，键为 `index_code, trade_date, con_code`。`--refresh` 会按指数、按年分块抓取 2020 年以来的月末快照，避免触发 Tushare 的 10 万行 offset 上限。它只用于成分归因和回测，不参与指标计算。
 
 ## 计算表
 
@@ -42,6 +46,12 @@ v3 只使用 DuckDB 本地副本。来源表保持 Tushare 接口的一接口一
 ### `calc_daily_rolling_factors` 与 `calc_daily_left_peak`
 
 保存日线 rolling 和左峰结构结果，键同样包含来源、标的、交易日和版本。窗口不足、无效 OHLC、分母为零和无法定位结构时写 `NULL`。
+
+### `calc_daily_industry_moneyflow`
+
+本地派生的申万 2021 二级行业资金流，不对应 Tushare 接口。按 `stock_moneyflow` + `index_sw_member` 的时点成分聚合，字段包括 `industry_code`, `industry_name`, `trade_date`, `stock_count`，小/中/大/特大单的买卖额与净额，`main_net_amount`（大单+特大单净额）、`net_mf_vol`、`net_mf_amount` 和 `calc_version`。键为 `source_dataset, industry_code, trade_date, calc_version`，当前版本为 `sw2021-l2-v1`。
+
+聚合时用 `in_date <= trade_date AND (out_date IS NULL OR trade_date < out_date)` 选择时点有效成分；同一股票同一天若匹配多条记录，取 `in_date` 最新的一条。未被申万成分覆盖的股票不进入行业合计，因此行业净额之和等于当天所有被映射股票的净额之和。该表按日期窗口幂等重建，`--mode cache/full/calc` 都会在抓取或计算阶段刷新目标窗口；未取到 `stock_moneyflow` 时跳过，有源数据但 `index_sw_member` 为空时报错并提示先执行 `--refresh`。
 
 ## 物理和写入设计
 

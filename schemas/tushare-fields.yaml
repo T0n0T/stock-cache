@@ -1156,10 +1156,10 @@ datasets:
       duckdb_type: DOUBLE
       nullable: true
       description: 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7
-  stock_moneyflow_ths:
-    api: moneyflow_ths
-    doc_url: https://tushare.pro/wctapi/documents/348.md
-    checked_at: '2026-06-26'
+  stock_moneyflow:
+    api: moneyflow
+    doc_url: https://tushare.pro/document/2?doc_id=170
+    checked_at: '2026-11-21'
     sdk_version: 1.4.29
     write_strategy:
       type: upsert
@@ -1171,64 +1171,94 @@ datasets:
       params:
       - trade_date
     notes:
-    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
-      are included and should be requested explicitly with the Tushare fields parameter. DuckDB types are chosen explicitly from
-      official docs plus source semantics, not inferred mechanically from pandas dtype.
+    - Tushare moneyflow is tiered by trade size (small/medium/large/extra-large buy and sell
+      volume/amount). The legacy THS moneyflow tables were removed from this cache.
+    - >-
+      Verified with this token on 2026-11-21: 20200103 returned 3,741 rows and 20261120
+      returned 5,580 rows, so the historical range needed for the 2020 backfill is available.
     doc_mismatch: []
     fields:
+    - name: ts_code
+      duckdb_type: VARCHAR
+      nullable: false
+      description: TS代码
     - name: trade_date
       duckdb_type: DATE
       nullable: false
       description: 交易日期
       source_format: YYYYMMDD
-    - name: ts_code
-      duckdb_type: VARCHAR
-      nullable: false
-      description: 股票代码
-    - name: name
-      duckdb_type: VARCHAR
-      nullable: true
-      description: 股票名称
-    - name: pct_change
+    - name: buy_sm_vol
       duckdb_type: DOUBLE
       nullable: true
-      description: 涨跌幅
-    - name: latest
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 最新价
-    - name: net_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 资金净流入(万元)
-    - name: net_d5_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 5日主力净额(万元)
-    - name: buy_lg_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 今日大单净流入额(万元)
-    - name: buy_lg_amount_rate
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 今日大单净流入占比(%)
-    - name: buy_md_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 今日中单净流入额(万元)
-    - name: buy_md_amount_rate
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 今日中单净流入占比(%)
+      description: 小单买入量（手）
     - name: buy_sm_amount
       duckdb_type: DOUBLE
       nullable: true
-      description: 今日小单净流入额(万元)
-    - name: buy_sm_amount_rate
+      description: 小单买入金额（万元）
+    - name: sell_sm_vol
       duckdb_type: DOUBLE
       nullable: true
-      description: 今日小单净流入占比(%)
+      description: 小单卖出量（手）
+    - name: sell_sm_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 小单卖出金额（万元）
+    - name: buy_md_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 中单买入量（手）
+    - name: buy_md_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 中单买入金额（万元）
+    - name: sell_md_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 中单卖出量（手）
+    - name: sell_md_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 中单卖出金额（万元）
+    - name: buy_lg_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 大单买入量（手）
+    - name: buy_lg_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 大单买入金额（万元）
+    - name: sell_lg_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 大单卖出量（手）
+    - name: sell_lg_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 大单卖出金额（万元）
+    - name: buy_elg_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 特大单买入量（手）
+    - name: buy_elg_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 特大单买入金额（万元）
+    - name: sell_elg_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 特大单卖出量（手）
+    - name: sell_elg_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 特大单卖出金额（万元）
+    - name: net_mf_vol
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 净流入量（手）
+    - name: net_mf_amount
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 净流入额（万元）
   index_idx_factor_pro:
     api: idx_factor_pro
     doc_url: https://tushare.pro/wctapi/documents/358.md
@@ -1735,75 +1765,6 @@ datasets:
       duckdb_type: DOUBLE
       nullable: true
       description: 流通市值（元）
-  index_moneyflow_cnt_ths:
-    api: moneyflow_cnt_ths
-    doc_url: https://tushare.pro/wctapi/documents/371.md
-    checked_at: '2026-06-26'
-    sdk_version: 1.4.29
-    write_strategy:
-      type: upsert
-      key:
-      - trade_date
-      - ts_code
-    fetch_plan:
-      kind: by_trade_date
-      params:
-      - trade_date
-    notes:
-    - Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields
-      are included and should be requested explicitly with the Tushare fields parameter. DuckDB types are chosen explicitly from
-      official docs plus source semantics, not inferred mechanically from pandas dtype.
-    doc_mismatch: []
-    fields:
-    - name: trade_date
-      duckdb_type: DATE
-      nullable: false
-      description: 交易日期
-      source_format: YYYYMMDD
-    - name: ts_code
-      duckdb_type: VARCHAR
-      nullable: false
-      description: 板块代码
-    - name: name
-      duckdb_type: VARCHAR
-      nullable: true
-      description: 板块名称
-    - name: lead_stock
-      duckdb_type: VARCHAR
-      nullable: true
-      description: 领涨股票名称
-    - name: close_price
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 最新价
-    - name: pct_change
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 行业涨跌幅
-    - name: industry_index
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 板块指数点位
-    - name: company_num
-      duckdb_type: BIGINT
-      nullable: true
-      description: 公司数量
-    - name: pct_change_stock
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 领涨股涨跌幅
-    - name: net_buy_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 流入资金(亿元)
-    - name: net_sell_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 流出资金(亿元)
-    - name: net_amount
-      duckdb_type: DOUBLE
-      nullable: true
-      description: 净额(亿元)
   index_ths_member:
     api: ths_member
     doc_url: https://tushare.pro/wctapi/documents/261.md
@@ -1859,6 +1820,169 @@ datasets:
       duckdb_type: VARCHAR
       nullable: true
       description: 是否最新Y是N否
+  index_sw_classify:
+    api: index_classify
+    doc_url: https://tushare.pro/document/2?doc_id=181
+    checked_at: '2026-11-21'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: replace_all
+      key:
+      - index_code
+      transaction_group: sw_classification
+    fetch_plan:
+      kind: refresh_current
+      params:
+      - src
+    notes:
+    - The refresh stage requests src=SW2021 without a level filter, returning 511 L1/L2/L3
+      classification rows with parent_code links.
+    - SW2021 L2 contains 134 rows; 124 are is_pub=1 and all 124 have idx_factor_pro data
+      from 2020-01-03 onward. The 10 is_pub=0 industries return no index factor rows.
+    doc_mismatch: []
+    fields:
+    - name: index_code
+      duckdb_type: VARCHAR
+      nullable: false
+      description: 指数代码
+    - name: industry_name
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 行业名称
+    - name: level
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 行业层级
+    - name: industry_code
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 行业代码
+    - name: is_pub
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 是否发布指数Y是N否
+    - name: parent_code
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 父级行业代码
+    - name: src
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 行业分类来源
+  index_sw_member:
+    api: index_member_all
+    doc_url: https://tushare.pro/document/2?doc_id=335
+    checked_at: '2026-11-21'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: replace_all
+      key:
+      - ts_code
+      - in_date
+      transaction_group: sw_classification
+    fetch_plan:
+      kind: refresh_current
+      params:
+      - is_new
+    notes:
+    - The refresh stage unions two snapshots, is_new=Y (current members) and is_new=N
+      (expired members), so in_date/out_date support point-in-time industry attribution.
+      The 2026-11-21 refresh returned 7,932 unique rows (5,919 current + 2,013 expired).
+    - in_date/out_date are normalized to DATE; out_date is NULL for current members.
+      (ts_code, in_date) was unique in the observed union, so it is used as the snapshot key.
+    - This table is NOT filtered to a single date; keep the full interval history for backfills.
+    doc_mismatch: []
+    fields:
+    - name: l1_code
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 一级行业代码
+    - name: l1_name
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 一级行业名称
+    - name: l2_code
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 二级行业代码
+    - name: l2_name
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 二级行业名称
+    - name: l3_code
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 三级行业代码
+    - name: l3_name
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 三级行业名称
+    - name: ts_code
+      duckdb_type: VARCHAR
+      nullable: false
+      description: 股票代码
+    - name: name
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 股票名称
+    - name: in_date
+      duckdb_type: DATE
+      nullable: false
+      description: 纳入日期
+      source_format: YYYYMMDD
+    - name: out_date
+      duckdb_type: DATE
+      nullable: true
+      description: 剔除日期
+      source_format: YYYYMMDD
+    - name: is_new
+      duckdb_type: VARCHAR
+      nullable: true
+      description: 是否最新Y是N否
+  index_weight:
+    api: index_weight
+    doc_url: https://tushare.pro/document/2?doc_id=96
+    checked_at: '2026-11-22'
+    sdk_version: 1.4.29
+    write_strategy:
+      type: upsert
+      key:
+      - index_code
+      - trade_date
+      - con_code
+    fetch_plan:
+      kind: refresh_weight_history
+      params:
+      - index_code
+      - start_date
+      - end_date
+    notes:
+    - Monthly constituent weights for configured market indices (category=market).
+      The refresh stage walks 2020-01-01 through today in yearly chunks so Tushare's
+      100,000-row offset limit is never reached.
+    - >-
+      Verified on 2026-11-22: 000300.SH has 82 monthly snapshots from 2020-01-23;
+      000688.SH starts 2020-07-31, 399303.SZ 2022-06-30, 899050.BJ 2022-11-30,
+      and 930050.CSI 2024-01-31.
+    doc_mismatch: []
+    fields:
+    - name: index_code
+      duckdb_type: VARCHAR
+      nullable: false
+      description: 指数代码
+    - name: trade_date
+      duckdb_type: DATE
+      nullable: false
+      description: 交易日期
+      source_format: YYYYMMDD
+    - name: con_code
+      duckdb_type: VARCHAR
+      nullable: false
+      description: 成分股票代码
+    - name: weight
+      duckdb_type: DOUBLE
+      nullable: true
+      description: 权重（%）
   index_limit_cpt_list:
     api: limit_cpt_list
     doc_url: https://tushare.pro/wctapi/documents/357.md

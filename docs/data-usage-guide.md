@@ -23,15 +23,28 @@ DETACH market;
 
 | 用途 | 表 |
 | --- | --- |
-| Tushare 原始缓存 | `stock_basic`, `stock_stk_factor_pro`, `stock_moneyflow_ths`, `index_idx_factor_pro`, `index_ths`, `index_ths_daily`, `index_moneyflow_cnt_ths`, `index_ths_member`, `index_limit_cpt_list`, `stock_limit_list_ths` |
+| Tushare 原始缓存 | `stock_basic`, `stock_stk_factor_pro`, `stock_moneyflow`, `index_idx_factor_pro`, `index_weight`, `index_ths`, `index_ths_daily`, `index_ths_member`, `index_sw_classify`, `index_sw_member`, `index_limit_cpt_list`, `stock_limit_list_ths` |
 | 已完成周/月 OHLC | `calc_period_bars` |
 | 已完成周期递推状态 | `calc_indicator_state` |
 | 每个交易日的日/周/月 MACD 与周/月 KDJ as-of | `calc_daily_indicators` |
 | 每日 CZSC 快照 | `calc_daily_czsc_structure` |
 | 每日 rolling 因子 | `calc_daily_rolling_factors` |
 | 每日左峰结构 | `calc_daily_left_peak` |
+| 申万 2021 二级行业资金流 | `calc_daily_industry_moneyflow` |
 
 计算结果按 `source_dataset`, `ts_code`, 日期和 `calc_version` 隔离。查询计算表时始终带上来源和版本条件。
+
+`index_weight` 按月保存配置中 9 个市场指数的成分权重，键为 `index_code, trade_date, con_code`。例如：
+
+```sql
+select con_code, weight
+from index_weight
+where index_code = '000300.SH'
+  and trade_date = (select max(trade_date) from index_weight where index_code = '000300.SH')
+order by weight desc;
+```
+
+`calc_daily_industry_moneyflow` 是本地派生表，不对应 Tushare 接口。它把 `stock_moneyflow` 按 `index_sw_member` 的时点成分聚合到申万 2021 二级行业（`industry_code` 形如 `801016.SI`），版本为 `sw2021-l2-v1`。行业净额之和等于当天所有被映射股票的净额之和；未被申万成分覆盖的股票不进入合计。需要行业指数行情时，用 `industry_code` 连接 `index_idx_factor_pro.ts_code`。
 
 当前默认版本为 `v3-macd-kdj-czsc-1`；版本表示完整计算契约，包含价格口径、参数和结构规则。
 

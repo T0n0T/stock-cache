@@ -6,7 +6,7 @@ use std::{
     time::{Duration as StdDuration, Instant},
 };
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use chrono::{Duration, FixedOffset, Months, NaiveDate, Utc};
 use serde_json::{json, Value};
 use stock_cache::{
@@ -14,9 +14,13 @@ use stock_cache::{
 };
 
 use super::market_data::{
-    configured_indexes, configured_tables, coverage, date, env_number, execute, literal, refresh,
-    strings, targets, write_rows, Job, CALC_SOURCES,
+    configured_indexes, configured_tables, coverage, date, env_number, execute, group_days,
+    literal, refresh, row_counts, strings, targets, write_rows, Job, CALC_SOURCES,
 };
+
+// Range responses are written in bounded date chunks so each writer
+// transaction deletes and inserts a small, indexed date slice.
+const WRITE_CHUNK_DAYS: usize = 30;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Mode {
@@ -335,34 +339,50 @@ pub(crate) fn run(args: Options) -> Result<()> {
         let coverage = duckdb::with_connection(&database.to_string_lossy(), |connection| {
             coverage(connection)
         })?;
-        for day in target.iter().chain(history.iter()) {
-            let warmup = *day < from;
-            for &id in &enabled {
-                if warmup && (args.mode == Mode::Cache || !CALC_SOURCES.contains(&id)) {
-                    continue;
-                }
-                let codes = if id == "index_idx_factor_pro" {
-                    indexes.clone()
-                } else {
-                    vec![String::new()]
-                };
-                for code in codes {
-                    let job = Job {
-                        id,
-                        day: *day,
-                        code,
-                    };
-                    // Always refresh targets; only historical completed requests are reused.
+        let request_days = target
+            .iter()
+            .map(|day| (*day, false))
+            .chain(history.iter().map(|day| (*day, true)))
+            .collect::<Vec<_>>();
+        for &id in &enabled {
+            let indexed = id == "index_idx_factor_pro";
+            let codes = if indexed {
+                indexes.clone()
+            } else {
+                vec![String::new()]
+            };
+            for code in codes {
+                let mut pending = Vec::new();
+                for &(day, warmup) in &request_days {
+                    if warmup && (args.mode == Mode::Cache || !CALC_SOURCES.contains(&id)) {
+                        continue;
+                    }
+                    let key = format!("{id}|{day}|{code}");
                     if should_fetch(
                         warmup,
                         args.skip_covered,
                         args.force_recalc,
-                        coverage.contains(&job.key()),
+                        coverage.contains(&key),
                     ) {
-                        jobs.push(job);
+                        if indexed {
+                            pending.push(day);
+                        } else {
+                            jobs.push(Job::single(id, day, code.clone()));
+                        }
                     } else {
                         skipped += 1;
                     }
+                }
+                // One provider request per index and contiguous date range;
+                // writing still happens in bounded date chunks below.
+                for days in group_days(pending) {
+                    let day = days[0];
+                    jobs.push(Job {
+                        id,
+                        day,
+                        days,
+                        code: code.clone(),
+                    });
                 }
             }
         }
@@ -385,7 +405,9 @@ pub(crate) fn run(args: Options) -> Result<()> {
                             "[write] request budget reached; waiting {:.1}s before next batch",
                             (window_duration - elapsed).as_secs_f64()
                         );
-                        runtime.block_on(tokio::time::sleep(window_duration - elapsed));
+                        runtime.block_on(async {
+                            tokio::time::sleep(window_duration - elapsed).await;
+                        });
                     }
                 }
                 window_started = Some(Instant::now());
@@ -408,52 +430,73 @@ pub(crate) fn run(args: Options) -> Result<()> {
                         }
                         Ok::<_, anyhow::Error>(responses)
                     })?;
-                    for (job, mut rows) in responses {
-                        if job.id == "index_moneyflow_cnt_ths" {
-                            rows.retain(|row| {
-                                row.get("ts_code")
-                                    .and_then(Value::as_str)
-                                    .is_some_and(|code| !code.is_empty())
-                            });
-                        }
-                        if job.id == "stock_stk_factor_pro" {
-                            ensure!(!rows.is_empty(), "Tushare has no stock market data for {}; target data may not be published yet", job.day);
-                        }
-                        for row in &rows {
-                            ensure!(
-                                row.get("trade_date")
-                                    .and_then(Value::as_str)
-                                    .is_some_and(|d| d == job.day.to_string()
-                                        || d == job.day.format("%Y%m%d").to_string()),
-                                "{} returned a row outside requested date {}",
-                                job.id,
-                                job.day
-                            );
+                    for (job, rows) in responses {
+                        let allowed = job.days.iter().copied().collect::<BTreeSet<_>>();
+                        let mut by_day = BTreeMap::<NaiveDate, Vec<BTreeMap<String, Value>>>::new();
+                        for row in rows {
+                            let text = row
+                                .get("trade_date")
+                                .and_then(Value::as_str)
+                                .context("Tushare row missing trade_date")?;
+                            let row_day = NaiveDate::parse_from_str(text, "%Y%m%d")
+                                .or_else(|_| date(text))?;
+                            if !allowed.contains(&row_day) {
+                                // Range requests may include exchange-holiday rows.
+                                // A single-day request must never return another date.
+                                if job.days.len() == 1 {
+                                    bail!(
+                                        "{} returned a row outside requested date {}",
+                                        job.id,
+                                        job.day
+                                    );
+                                }
+                                continue;
+                            }
                             if !job.code.is_empty() {
                                 ensure!(
                                     row.get("ts_code").and_then(Value::as_str) == Some(&job.code),
                                     "index response code mismatch"
                                 );
                             }
+                            by_day.entry(row_day).or_default().push(row);
                         }
-                        let path = work.path().join("source.jsonl");
-                        write_rows(&path, &rows)?;
+                        if job.id == "stock_stk_factor_pro" {
+                            ensure!(!by_day.is_empty(), "Tushare has no stock market data for {}; target data may not be published yet", job.day);
+                        }
                         let scope = if job.code.is_empty() {
                             BTreeMap::new()
                         } else {
                             BTreeMap::from([("ts_code".into(), job.code.clone())])
                         };
-                        let written = duckdb::write_jsonl(
-                            connection,
-                            job.id,
-                            &path,
-                            "replace-dates",
-                            &[job.day.to_string()],
-                            &scope,
-                            &[],
-                        )?;
-                        execute(connection, format!("INSERT OR REPLACE INTO cache_fetch_coverage VALUES ({}, DATE '{}', {}, {})", literal(job.id), job.day, literal(&job.code), written))?;
-                        *fetched_rows.entry(job.id.into()).or_default() += rows.len();
+                        // A range response can cover years of sessions; replace
+                        // dates in bounded chunks so one transaction stays small.
+                        for chunk in job.days.chunks(WRITE_CHUNK_DAYS) {
+                            let mut chunk_rows = Vec::new();
+                            for day in chunk {
+                                if let Some(day_rows) = by_day.get(day) {
+                                    chunk_rows.extend(day_rows.iter().cloned());
+                                }
+                            }
+                            let path = work.path().join("source.jsonl");
+                            write_rows(&path, &chunk_rows)?;
+                            let dates = chunk.iter().map(|day| day.to_string()).collect::<Vec<_>>();
+                            duckdb::write_jsonl(
+                                connection,
+                                job.id,
+                                &path,
+                                "replace-dates",
+                                &dates,
+                                &scope,
+                                &[],
+                            )?;
+                            let counts = row_counts(connection, job.id, chunk, &job.code)?;
+                            for day in chunk {
+                                let count = counts.get(day).copied().unwrap_or(0);
+                                execute(connection, format!("INSERT OR REPLACE INTO cache_fetch_coverage VALUES ({}, DATE '{}', {}, {})", literal(job.id), day, literal(&job.code), count))?;
+                            }
+                        }
+                        *fetched_rows.entry(job.id.into()).or_default() +=
+                            by_day.values().map(Vec::len).sum::<usize>();
                     }
                     let fetched = (window * request_window + batch * concurrency + jobs.len())
                         .min(total_jobs);
@@ -468,10 +511,19 @@ pub(crate) fn run(args: Options) -> Result<()> {
             refresh(&runtime, &client, &database, work.path(), &mut fetched_rows)?;
         }
     }
+    // The industry rollup is a cheap local derivation of the fetched stock
+    // moneyflow.  Run it in cache mode too, so a moneyflow backfill does not
+    // need to recompute every instrument indicator.
+    let industry_rows = duckdb::with_connection(&database.to_string_lossy(), |connection| {
+        super::industry_moneyflow::rebuild(connection, &target, duckdb::INDUSTRY_MONEYFLOW_VERSION)
+    })?;
+    if industry_rows > 0 {
+        eprintln!("[write] industry moneyflow: wrote {industry_rows} rows");
+    }
     let fetch_ms = started.elapsed().as_secs_f64() * 1000.0;
     let mut calc_rows = 0usize;
     if args.mode != Mode::Cache {
-        eprintln!("[write] fetch complete; calculating indicators");
+        eprintln!("[write] fetch complete; deriving industry moneyflow and calculating indicators");
         // Require source-history coverage, not just a recent row, before deriving factors.
         duckdb::with_connection(&database.to_string_lossy(), |connection| {
             let present = coverage(connection)?;
@@ -483,7 +535,7 @@ pub(crate) fn run(args: Options) -> Result<()> {
                     vec![String::new()]
                 };
                 for code in codes {
-                    ensure!(history.iter().chain(target.iter()).all(|day| present.contains(&Job { id, day: *day, code: code.clone() }.key())),
+                    ensure!(history.iter().chain(target.iter()).all(|day| present.contains(&Job::single(id, *day, code.clone()).key())),
                         "{id}/{code} lacks historical source coverage; run write --mode full to fill it");
                 }
             }
@@ -585,8 +637,29 @@ pub(crate) fn run(args: Options) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::market_data::{date, targets};
+    use super::super::market_data::{date, group_days, targets};
     use super::should_fetch;
+
+    #[test]
+    fn index_ranges_keep_holiday_gaps_and_cap_long_runs() {
+        let split = group_days(vec![
+            date("2026-11-09").unwrap(),
+            date("2026-11-10").unwrap(),
+            date("2026-11-21").unwrap(),
+        ]);
+        assert_eq!(split.len(), 2);
+        assert_eq!(split[0].len(), 2);
+        assert_eq!(split[1], vec![date("2026-11-21").unwrap()]);
+
+        let start = date("2026-01-01").unwrap();
+        let long = (0..260)
+            .map(|offset| start + chrono::Duration::days(offset))
+            .collect();
+        let capped = group_days(long);
+        assert_eq!(capped.len(), 2);
+        assert_eq!(capped[0].len(), 250);
+        assert_eq!(capped[1].len(), 10);
+    }
 
     #[test]
     fn skip_covered_reuses_completed_requests() {

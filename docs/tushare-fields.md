@@ -309,31 +309,39 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `xsii_td4_hfq` | `DOUBLE` | yes |  | 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7 |
 | `xsii_td4_qfq` | `DOUBLE` | yes |  | 薛斯通道II-CLOSE, HIGH, LOW, N=102, M=7 |
 
-## stock_moneyflow_ths
+## stock_moneyflow
 
-- API: `moneyflow_ths`
-- Official doc: https://tushare.pro/wctapi/documents/348.md
-- Checked at: `2026-06-26`
+- API: `moneyflow`
+- Official doc: https://tushare.pro/document/2?doc_id=170
+- Checked at: `2026-11-21`
 - SDK version: `1.4.29`
 - Fetch plan: `kind`=`by_trade_date`; `params`=`trade_date`
 - Write strategy: `type`=`upsert`; `key`=`trade_date`, `ts_code`
-- Note: Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields are included and should be requested explicitly with the Tushare fields parameter. DuckDB types are chosen explicitly from official docs plus source semantics, not inferred mechanically from pandas dtype.
+- Note: Tushare moneyflow is tiered by trade size (small/medium/large/extra-large buy and sell volume/amount). The legacy THS moneyflow tables were removed from this cache.
+- Note: Verified with this token on 2026-11-21: 20200103 returned 3,741 rows and 20261120 returned 5,580 rows, so the historical range needed for the 2020 backfill is available.
 
 | Field | DuckDB type | Nullable | Source format | Description |
 | --- | --- | --- | --- | --- |
+| `ts_code` | `VARCHAR` | no |  | TS代码 |
 | `trade_date` | `DATE` | no | YYYYMMDD | 交易日期 |
-| `ts_code` | `VARCHAR` | no |  | 股票代码 |
-| `name` | `VARCHAR` | yes |  | 股票名称 |
-| `pct_change` | `DOUBLE` | yes |  | 涨跌幅 |
-| `latest` | `DOUBLE` | yes |  | 最新价 |
-| `net_amount` | `DOUBLE` | yes |  | 资金净流入(万元) |
-| `net_d5_amount` | `DOUBLE` | yes |  | 5日主力净额(万元) |
-| `buy_lg_amount` | `DOUBLE` | yes |  | 今日大单净流入额(万元) |
-| `buy_lg_amount_rate` | `DOUBLE` | yes |  | 今日大单净流入占比(%) |
-| `buy_md_amount` | `DOUBLE` | yes |  | 今日中单净流入额(万元) |
-| `buy_md_amount_rate` | `DOUBLE` | yes |  | 今日中单净流入占比(%) |
-| `buy_sm_amount` | `DOUBLE` | yes |  | 今日小单净流入额(万元) |
-| `buy_sm_amount_rate` | `DOUBLE` | yes |  | 今日小单净流入占比(%) |
+| `buy_sm_vol` | `DOUBLE` | yes |  | 小单买入量（手） |
+| `buy_sm_amount` | `DOUBLE` | yes |  | 小单买入金额（万元） |
+| `sell_sm_vol` | `DOUBLE` | yes |  | 小单卖出量（手） |
+| `sell_sm_amount` | `DOUBLE` | yes |  | 小单卖出金额（万元） |
+| `buy_md_vol` | `DOUBLE` | yes |  | 中单买入量（手） |
+| `buy_md_amount` | `DOUBLE` | yes |  | 中单买入金额（万元） |
+| `sell_md_vol` | `DOUBLE` | yes |  | 中单卖出量（手） |
+| `sell_md_amount` | `DOUBLE` | yes |  | 中单卖出金额（万元） |
+| `buy_lg_vol` | `DOUBLE` | yes |  | 大单买入量（手） |
+| `buy_lg_amount` | `DOUBLE` | yes |  | 大单买入金额（万元） |
+| `sell_lg_vol` | `DOUBLE` | yes |  | 大单卖出量（手） |
+| `sell_lg_amount` | `DOUBLE` | yes |  | 大单卖出金额（万元） |
+| `buy_elg_vol` | `DOUBLE` | yes |  | 特大单买入量（手） |
+| `buy_elg_amount` | `DOUBLE` | yes |  | 特大单买入金额（万元） |
+| `sell_elg_vol` | `DOUBLE` | yes |  | 特大单卖出量（手） |
+| `sell_elg_amount` | `DOUBLE` | yes |  | 特大单卖出金额（万元） |
+| `net_mf_vol` | `DOUBLE` | yes |  | 净流入量（手） |
+| `net_mf_amount` | `DOUBLE` | yes |  | 净流入额（万元） |
 
 ## index_idx_factor_pro
 
@@ -487,31 +495,6 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `total_mv` | `DOUBLE` | yes |  | 总市值（元） |
 | `float_mv` | `DOUBLE` | yes |  | 流通市值（元） |
 
-## index_moneyflow_cnt_ths
-
-- API: `moneyflow_cnt_ths`
-- Official doc: https://tushare.pro/wctapi/documents/371.md
-- Checked at: `2026-06-26`
-- SDK version: `1.4.29`
-- Fetch plan: `kind`=`by_trade_date`; `params`=`trade_date`
-- Write strategy: `type`=`upsert`; `key`=`trade_date`, `ts_code`
-- Note: Fields are frozen from official Tushare output docs and SDK samples checked on 2026-06-26; optional output fields are included and should be requested explicitly with the Tushare fields parameter. DuckDB types are chosen explicitly from official docs plus source semantics, not inferred mechanically from pandas dtype.
-
-| Field | DuckDB type | Nullable | Source format | Description |
-| --- | --- | --- | --- | --- |
-| `trade_date` | `DATE` | no | YYYYMMDD | 交易日期 |
-| `ts_code` | `VARCHAR` | no |  | 板块代码 |
-| `name` | `VARCHAR` | yes |  | 板块名称 |
-| `lead_stock` | `VARCHAR` | yes |  | 领涨股票名称 |
-| `close_price` | `DOUBLE` | yes |  | 最新价 |
-| `pct_change` | `DOUBLE` | yes |  | 行业涨跌幅 |
-| `industry_index` | `DOUBLE` | yes |  | 板块指数点位 |
-| `company_num` | `BIGINT` | yes |  | 公司数量 |
-| `pct_change_stock` | `DOUBLE` | yes |  | 领涨股涨跌幅 |
-| `net_buy_amount` | `DOUBLE` | yes |  | 流入资金(亿元) |
-| `net_sell_amount` | `DOUBLE` | yes |  | 流出资金(亿元) |
-| `net_amount` | `DOUBLE` | yes |  | 净额(亿元) |
-
 ## index_ths_member
 
 - API: `ths_member`
@@ -533,6 +516,71 @@ Do not edit it by hand; update the YAML and rerun `tools/generate_tushare_fields
 | `in_date` | `DATE` | yes | YYYYMMDD | 纳入日期(暂无) |
 | `out_date` | `DATE` | yes | YYYYMMDD | 剔除日期(暂无) |
 | `is_new` | `VARCHAR` | yes |  | 是否最新Y是N否 |
+
+## index_sw_classify
+
+- API: `index_classify`
+- Official doc: https://tushare.pro/document/2?doc_id=181
+- Checked at: `2026-11-21`
+- SDK version: `1.4.29`
+- Fetch plan: `kind`=`refresh_current`; `params`=`src`
+- Write strategy: `type`=`replace_all`; `key`=`index_code`; `transaction_group`=`sw_classification`
+- Note: The refresh stage requests src=SW2021 without a level filter, returning 511 L1/L2/L3 classification rows with parent_code links.
+- Note: SW2021 L2 contains 134 rows; 124 are is_pub=1 and all 124 have idx_factor_pro data from 2020-01-03 onward. The 10 is_pub=0 industries return no index factor rows.
+
+| Field | DuckDB type | Nullable | Source format | Description |
+| --- | --- | --- | --- | --- |
+| `index_code` | `VARCHAR` | no |  | 指数代码 |
+| `industry_name` | `VARCHAR` | yes |  | 行业名称 |
+| `level` | `VARCHAR` | yes |  | 行业层级 |
+| `industry_code` | `VARCHAR` | yes |  | 行业代码 |
+| `is_pub` | `VARCHAR` | yes |  | 是否发布指数Y是N否 |
+| `parent_code` | `VARCHAR` | yes |  | 父级行业代码 |
+| `src` | `VARCHAR` | yes |  | 行业分类来源 |
+
+## index_sw_member
+
+- API: `index_member_all`
+- Official doc: https://tushare.pro/document/2?doc_id=335
+- Checked at: `2026-11-21`
+- SDK version: `1.4.29`
+- Fetch plan: `kind`=`refresh_current`; `params`=`is_new`
+- Write strategy: `type`=`replace_all`; `key`=`ts_code`, `in_date`; `transaction_group`=`sw_classification`
+- Note: The refresh stage unions two snapshots, is_new=Y (current members) and is_new=N (expired members), so in_date/out_date support point-in-time industry attribution. The 2026-11-21 refresh returned 7,932 unique rows (5,919 current + 2,013 expired).
+- Note: in_date/out_date are normalized to DATE; out_date is NULL for current members. (ts_code, in_date) was unique in the observed union, so it is used as the snapshot key.
+- Note: This table is NOT filtered to a single date; keep the full interval history for backfills.
+
+| Field | DuckDB type | Nullable | Source format | Description |
+| --- | --- | --- | --- | --- |
+| `l1_code` | `VARCHAR` | yes |  | 一级行业代码 |
+| `l1_name` | `VARCHAR` | yes |  | 一级行业名称 |
+| `l2_code` | `VARCHAR` | yes |  | 二级行业代码 |
+| `l2_name` | `VARCHAR` | yes |  | 二级行业名称 |
+| `l3_code` | `VARCHAR` | yes |  | 三级行业代码 |
+| `l3_name` | `VARCHAR` | yes |  | 三级行业名称 |
+| `ts_code` | `VARCHAR` | no |  | 股票代码 |
+| `name` | `VARCHAR` | yes |  | 股票名称 |
+| `in_date` | `DATE` | no | YYYYMMDD | 纳入日期 |
+| `out_date` | `DATE` | yes | YYYYMMDD | 剔除日期 |
+| `is_new` | `VARCHAR` | yes |  | 是否最新Y是N否 |
+
+## index_weight
+
+- API: `index_weight`
+- Official doc: https://tushare.pro/document/2?doc_id=96
+- Checked at: `2026-11-22`
+- SDK version: `1.4.29`
+- Fetch plan: `kind`=`refresh_weight_history`; `params`=`index_code`, `start_date`, `end_date`
+- Write strategy: `type`=`upsert`; `key`=`index_code`, `trade_date`, `con_code`
+- Note: Monthly constituent weights for configured market indices (category=market). The refresh stage walks 2020-01-01 through today in yearly chunks so Tushare's 100,000-row offset limit is never reached.
+- Note: Verified on 2026-11-22: 000300.SH has 82 monthly snapshots from 2020-01-23; 000688.SH starts 2020-07-31, 399303.SZ 2022-06-30, 899050.BJ 2022-11-30, and 930050.CSI 2024-01-31.
+
+| Field | DuckDB type | Nullable | Source format | Description |
+| --- | --- | --- | --- | --- |
+| `index_code` | `VARCHAR` | no |  | 指数代码 |
+| `trade_date` | `DATE` | no | YYYYMMDD | 交易日期 |
+| `con_code` | `VARCHAR` | no |  | 成分股票代码 |
+| `weight` | `DOUBLE` | yes |  | 权重（%） |
 
 ## index_limit_cpt_list
 

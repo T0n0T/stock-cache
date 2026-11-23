@@ -113,6 +113,32 @@ const LEFT_PEAK_COLUMNS: &[&str] = &[
     "status",
     "calc_version",
 ];
+/// Local derivation of stock moneyflow into SW2021 level-2 industry totals.
+pub const INDUSTRY_MONEYFLOW_TABLE: &str = "calc_daily_industry_moneyflow";
+pub const INDUSTRY_MONEYFLOW_VERSION: &str = "sw2021-l2-v1";
+const INDUSTRY_MONEYFLOW_COLUMNS: &[&str] = &[
+    "source_dataset",
+    "industry_code",
+    "industry_name",
+    "trade_date",
+    "stock_count",
+    "buy_sm_amount",
+    "sell_sm_amount",
+    "net_sm_amount",
+    "buy_md_amount",
+    "sell_md_amount",
+    "net_md_amount",
+    "buy_lg_amount",
+    "sell_lg_amount",
+    "net_lg_amount",
+    "buy_elg_amount",
+    "sell_elg_amount",
+    "net_elg_amount",
+    "main_net_amount",
+    "net_mf_vol",
+    "net_mf_amount",
+    "calc_version",
+];
 
 fn czsc_columns(prefix: &str) -> Vec<String> {
     [
@@ -153,6 +179,10 @@ pub fn table_columns(table: &str) -> Result<Vec<String>> {
         "calc_daily_indicators" => INDICATOR_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
         "calc_daily_rolling_factors" => ROLLING_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
         "calc_daily_left_peak" => LEFT_PEAK_COLUMNS.iter().map(|x| (*x).to_string()).collect(),
+        "calc_daily_industry_moneyflow" => INDUSTRY_MONEYFLOW_COLUMNS
+            .iter()
+            .map(|x| (*x).to_string())
+            .collect(),
         "calc_daily_czsc_structure" => {
             let mut values = vec![
                 "source_dataset",
@@ -204,6 +234,14 @@ pub fn table_keys(table: &str) -> Result<Vec<String>> {
         | "calc_daily_czsc_structure"
         | "calc_daily_rolling_factors"
         | "calc_daily_left_peak" => vec!["source_dataset", "ts_code", "trade_date", "calc_version"],
+        "calc_daily_industry_moneyflow" => {
+            vec![
+                "source_dataset",
+                "industry_code",
+                "trade_date",
+                "calc_version",
+            ]
+        }
         _ => match dataset(table) {
             Some(metadata) => match metadata.write_strategy {
                 WriteStrategy::Upsert { key } | WriteStrategy::ReplaceAll { key, .. } => {
@@ -264,6 +302,8 @@ fn type_for(column: &str) -> &'static str {
             | "daily_last_bi_direction"
             | "weekly_last_bi_direction"
             | "monthly_last_bi_direction"
+            | "industry_code"
+            | "industry_name"
     ) || column.ends_with("_direction")
         || column.ends_with("_status")
     {
@@ -356,4 +396,5 @@ CREATE TABLE IF NOT EXISTS calc_daily_indicators (source_dataset VARCHAR NOT NUL
 CREATE TABLE IF NOT EXISTS calc_daily_czsc_structure (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, trade_date DATE NOT NULL, daily_period_complete BOOLEAN, weekly_period_complete BOOLEAN, monthly_period_complete BOOLEAN, daily_source_bar_valid BOOLEAN, daily_status VARCHAR, daily_available_finished_bi_count INTEGER, daily_recent_bi_count INTEGER, daily_last_bi_direction VARCHAR, daily_last_bi_start_date DATE, daily_last_bi_end_date DATE, daily_last_bi_high DOUBLE, daily_last_bi_low DOUBLE, daily_last_bi_mid DOUBLE, daily_latest_zs_start_date DATE, daily_latest_zs_end_date DATE, daily_latest_zs_bi_count INTEGER, daily_latest_zs_zg DOUBLE, daily_latest_zs_zd DOUBLE, daily_latest_zs_zz DOUBLE, daily_recent_peak_date DATE, daily_recent_peak_high DOUBLE, daily_post_peak_first_bear_date DATE, daily_post_peak_first_bear_open DOUBLE, daily_post_peak_first_bear_high DOUBLE, daily_post_peak_first_bear_low DOUBLE, daily_post_peak_first_bear_close DOUBLE, daily_post_peak_first_bear_missing BOOLEAN, weekly_source_bar_valid BOOLEAN, weekly_status VARCHAR, weekly_available_finished_bi_count INTEGER, weekly_recent_bi_count INTEGER, weekly_last_bi_direction VARCHAR, weekly_last_bi_start_date DATE, weekly_last_bi_end_date DATE, weekly_last_bi_high DOUBLE, weekly_last_bi_low DOUBLE, weekly_last_bi_mid DOUBLE, weekly_latest_zs_start_date DATE, weekly_latest_zs_end_date DATE, weekly_latest_zs_bi_count INTEGER, weekly_latest_zs_zg DOUBLE, weekly_latest_zs_zd DOUBLE, weekly_latest_zs_zz DOUBLE, weekly_recent_peak_date DATE, weekly_recent_peak_high DOUBLE, weekly_post_peak_first_bear_date DATE, weekly_post_peak_first_bear_open DOUBLE, weekly_post_peak_first_bear_high DOUBLE, weekly_post_peak_first_bear_low DOUBLE, weekly_post_peak_first_bear_close DOUBLE, weekly_post_peak_first_bear_missing BOOLEAN, monthly_source_bar_valid BOOLEAN, monthly_status VARCHAR, monthly_available_finished_bi_count INTEGER, monthly_recent_bi_count INTEGER, monthly_last_bi_direction VARCHAR, monthly_last_bi_start_date DATE, monthly_last_bi_end_date DATE, monthly_last_bi_high DOUBLE, monthly_last_bi_low DOUBLE, monthly_last_bi_mid DOUBLE, monthly_latest_zs_start_date DATE, monthly_latest_zs_end_date DATE, monthly_latest_zs_bi_count INTEGER, monthly_latest_zs_zg DOUBLE, monthly_latest_zs_zd DOUBLE, monthly_latest_zs_zz DOUBLE, monthly_recent_peak_date DATE, monthly_recent_peak_high DOUBLE, monthly_post_peak_first_bear_date DATE, monthly_post_peak_first_bear_open DOUBLE, monthly_post_peak_first_bear_high DOUBLE, monthly_post_peak_first_bear_low DOUBLE, monthly_post_peak_first_bear_close DOUBLE, monthly_post_peak_first_bear_missing BOOLEAN, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, trade_date, calc_version));
 CREATE TABLE IF NOT EXISTS calc_daily_rolling_factors (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, trade_date DATE NOT NULL, ma25_qfq DOUBLE, ma144_qfq DOUBLE, ma220_qfq DOUBLE, high_20_qfq DOUBLE, high_90_qfq DOUBLE, low_90_qfq DOUBLE, high_120_qfq DOUBLE, low_120_qfq DOUBLE, close_to_20d_max_close_pct DOUBLE, position_90d DOUBLE, position_120d DOUBLE, volume_ma5 DOUBLE, volume_ma20 DOUBLE, volume_to_ma5_ratio DOUBLE, volume_to_ma20_ratio DOUBLE, volume_ma5_to_ma20_ratio DOUBLE, turnover_rate_ma5 DOUBLE, turnover_to_ma5_ratio DOUBLE, range_compression_20d DOUBLE, range_compression_40d DOUBLE, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, trade_date, calc_version));
 CREATE TABLE IF NOT EXISTS calc_daily_left_peak (source_dataset VARCHAR NOT NULL, ts_code VARCHAR NOT NULL, trade_date DATE NOT NULL, left_peak_date DATE, left_peak_high DOUBLE, breakout_date DATE, breakout_close DOUBLE, breakout_body_above_left_peak BOOLEAN, first_bear_date DATE, first_bear_open DOUBLE, first_bear_missing BOOLEAN, pick_close DOUBLE, b_div_a DOUBLE, abs_ba_minus_1 DOUBLE, a_lt_b BOOLEAN, is_valid BOOLEAN, status VARCHAR, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, ts_code, trade_date, calc_version));
+CREATE TABLE IF NOT EXISTS calc_daily_industry_moneyflow (source_dataset VARCHAR NOT NULL, industry_code VARCHAR NOT NULL, industry_name VARCHAR, trade_date DATE NOT NULL, stock_count BIGINT, buy_sm_amount DOUBLE, sell_sm_amount DOUBLE, net_sm_amount DOUBLE, buy_md_amount DOUBLE, sell_md_amount DOUBLE, net_md_amount DOUBLE, buy_lg_amount DOUBLE, sell_lg_amount DOUBLE, net_lg_amount DOUBLE, buy_elg_amount DOUBLE, sell_elg_amount DOUBLE, net_elg_amount DOUBLE, main_net_amount DOUBLE, net_mf_vol DOUBLE, net_mf_amount DOUBLE, calc_version VARCHAR NOT NULL, PRIMARY KEY (source_dataset, industry_code, trade_date, calc_version));
 "#;

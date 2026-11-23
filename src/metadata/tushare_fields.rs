@@ -1726,13 +1726,7 @@ const STOCK_STK_FACTOR_PRO_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const STOCK_MONEYFLOW_THS_FIELDS: &[FieldMetadata] = &[
-    FieldMetadata {
-        name: "trade_date",
-        duckdb_type: "DATE",
-        nullable: false,
-        source_format: Some("YYYYMMDD"),
-    },
+const STOCK_MONEYFLOW_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
         duckdb_type: "VARCHAR",
@@ -1740,55 +1734,13 @@ const STOCK_MONEYFLOW_THS_FIELDS: &[FieldMetadata] = &[
         source_format: None,
     },
     FieldMetadata {
-        name: "name",
-        duckdb_type: "VARCHAR",
-        nullable: true,
-        source_format: None,
+        name: "trade_date",
+        duckdb_type: "DATE",
+        nullable: false,
+        source_format: Some("YYYYMMDD"),
     },
     FieldMetadata {
-        name: "pct_change",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "latest",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "net_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "net_d5_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "buy_lg_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "buy_lg_amount_rate",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "buy_md_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "buy_md_amount_rate",
+        name: "buy_sm_vol",
         duckdb_type: "DOUBLE",
         nullable: true,
         source_format: None,
@@ -1800,7 +1752,97 @@ const STOCK_MONEYFLOW_THS_FIELDS: &[FieldMetadata] = &[
         source_format: None,
     },
     FieldMetadata {
-        name: "buy_sm_amount_rate",
+        name: "sell_sm_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_sm_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "buy_md_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "buy_md_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_md_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_md_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "buy_lg_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "buy_lg_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_lg_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_lg_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "buy_elg_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "buy_elg_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_elg_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "sell_elg_amount",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "net_mf_vol",
+        duckdb_type: "DOUBLE",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "net_mf_amount",
         duckdb_type: "DOUBLE",
         nullable: true,
         source_format: None,
@@ -2470,81 +2512,6 @@ const INDEX_THS_DAILY_FIELDS: &[FieldMetadata] = &[
     },
 ];
 
-const INDEX_MONEYFLOW_CNT_THS_FIELDS: &[FieldMetadata] = &[
-    FieldMetadata {
-        name: "trade_date",
-        duckdb_type: "DATE",
-        nullable: false,
-        source_format: Some("YYYYMMDD"),
-    },
-    FieldMetadata {
-        name: "ts_code",
-        duckdb_type: "VARCHAR",
-        nullable: false,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "name",
-        duckdb_type: "VARCHAR",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "lead_stock",
-        duckdb_type: "VARCHAR",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "close_price",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "pct_change",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "industry_index",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "company_num",
-        duckdb_type: "BIGINT",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "pct_change_stock",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "net_buy_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "net_sell_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-    FieldMetadata {
-        name: "net_amount",
-        duckdb_type: "DOUBLE",
-        nullable: true,
-        source_format: None,
-    },
-];
-
 const INDEX_THS_MEMBER_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "ts_code",
@@ -2585,6 +2552,147 @@ const INDEX_THS_MEMBER_FIELDS: &[FieldMetadata] = &[
     FieldMetadata {
         name: "is_new",
         duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+];
+
+const INDEX_SW_CLASSIFY_FIELDS: &[FieldMetadata] = &[
+    FieldMetadata {
+        name: "index_code",
+        duckdb_type: "VARCHAR",
+        nullable: false,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "industry_name",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "level",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "industry_code",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "is_pub",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "parent_code",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "src",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+];
+
+const INDEX_SW_MEMBER_FIELDS: &[FieldMetadata] = &[
+    FieldMetadata {
+        name: "l1_code",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "l1_name",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "l2_code",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "l2_name",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "l3_code",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "l3_name",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "ts_code",
+        duckdb_type: "VARCHAR",
+        nullable: false,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "name",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "in_date",
+        duckdb_type: "DATE",
+        nullable: false,
+        source_format: Some("YYYYMMDD"),
+    },
+    FieldMetadata {
+        name: "out_date",
+        duckdb_type: "DATE",
+        nullable: true,
+        source_format: Some("YYYYMMDD"),
+    },
+    FieldMetadata {
+        name: "is_new",
+        duckdb_type: "VARCHAR",
+        nullable: true,
+        source_format: None,
+    },
+];
+
+const INDEX_WEIGHT_FIELDS: &[FieldMetadata] = &[
+    FieldMetadata {
+        name: "index_code",
+        duckdb_type: "VARCHAR",
+        nullable: false,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "trade_date",
+        duckdb_type: "DATE",
+        nullable: false,
+        source_format: Some("YYYYMMDD"),
+    },
+    FieldMetadata {
+        name: "con_code",
+        duckdb_type: "VARCHAR",
+        nullable: false,
+        source_format: None,
+    },
+    FieldMetadata {
+        name: "weight",
+        duckdb_type: "DOUBLE",
         nullable: true,
         source_format: None,
     },
@@ -2825,10 +2933,10 @@ pub const DATASETS: &[DatasetMetadata] = &[
         },
     },
     DatasetMetadata {
-        id: "stock_moneyflow_ths",
-        table: "stock_moneyflow_ths",
-        api: "moneyflow_ths",
-        fields: STOCK_MONEYFLOW_THS_FIELDS,
+        id: "stock_moneyflow",
+        table: "stock_moneyflow",
+        api: "moneyflow",
+        fields: STOCK_MONEYFLOW_FIELDS,
         write_strategy: WriteStrategy::Upsert {
             key: &["trade_date", "ts_code"],
         },
@@ -2882,20 +2990,6 @@ pub const DATASETS: &[DatasetMetadata] = &[
         },
     },
     DatasetMetadata {
-        id: "index_moneyflow_cnt_ths",
-        table: "index_moneyflow_cnt_ths",
-        api: "moneyflow_cnt_ths",
-        fields: INDEX_MONEYFLOW_CNT_THS_FIELDS,
-        write_strategy: WriteStrategy::Upsert {
-            key: &["trade_date", "ts_code"],
-        },
-        fetch_plan: FetchPlan {
-            kind: "by_trade_date",
-            params: &["trade_date"],
-            code_source: None,
-        },
-    },
-    DatasetMetadata {
         id: "index_ths_member",
         table: "index_ths_member",
         api: "ths_member",
@@ -2908,6 +3002,50 @@ pub const DATASETS: &[DatasetMetadata] = &[
             kind: "refresh_current_by_ths_code",
             params: &["ts_code"],
             code_source: Some("index_ths"),
+        },
+    },
+    DatasetMetadata {
+        id: "index_sw_classify",
+        table: "index_sw_classify",
+        api: "index_classify",
+        fields: INDEX_SW_CLASSIFY_FIELDS,
+        write_strategy: WriteStrategy::ReplaceAll {
+            key: &["index_code"],
+            transaction_group: Some("sw_classification"),
+        },
+        fetch_plan: FetchPlan {
+            kind: "refresh_current",
+            params: &["src"],
+            code_source: None,
+        },
+    },
+    DatasetMetadata {
+        id: "index_sw_member",
+        table: "index_sw_member",
+        api: "index_member_all",
+        fields: INDEX_SW_MEMBER_FIELDS,
+        write_strategy: WriteStrategy::ReplaceAll {
+            key: &["ts_code", "in_date"],
+            transaction_group: Some("sw_classification"),
+        },
+        fetch_plan: FetchPlan {
+            kind: "refresh_current",
+            params: &["is_new"],
+            code_source: None,
+        },
+    },
+    DatasetMetadata {
+        id: "index_weight",
+        table: "index_weight",
+        api: "index_weight",
+        fields: INDEX_WEIGHT_FIELDS,
+        write_strategy: WriteStrategy::Upsert {
+            key: &["index_code", "trade_date", "con_code"],
+        },
+        fetch_plan: FetchPlan {
+            kind: "refresh_weight_history",
+            params: &["index_code", "start_date", "end_date"],
+            code_source: None,
         },
     },
     DatasetMetadata {

@@ -26,12 +26,14 @@ pub(crate) fn status(database: Option<String>) -> Result<()> {
             "cache_fetch_coverage",
             "stock_basic",
             "stock_stk_factor_pro",
-            "stock_moneyflow_ths",
+            "stock_moneyflow",
             "index_idx_factor_pro",
             "index_ths",
             "index_ths_daily",
-            "index_moneyflow_cnt_ths",
             "index_ths_member",
+            "index_sw_classify",
+            "index_sw_member",
+            "index_weight",
             "index_limit_cpt_list",
             "stock_limit_list_ths",
             "calc_period_bars",
@@ -40,6 +42,7 @@ pub(crate) fn status(database: Option<String>) -> Result<()> {
             "calc_daily_czsc_structure",
             "calc_daily_rolling_factors",
             "calc_daily_left_peak",
+            "calc_daily_industry_moneyflow",
         ];
         let mut counts = serde_json::Map::new();
         for table in tables {

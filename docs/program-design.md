@@ -85,8 +85,8 @@ MACD 使用与 `pandas.Series.ewm(adjust=False)` 相同的递推：12/26 EMA、9
 
 `stock-cache write --mode full --lookback-trading-days 1` 恢复 v2 的主流程语义：
 用交易日历选择截至上海当前日期的最近一个交易日，更新该日配置中的来源表；
-为股票、配置指数、同花顺指数三类计算来源补齐此前 36 个月缺失历史，计算并
-写入目标日期六类结果。非交易日选择最近交易日；当日数据尚未发布时明确失败。
+为股票和配置指数两类计算来源补齐此前 36 个月缺失历史，计算并写入目标日期
+六类结果；同花顺板块日线仍作为来源表缓存，但不再参与指标计算。非交易日选择最近交易日；当日数据尚未发布时明确失败。
 交易日历请求延伸到目标日期之后 40 个自然日，禁止把输入截断日当成周/月收盘日。
 
 `--start-date/--end-date` 与 `--lookback-trading-days` 互斥。`--mode cache` 仅缓存
@@ -107,6 +107,18 @@ Tushare HTTP 请求默认按每分钟 450 次限流，分页与重试共享同�
 首轮 MACD 沿用 v2 的 36 个月有限预热口径，不能视为上市以来的精确基线。
 每批来源与计算结果使用 writer 事务；跨 HTTP 和各计算批次不构成单一事务，失败
 不会报告成功，已完成的来源缓存可供重试复用。
+
+## 申万 2021 二级行业资金流
+
+`stock_moneyflow` 保存 Tushare `moneyflow` 的按单笔金额分档数据（小/中/大/特大单的买卖量与金额）。`index_sw_classify` 和 `index_sw_member` 由 `write --mode cache --refresh` 维护；后者合并 `is_new=Y` 当前成分与 `is_new=N` 历史成分，保留 `in_date`/`out_date`，因此可以按时点归属，而不是只用当前快照。
+
+`config/default-indexes.csv` 默认包含 124 个已发布指数的申万 2021 二级行业代码（`801xxx.SI`）。`index_idx_factor_pro` 对每个指数按连续交易日区间抓取：一个指数的一段目标窗口只发一次请求，响应按 30 个交易日分块写入并逐日记录 `cache_fetch_coverage`。因此 124 个行业指数补齐 2020 年以来的历史只需百余次请求，而不是 124 × 交易日数次。
+
+`calc_daily_industry_moneyflow` 是本地派生表：用 `stock_moneyflow` 与 `index_sw_member` 的时点有效成分聚合，版本 `sw2021-l2-v1`。它在 cache/full/calc 三种模式的目标窗口结束后幂等重建；窗口内有 `stock_moneyflow` 但 `index_sw_member` 为空时直接报错，提示先运行 `--refresh`。行业净额之和等于当天所有被映射股票的净额之和；未被申万成分覆盖的股票（新股、北交所、退市）不进入合计。SW2021 二级分类共 134 个代码，其中 124 个 `is_pub=1` 且有指数因子数据；其余 10 个不发布指数，不加入默认指数列表。
+
+## 市场指数权重
+
+`index_weight` 按月保存配置中 `category=market` 的 9 个市场指数成分权重。`--refresh` 时按指数、按年分块抓取 2020 年以来的月末快照，使用 `replace-batch-keys` 只替换本批出现的键，单指数单年数据量控制在 Tushare 的 10 万行 offset 上限以内。权重表只用于成分归因和回测，不进入 MACD/KDJ/CZSC 计算；申万成分仍由 `index_sw_member` 独立维护。
 
 ## 日期擦除
 

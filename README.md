@@ -38,6 +38,12 @@ target/release/stock-cache write --mode full --start-date 2026-11-09 --end-date 
 
 股票使用 `*_qfq` 复权 OHLC；指数使用原始 OHLC。预热行保留在数据源表中；只有目标日的计算行以及以目标窗口结束的完整周期行会被持久化。已有的更早缓存历史仍会作为计算输入，以免 EMA 种子每天向前漂移。初始的 36 个月预热遵循 v2 的有限历史约定，而不是从上市首日开始的历史基线。写入采用 Rust 批量暂存和事务；失败时已完成的源数据批次仍可复用于重试。一个工作流并不是跨所有 HTTP 请求和计算批次的单一事务。
 
+### 申万二级行业资金流
+
+`stock_moneyflow` 缓存 Tushare `moneyflow` 的小/中/大/特大单买卖数据。`config/default-indexes.csv` 默认加入 124 个申万 2021 二级行业指数（`801xxx.SI`），其行情和因子写入现有 `index_idx_factor_pro`。`index_sw_classify` / `index_sw_member` 由 `--refresh` 维护，后者同时保存当前成分和历史成分的 `in_date` / `out_date`。`--refresh` 还会按月抓取 9 个市场指数的 `index_weight` 成分权重（2020 年起），供归因和回测查询，不参与指标计算。
+
+`write` 在 cache/full/calc 三种模式结束目标窗口后，会幂等重建 `calc_daily_industry_moneyflow`：按申万二级行业聚合个股资金流，版本 `sw2021-l2-v1`。该表每天约 131 个行业（包含 7 个有成分但不发布指数的二级行业），行业净额之和等于当天被映射股票的净额之和。首次使用先执行 `write --mode cache --refresh` 获取申万分类和成分，再做历史回填。
+
 公开命令为 `init`（别名 `init-db`）、`status`、`write`、`erase` 和 `serve`。计算与 HTTP 抓取是 `write` 的内部阶段。
 
 ## 快速开始

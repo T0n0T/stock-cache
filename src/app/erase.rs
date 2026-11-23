@@ -104,6 +104,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
             ("calc_daily_czsc_structure", "trade_date"),
             ("calc_daily_rolling_factors", "trade_date"),
             ("calc_daily_left_peak", "trade_date"),
+            (duckdb::INDUSTRY_MONEYFLOW_TABLE, "trade_date"),
             ("cache_fetch_coverage", "trade_date"),
         ]);
         connection.execute("BEGIN TRANSACTION", Parameters::None)?;

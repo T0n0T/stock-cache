@@ -56,6 +56,15 @@ def _index_window_params(args: argparse.Namespace, _pro: Any) -> dict[str, Any]:
     return params
 
 
+def _index_weight_params(args: argparse.Namespace, _pro: Any) -> dict[str, Any]:
+    params: dict[str, Any] = {"index_code": args.index_code}
+    if args.start_date and args.end_date:
+        params.update({"start_date": args.start_date, "end_date": args.end_date})
+    else:
+        params["trade_date"] = args.trade_date
+    return params
+
+
 def _ths_index_params(_args: argparse.Namespace, _pro: Any) -> dict[str, Any]:
     return {}
 
@@ -84,11 +93,10 @@ def _ths_member_params(args: argparse.Namespace, pro: Any) -> dict[str, Any]:
 
 DATASETS: dict[str, DatasetSpec] = {
     "stock_stk_factor_pro": DatasetSpec("stk_factor_pro", _stock_window_params),
-    "stock_moneyflow_ths": DatasetSpec("moneyflow_ths", _stock_window_params),
     "index_idx_factor_pro": DatasetSpec("idx_factor_pro", _index_window_params),
+    "index_weight": DatasetSpec("index_weight", _index_weight_params),
     "index_ths": DatasetSpec("ths_index", _ths_index_params),
     "index_ths_daily": DatasetSpec("ths_daily", _ths_window_params),
-    "index_moneyflow_cnt_ths": DatasetSpec("moneyflow_cnt_ths", _date_params),
     "index_ths_member": DatasetSpec("ths_member", _ths_member_params),
     "index_limit_cpt_list": DatasetSpec("limit_cpt_list", _date_params),
     "stock_limit_list_ths": DatasetSpec("limit_list_ths", _date_params),
